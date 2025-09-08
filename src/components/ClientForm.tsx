@@ -3,7 +3,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -22,7 +21,6 @@ import {
 } from '@/components/ui/select';
 import { IMaskInput } from 'react-imask';
 
-// Schema não precisa de alteração, está correto.
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Nome deve ter no mínimo 2 caracteres.' }),
   address: z.string().min(5, { message: 'Endereço muito curto.' }),
@@ -30,40 +28,25 @@ const formSchema = z.object({
   phone: z.string().optional(),
   poolVolume: z.coerce.number().min(0, { message: 'Volume não pode ser negativo.' }),
   serviceValue: z.coerce.number().min(0, { message: 'Valor não pode ser negativo.' }),
-  visitDay: z.enum(['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado']),
+  visitDay: z.enum(['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'], {
+    errorMap: () => ({ message: "Por favor, selecione um dia da visita." }),
+  }),
 });
 
 export type ClientFormData = z.infer<typeof formSchema>;
 
 interface ClientFormProps {
+  // Passaremos o form controller como prop
+  form: any; 
   onSubmit: (data: ClientFormData) => void;
-  isLoading: boolean;
-  defaultValues?: Partial<ClientFormData>;
 }
 
-export function ClientForm({ onSubmit, isLoading, defaultValues }: ClientFormProps) {
-  const form = useForm<ClientFormData>({
-    resolver: zodResolver(formSchema),
-    // ================== A CORREÇÃO DEFINITIVA ESTÁ AQUI ==================
-    // Garantimos que todos os campos tenham um valor inicial controlado (string vazia).
-    // O `defaultValues` da props (para edição) é mesclado depois.
-    defaultValues: {
-      name: defaultValues?.name || '',
-      address: defaultValues?.address || '',
-      neighborhood: defaultValues?.neighborhood || '',
-      phone: defaultValues?.phone || '',
-      // Para números, também iniciamos com string vazia. O `z.coerce.number()` cuidará da conversão.
-      poolVolume: defaultValues?.poolVolume || '',
-      serviceValue: defaultValues?.serviceValue || '',
-      visitDay: defaultValues?.visitDay || '',
-    },
-    // =====================================================================
-  });
-
+export function ClientForm({ form, onSubmit }: ClientFormProps) {
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        {/* O JSX do formulário não precisa de alterações, pois o erro estava na lógica de inicialização */}
+      {/* 1. Adicionamos um ID e usamos o handleSubmit aqui */}
+      <form id="client-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        {/* O JSX do formulário, mas SEM O BOTÃO no final */}
         <FormField
           control={form.control}
           name="name"
@@ -133,7 +116,6 @@ export function ClientForm({ onSubmit, isLoading, defaultValues }: ClientFormPro
               <FormItem>
                 <FormLabel>Volume da Piscina (m³)</FormLabel>
                 <FormControl>
-                  {/* Passamos `field.value || ''` para garantir que o valor nunca seja null/undefined */}
                   <Input type="number" placeholder="30" {...field} value={field.value || ''} />
                 </FormControl>
                 <FormMessage />
@@ -179,9 +161,7 @@ export function ClientForm({ onSubmit, isLoading, defaultValues }: ClientFormPro
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? 'Salvando...' : 'Salvar Cliente'}
-        </Button>
+        {/* O BOTÃO FOI REMOVIDO DAQUI */}
       </form>
     </Form>
   );

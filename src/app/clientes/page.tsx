@@ -13,6 +13,11 @@ import {
 } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
+import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { toast } from "sonner";
 
 import { Button } from '@/components/ui/button';
 import {
@@ -26,6 +31,8 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -45,28 +52,56 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-
-import { ClientForm, ClientFormData } from '@/components/ClientForm';
+import { ClientForm } from '@/components/ClientForm';
 import { MoreHorizontal } from 'lucide-react';
-import { toast } from "sonner";
 
-// Definindo o tipo de Cliente com o ID
-interface Client extends ClientFormData {
-  id: string;
-}
+// Centralizamos o Schema e os Tipos aqui na página que controla o formulário
+const formSchema = z.object({
+  name: z.string().min(2, { message: 'Nome deve ter no mínimo 2 caracteres.' }),
+  address: z.string().min(5, { message: 'Endereço muito curto.' }),
+  neighborhood: z.string().min(2, { message: 'Bairro/Condomínio muito curto.' }),
+  phone: z.string().optional(),
+  poolVolume: z.coerce.number().min(0, { message: 'Volume não pode ser negativo.' }),
+  serviceValue: z.coerce.number().min(0, { message: 'Valor não pode ser negativo.' }),
+  visitDay: z.enum(['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'], {
+    errorMap: () => ({ message: "Por favor, selecione um dia da visita." }),
+  }),
+});
+
+export type ClientFormData = z.infer<typeof formSchema>;
+interface Client extends ClientFormData { id: string; }
 
 export default function ClientesPage() {
   const [user] = useAuthState(auth);
+  const router = useRouter();
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Estados para controlar os modais
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [deletingClientId, setDeletingClientId] = useState<string | null>(null);
 
-  // Efeito para buscar os clientes do Firestore em tempo real
+  const form = useForm<ClientFormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: '', address: '', neighborhood: '', phone: '',
+      poolVolume: '', serviceValue: '', visitDay: '',
+    },
+  });
+
+  useEffect(() => {
+    if (isFormOpen) {
+      form.reset(
+        editingClient
+          ? editingClient
+          : {
+              name: '', address: '', neighborhood: '', phone: '',
+              poolVolume: '', serviceValue: '', visitDay: '',
+            }
+      );
+    }
+  }, [isFormOpen, editingClient, form]);
+
   useEffect(() => {
     if (user) {
       const q = query(collection(db, 'clients'), where('userId', '==', user.uid));
@@ -82,17 +117,18 @@ export default function ClientesPage() {
   }, [user]);
 
   const handleFormSubmit = async (data: ClientFormData) => {
-    if (!user) return;
+    if (!user) {
+      toast.error("Você precisa estar logado para salvar um cliente.");
+      return;
+    };
     setIsLoading(true);
 
     try {
       if (editingClient) {
-        // Atualizar cliente existente
         const clientDoc = doc(db, 'clients', editingClient.id);
         await updateDoc(clientDoc, { ...data });
         toast.success("Cliente atualizado com sucesso!");
       } else {
-        // Adicionar novo cliente
         await addDoc(collection(db, 'clients'), {
           ...data,
           userId: user.uid,
@@ -101,7 +137,7 @@ export default function ClientesPage() {
       }
       closeForm();
     } catch (error) {
-      console.error('Error saving client: ', error);
+      console.error('Erro ao salvar no Firebase:', error);
       toast.error("Não foi possível salvar o cliente.");
     } finally {
       setIsLoading(false);
@@ -120,7 +156,10 @@ export default function ClientesPage() {
     }
   };
 
-  // Funções para abrir e fechar os modais
+  const handleRowClick = (clientId: string) => {
+    router.push(`/clientes/${clientId}`);
+  };
+
   const openFormToEdit = (client: Client) => {
     setEditingClient(client);
     setIsFormOpen(true);
@@ -165,23 +204,37 @@ export default function ClientesPage() {
           </TableHeader>
           <TableBody>
             {clients.map((client) => (
-              <TableRow key={client.id}>
+              <TableRow
+                key={client.id}
+                onClick={() => handleRowClick(client.id)}
+                className="cursor-pointer hover:bg-gray-100"
+              >
                 <TableCell className="font-medium">{client.name}</TableCell>
                 <TableCell>{`${client.address}, ${client.neighborhood}`}</TableCell>
                 <TableCell>{client.visitDay}</TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
+                      <Button
+                        variant="ghost"
+                        className="h-8 w-8 p-0"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <span className="sr-only">Abrir menu</span>
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => openFormToEdit(client)}>
+                      <DropdownMenuItem onClick={(e) => {
+                        e.stopPropagation();
+                        openFormToEdit(client);
+                      }}>
                         Editar
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => openAlert(client.id)}>
+                      <DropdownMenuItem onClick={(e) => {
+                        e.stopPropagation();
+                        openAlert(client.id);
+                      }}>
                         Excluir
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -193,21 +246,30 @@ export default function ClientesPage() {
         </Table>
       </div>
 
-      {/* Modal de Adicionar/Editar Cliente */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>{editingClient ? 'Editar Cliente' : 'Adicionar Novo Cliente'}</DialogTitle>
+            <DialogDescription>
+              Preencha ou edite as informações do cliente abaixo. Clique em salvar quando terminar.
+            </DialogDescription>
           </DialogHeader>
           <ClientForm
+            form={form}
             onSubmit={handleFormSubmit}
-            isLoading={isLoading}
-            defaultValues={editingClient || {}}
           />
+          <DialogFooter>
+            <Button
+              type="submit"
+              form="client-form"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Salvando...' : 'Salvar Cliente'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
       
-      {/* Alerta de Confirmação de Exclusão */}
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
