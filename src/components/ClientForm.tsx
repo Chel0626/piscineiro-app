@@ -17,11 +17,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { IMaskInput } from 'react-imask';
-import { UseFormReturn } from 'react-hook-form'; // Importar o tipo
-import { ClientFormData } from '@/app/dashboard/clientes/page'; // Importar o tipo da página
+import { UseFormReturn } from 'react-hook-form';
+import { ClientFormData } from '@/lib/validators/clientSchema';
 
 interface ClientFormProps {
-  form: UseFormReturn<ClientFormData>; // Usar a tipagem correta
+  form: UseFormReturn<ClientFormData>;
   onSubmit: (data: ClientFormData) => void;
 }
 
@@ -29,7 +29,6 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
   return (
     <Form {...form}>
       <form id="client-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        {/* O JSX do formulário continua o mesmo */}
         <FormField
           control={form.control}
           name="name"
@@ -99,7 +98,7 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
               <FormItem>
                 <FormLabel>Volume da Piscina (m³)</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="30" {...field} value={field.value || ''} />
+                  <Input type="number" placeholder="30" {...field} value={field.value === undefined ? '' : field.value} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -112,7 +111,7 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
               <FormItem>
                 <FormLabel>Valor (R$)</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="250" {...field} value={field.value || ''} />
+                   <Input type="number" placeholder="250" {...field} value={field.value === undefined ? '' : field.value} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -125,7 +124,7 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Dia da Visita</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value || ''}>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione um dia" />

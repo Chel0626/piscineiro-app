@@ -1,22 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import {
-  collection,
-  deleteDoc,
-  doc,
-  onSnapshot,
-  query,
-  updateDoc,
-  where,
-} from 'firebase/firestore';
+import { collection, deleteDoc, doc, onSnapshot, query, updateDoc, where } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { toast } from "sonner";
+
+// 1. Importar o schema e o tipo da nossa fonte central
+import { clientFormSchema, ClientFormData } from '@/lib/validators/clientSchema';
 
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -26,17 +20,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { ClientForm } from '@/components/ClientForm';
 import { MoreHorizontal } from 'lucide-react';
 
-const formSchema = z.object({
-  name: z.string().min(2, { message: 'Nome deve ter no mínimo 2 caracteres.' }),
-  address: z.string().min(5, { message: 'Endereço muito curto.' }),
-  neighborhood: z.string().min(2, { message: 'Bairro/Condomínio muito curto.' }),
-  phone: z.string().optional(),
-  poolVolume: z.coerce.number().min(0, { message: 'Volume não pode ser negativo.' }),
-  serviceValue: z.coerce.number().min(0, { message: 'Valor não pode ser negativo.' }),
-  visitDay: z.string().min(1, { message: "Por favor, selecione um dia da visita." }),
-});
+// O schema não é mais definido aqui
 
-export type ClientFormData = z.infer<typeof formSchema>;
 interface Client extends ClientFormData { id: string; }
 
 export default function ClientesPage() {
@@ -49,25 +34,22 @@ export default function ClientesPage() {
     const [editingClient, setEditingClient] = useState<Client | null>(null);
     const [deletingClientId, setDeletingClientId] = useState<string | null>(null);
     
+    // 2. O useForm agora funciona sem erros de tipo
     const form = useForm<ClientFormData>({
-        resolver: zodResolver(formSchema),
-        // ====================== A CORREÇÃO ESTÁ AQUI ======================
-        defaultValues: { 
-            name: '', 
-            address: '', 
-            neighborhood: '', 
-            phone: '', 
-            // Usar 'undefined' para campos numéricos vazios é o correto para o React Hook Form
-            poolVolume: undefined, 
-            serviceValue: undefined, 
-            visitDay: '' 
+        resolver: zodResolver(clientFormSchema),
+        defaultValues: {
+            name: '',
+            address: '',
+            neighborhood: '',
+            phone: '',
+            poolVolume: undefined,
+            serviceValue: undefined,
+            visitDay: '',
         },
-        // ================================================================
     });
 
     useEffect(() => {
         if (isFormOpen) {
-            // Ao resetar, preenchemos com os dados de edição ou com os valores padrão limpos
             form.reset(editingClient ? editingClient : { 
                 name: '', address: '', neighborhood: '', phone: '', 
                 poolVolume: undefined, serviceValue: undefined, visitDay: '' 
@@ -125,6 +107,7 @@ export default function ClientesPage() {
         }
     };
     
+    // ... O resto do componente continua exatamente o mesmo ...
     const handleDelete = async () => {
         if (!deletingClientId) return;
         try {
