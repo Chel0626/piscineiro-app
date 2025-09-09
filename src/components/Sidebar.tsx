@@ -1,31 +1,26 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { Home, Users, Route } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
-// ================== CORREÇÃO APLICADA AQUI ==================
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
   { href: '/dashboard/clientes', label: 'Clientes', icon: Users },
   { href: '/dashboard/roteiros', label: 'Roteiros', icon: Route },
 ];
-// ==========================================================
 
 export function Sidebar() {
   const pathname = usePathname();
-  const router = useRouter();
 
   const handleLogout = async () => {
     await signOut(auth);
-    // Nós refatoramos a autenticação, então vamos simplificar o logout também
-    // Apenas deslogar e recarregar a página é o mais robusto.
-    // O middleware vai cuidar do redirecionamento.
-    window.location.href = '/login';
+    await fetch('/api/logout', { method: 'POST' });
+    window.location.href = '/login'; // Forçar recarregamento
   };
 
   return (
