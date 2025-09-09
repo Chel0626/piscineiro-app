@@ -48,14 +48,30 @@ export default function ClientesPage() {
     const [isAlertOpen, setIsAlertOpen] = useState(false);
     const [editingClient, setEditingClient] = useState<Client | null>(null);
     const [deletingClientId, setDeletingClientId] = useState<string | null>(null);
+    
     const form = useForm<ClientFormData>({
         resolver: zodResolver(formSchema),
-        defaultValues: { name: '', address: '', neighborhood: '', phone: '', poolVolume: '', serviceValue: '', visitDay: '' },
+        // ====================== A CORREÇÃO ESTÁ AQUI ======================
+        defaultValues: { 
+            name: '', 
+            address: '', 
+            neighborhood: '', 
+            phone: '', 
+            // Usar 'undefined' para campos numéricos vazios é o correto para o React Hook Form
+            poolVolume: undefined, 
+            serviceValue: undefined, 
+            visitDay: '' 
+        },
+        // ================================================================
     });
 
     useEffect(() => {
         if (isFormOpen) {
-            form.reset(editingClient ? editingClient : { name: '', address: '', neighborhood: '', phone: '', poolVolume: '', serviceValue: '', visitDay: '' });
+            // Ao resetar, preenchemos com os dados de edição ou com os valores padrão limpos
+            form.reset(editingClient ? editingClient : { 
+                name: '', address: '', neighborhood: '', phone: '', 
+                poolVolume: undefined, serviceValue: undefined, visitDay: '' 
+            });
         }
     }, [isFormOpen, editingClient, form]);
 
