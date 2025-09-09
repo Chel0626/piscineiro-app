@@ -160,4 +160,4 @@ export default function ClienteDetailPage() {
               <CardTitle>Registrar Nova Visita</CardTitle>
             </CardHeader>
             <CardContent>
-              <VisitForm onSubmit={handleVisitSubmit} isLoading={isSubmitting} /
+              <VisitForm onSubmit={handleVisitSubmit} isLoading={isSubmitting} />
