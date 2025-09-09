@@ -26,7 +26,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { ClientForm } from '@/components/ClientForm';
 import { MoreHorizontal } from 'lucide-react';
 
-// ====================== A CORREÇÃO ESTÁ AQUI ======================
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Nome deve ter no mínimo 2 caracteres.' }),
   address: z.string().min(5, { message: 'Endereço muito curto.' }),
@@ -34,10 +33,8 @@ const formSchema = z.object({
   phone: z.string().optional(),
   poolVolume: z.coerce.number().min(0, { message: 'Volume não pode ser negativo.' }),
   serviceValue: z.coerce.number().min(0, { message: 'Valor não pode ser negativo.' }),
-  // A forma mais simples e robusta de validar um select
-  visitDay: z.string({ required_error: "Por favor, selecione um dia da visita." }).min(1, { message: "Por favor, selecione um dia da visita." }),
+  visitDay: z.string().min(1, { message: "Por favor, selecione um dia da visita." }),
 });
-// ================================================================
 
 export type ClientFormData = z.infer<typeof formSchema>;
 interface Client extends ClientFormData { id: string; }
@@ -112,7 +109,6 @@ export default function ClientesPage() {
         }
     };
     
-    // ... (O resto do componente, funções e JSX, continua o mesmo)
     const handleDelete = async () => {
         if (!deletingClientId) return;
         try {
