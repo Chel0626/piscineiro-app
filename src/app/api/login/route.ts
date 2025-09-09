@@ -22,6 +22,8 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
+    // Apenas logamos o erro no servidor, sem a variável 'error' não usada
+    console.error('Erro na API de login:', error);
     return NextResponse.json({ message: 'Erro interno do servidor.' }, { status: 500 });
   }
 }

@@ -1,5 +1,5 @@
 'use client';
-// ... (imports)
+
 import { useEffect, useState } from 'react';
 import {
   collection,
@@ -17,54 +17,27 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from "sonner";
+
 import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { ClientForm } from '@/components/ClientForm';
 import { MoreHorizontal } from 'lucide-react';
 
-
+// ====================== A CORREÇÃO ESTÁ AQUI ======================
 const formSchema = z.object({
-    name: z.string().min(2, { message: 'Nome deve ter no mínimo 2 caracteres.' }),
-    address: z.string().min(5, { message: 'Endereço muito curto.' }),
-    neighborhood: z.string().min(2, { message: 'Bairro/Condomínio muito curto.' }),
-    phone: z.string().optional(),
-    poolVolume: z.coerce.number().min(0, { message: 'Volume não pode ser negativo.' }),
-    serviceValue: z.coerce.number().min(0, { message: 'Valor não pode ser negativo.' }),
-    visitDay: z.enum(['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'], {
-        errorMap: () => ({ message: "Por favor, selecione um dia da visita." }),
-    }),
+  name: z.string().min(2, { message: 'Nome deve ter no mínimo 2 caracteres.' }),
+  address: z.string().min(5, { message: 'Endereço muito curto.' }),
+  neighborhood: z.string().min(2, { message: 'Bairro/Condomínio muito curto.' }),
+  phone: z.string().optional(),
+  poolVolume: z.coerce.number().min(0, { message: 'Volume não pode ser negativo.' }),
+  serviceValue: z.coerce.number().min(0, { message: 'Valor não pode ser negativo.' }),
+  // A forma mais simples e robusta de validar um select
+  visitDay: z.string({ required_error: "Por favor, selecione um dia da visita." }).min(1, { message: "Por favor, selecione um dia da visita." }),
 });
+// ================================================================
 
 export type ClientFormData = z.infer<typeof formSchema>;
 interface Client extends ClientFormData { id: string; }
@@ -111,11 +84,14 @@ export default function ClientesPage() {
                 await updateDoc(clientDoc, { ...data });
                 toast.success("Cliente atualizado com sucesso!");
             } else {
+                const currentUser = auth.currentUser;
+                if (!currentUser) { throw new Error("Usuário não está autenticado no cliente."); }
+                const idToken = await currentUser.getIdToken();
+
                 const response = await fetch('/api/clients/create', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
                     body: JSON.stringify(data),
-                    credentials: 'include',
                 });
                 if (!response.ok) {
                     const errorData = await response.json();
@@ -124,7 +100,7 @@ export default function ClientesPage() {
                 toast.success("Cliente adicionado com sucesso!");
             }
             closeForm();
-        } catch (error) { // Corrigido
+        } catch (error) {
             console.error('Erro ao salvar cliente:', error);
             if (error instanceof Error) {
                 toast.error(error.message);
@@ -135,7 +111,8 @@ export default function ClientesPage() {
             setIsSubmitting(false);
         }
     };
-    // ... (JSX e outras funções)
+    
+    // ... (O resto do componente, funções e JSX, continua o mesmo)
     const handleDelete = async () => {
         if (!deletingClientId) return;
         try {
