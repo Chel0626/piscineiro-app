@@ -1,9 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { AuthProvider } from '@/components/AuthProvider';
-import { AppLayout } from '@/components/AppLayout'; // Importe o novo componente
-import { Toaster } from "@/components/ui/sonner"
+import { Toaster } from "@/components/ui/sonner";
+import { AppLayout } from '@/components/AppLayout';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -20,9 +19,8 @@ export default function RootLayout({
   return (
     <html lang="pt-br">
       <body className={inter.className}>
-        <AuthProvider>
-          <AppLayout>{children}</AppLayout>
-        </AuthProvider>
+        {/* Não precisamos mais do AuthProvider aqui, o AppLayout e o middleware cuidam de tudo */}
+        <AppLayout>{children}</AppLayout>
         <Toaster richColors />
       </body>
     </html>

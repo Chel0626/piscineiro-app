@@ -6,14 +6,7 @@ import Link from 'next/link';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
@@ -30,8 +23,22 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      router.push('/'); // Redireciona para o dashboard após o login
+      // 1. Faz o login no Firebase
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // 2. Pega o token de ID do usuário
+      const idToken = await user.getIdToken();
+
+      // 3. Envia o token para a nossa API para criar o cookie
+      await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: idToken }),
+      });
+
+      // 4. Redireciona para o dashboard. O middleware agora verá o cookie.
+      router.push('/dashboard');
     } catch (error: any) {
       console.error(error);
       setError('Falha ao fazer login. Verifique seu e-mail e senha.');
@@ -45,32 +52,17 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-2xl">Login</CardTitle>
-          <CardDescription>
-            Entre com seu e-mail e senha para acessar o painel.
-          </CardDescription>
+          <CardDescription>Entre com seu e-mail e senha para acessar o painel.</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="email">E-mail</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="m@example.com"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
+              <Input id="email" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="password">Senha</Label>
-              <Input
-                id="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
           </CardContent>
@@ -80,9 +72,7 @@ export default function LoginPage() {
             </Button>
             <p className="mt-4 text-center text-sm text-gray-600">
               Não tem uma conta?{' '}
-              <Link href="/signup" className="underline">
-                Cadastre-se
-              </Link>
+              <Link href="/signup" className="underline">Cadastre-se</Link>
             </p>
           </CardFooter>
         </form>

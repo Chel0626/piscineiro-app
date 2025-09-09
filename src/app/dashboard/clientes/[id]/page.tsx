@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useState } from 'react';
 import {
   doc,
@@ -46,7 +48,6 @@ export default function ClienteDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Efeito para buscar os dados do cliente
   useEffect(() => {
     if (clientId) {
       const fetchClientData = async () => {
@@ -65,7 +66,6 @@ export default function ClienteDetailPage() {
     }
   }, [clientId]);
 
-  // Efeito para buscar o histórico de visitas em tempo real
   useEffect(() => {
     if (clientId) {
       const visitsCollectionRef = collection(db, 'clients', clientId, 'visits');
@@ -111,7 +111,7 @@ export default function ClienteDetailPage() {
   return (
     <div>
       <div className="mb-6 flex items-center gap-4">
-        <Link href="/clientes" className="p-2 rounded-md hover:bg-gray-200">
+        <Link href="/dashboard/clientes" className="p-2 rounded-md hover:bg-gray-200">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <h1 className="text-3xl font-bold">{client.name}</h1>
@@ -123,13 +123,10 @@ export default function ClienteDetailPage() {
           <TabsTrigger value="history">Histórico de Visitas</TabsTrigger>
           <TabsTrigger value="products">Produtos Necessários</TabsTrigger>
         </TabsList>
-
-        {/* Aba 1: Dados Cadastrais (sem alterações) */}
+        
         <TabsContent value="data">
           <Card>
-            <CardHeader>
-              <CardTitle>Informações do Cliente</CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle>Informações do Cliente</CardTitle></CardHeader>
             <CardContent className="space-y-4">
                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -157,56 +154,10 @@ export default function ClienteDetailPage() {
           </Card>
         </TabsContent>
 
-        {/* Aba 2: Histórico de Visitas (CONTEÚDO NOVO) */}
         <TabsContent value="history">
           <Card>
             <CardHeader>
               <CardTitle>Registrar Nova Visita</CardTitle>
             </CardHeader>
             <CardContent>
-              <VisitForm onSubmit={handleVisitSubmit} isLoading={isSubmitting} />
-              
-              <Separator className="my-8" />
-
-              <h3 className="text-xl font-semibold mb-4">Visitas Anteriores</h3>
-              <div className="space-y-4">
-                {visits.length > 0 ? (
-                  visits.map((visit) => (
-                    <div key={visit.id} className="p-4 border rounded-md">
-                      <p className="font-semibold text-md mb-2">
-                        {visit.timestamp?.toDate().toLocaleDateString('pt-BR', {
-                          year: 'numeric', month: 'long', day: 'numeric',
-                        })}
-                      </p>
-                      <div className="flex gap-6 text-sm">
-                        <span><strong>pH:</strong> {visit.ph}</span>
-                        <span><strong>Cloro:</strong> {visit.cloro} ppm</span>
-                        <span><strong>Alcalinidade:</strong> {visit.alcalinidade} ppm</span>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-center text-gray-500 py-4">
-                    Nenhum registro de visita encontrado.
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Aba 3: Produtos Necessários (Placeholder) */}
-        <TabsContent value="products">
-          <Card>
-            <CardHeader>
-              <CardTitle>Produtos Necessários</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Em breve: Sistema de solicitação de produtos.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-}
+              <VisitForm onSubmit={handleVisitSubmit} isLoading={isSubmitting} /

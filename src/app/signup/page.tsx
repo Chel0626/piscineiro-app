@@ -32,7 +32,7 @@ export default function SignupPage() {
 
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-      router.push('/'); // Redireciona para o dashboard após o cadastro
+      router.push('/dashboard'); // Redireciona para o dashboard após o cadastro
     } catch (error: any) {
       console.error(error);
       if (error.code === 'auth/email-already-in-use') {

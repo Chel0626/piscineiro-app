@@ -1,27 +1,31 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Home, Users, Route } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
-import { getAuth, signOut } from 'firebase/auth';
-import { useRouter } from 'next/navigation';
+import { signOut } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
+// ================== CORREÇÃO APLICADA AQUI ==================
 const navItems = [
-  { href: '/', label: 'Dashboard', icon: Home },
-  { href: '/clientes', label: 'Clientes', icon: Users },
-  { href: '/roteiros', label: 'Roteiros', icon: Route },
+  { href: '/dashboard', label: 'Dashboard', icon: Home },
+  { href: '/dashboard/clientes', label: 'Clientes', icon: Users },
+  { href: '/dashboard/roteiros', label: 'Roteiros', icon: Route },
 ];
+// ==========================================================
 
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
 
   const handleLogout = async () => {
-    const auth = getAuth();
     await signOut(auth);
-    // A lógica no AuthProvider vai cuidar de limpar o cookie e redirecionar
+    // Nós refatoramos a autenticação, então vamos simplificar o logout também
+    // Apenas deslogar e recarregar a página é o mais robusto.
+    // O middleware vai cuidar do redirecionamento.
+    window.location.href = '/login';
   };
 
   return (
@@ -36,9 +40,7 @@ export function Sidebar() {
             href={item.href}
             className={cn(
               'flex items-center px-4 py-2 mt-2 text-gray-300 rounded-lg hover:bg-gray-700 hover:text-white',
-              {
-                'bg-gray-700 text-white': pathname === item.href,
-              }
+              { 'bg-gray-700 text-white': pathname === item.href, }
             )}
           >
             <item.icon className="h-5 w-5" />
@@ -47,11 +49,7 @@ export function Sidebar() {
         ))}
       </nav>
       <div className="p-4 border-t border-gray-700">
-        <Button
-          onClick={handleLogout}
-          variant="destructive"
-          className="w-full"
-        >
+        <Button onClick={handleLogout} variant="destructive" className="w-full">
           Sair
         </Button>
       </div>
