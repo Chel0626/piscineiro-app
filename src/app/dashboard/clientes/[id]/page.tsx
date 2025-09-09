@@ -42,7 +42,7 @@ interface Visit extends VisitFormData {
 export default function ClienteDetailPage() {
   const params = useParams();
   const clientId = params.id as string;
-  
+
   const [client, setClient] = useState<ClientData | null>(null);
   const [visits, setVisits] = useState<Visit[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -78,7 +78,7 @@ export default function ClienteDetailPage() {
         });
         setVisits(visitsData);
       });
-      
+
       return () => unsubscribe();
     }
   }, [clientId]);
@@ -123,12 +123,14 @@ export default function ClienteDetailPage() {
           <TabsTrigger value="history">Histórico de Visitas</TabsTrigger>
           <TabsTrigger value="products">Produtos Necessários</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="data">
           <Card>
-            <CardHeader><CardTitle>Informações do Cliente</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle>Informações do Cliente</CardTitle>
+            </CardHeader>
             <CardContent className="space-y-4">
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm font-medium text-gray-500">Endereço</p>
                   <p>{`${client.address}, ${client.neighborhood}`}</p>
@@ -161,3 +163,13 @@ export default function ClienteDetailPage() {
             </CardHeader>
             <CardContent>
               <VisitForm onSubmit={handleVisitSubmit} isLoading={isSubmitting} />
+            </CardContent>
+            {/* O restante do código, como a exibição do histórico de visitas, deve ser adicionado aqui, conforme a lógica da aplicação. */}
+          </Card>
+        </TabsContent>
+        {/* Adicionar a TabsContent para "Produtos Necessários" aqui */}
+      </Tabs>
+      {/* Fechar a div do retorno */}
+    </div>
+  );
+}
