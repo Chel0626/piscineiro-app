@@ -1,5 +1,5 @@
 'use client';
-
+// ... (imports)
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -21,33 +21,25 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
-
     try {
-      // 1. Faz o login no Firebase
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-
-      // 2. Pega o token de ID do usuário
       const idToken = await user.getIdToken();
-
-      // 3. Envia o token para a nossa API para criar o cookie
       await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: idToken }),
       });
-
-      // 4. Redireciona para o dashboard. O middleware agora verá o cookie.
       router.push('/dashboard');
-    } catch (error: any) {
-      console.error(error);
+    } catch (err) { // Corrigido
+      console.error(err);
       setError('Falha ao fazer login. Verifique seu e-mail e senha.');
     } finally {
       setIsLoading(false);
     }
   };
-
-  return (
+  // ... (JSX)
+    return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100">
       <Card className="w-full max-w-sm">
         <CardHeader>

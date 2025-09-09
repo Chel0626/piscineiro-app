@@ -1,8 +1,5 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
 import {
   Form,
   FormControl,
@@ -20,33 +17,19 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { IMaskInput } from 'react-imask';
-
-const formSchema = z.object({
-  name: z.string().min(2, { message: 'Nome deve ter no mínimo 2 caracteres.' }),
-  address: z.string().min(5, { message: 'Endereço muito curto.' }),
-  neighborhood: z.string().min(2, { message: 'Bairro/Condomínio muito curto.' }),
-  phone: z.string().optional(),
-  poolVolume: z.coerce.number().min(0, { message: 'Volume não pode ser negativo.' }),
-  serviceValue: z.coerce.number().min(0, { message: 'Valor não pode ser negativo.' }),
-  visitDay: z.enum(['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'], {
-    errorMap: () => ({ message: "Por favor, selecione um dia da visita." }),
-  }),
-});
-
-export type ClientFormData = z.infer<typeof formSchema>;
+import { UseFormReturn } from 'react-hook-form'; // Importar o tipo
+import { ClientFormData } from '@/app/dashboard/clientes/page'; // Importar o tipo da página
 
 interface ClientFormProps {
-  // Passaremos o form controller como prop
-  form: any; 
+  form: UseFormReturn<ClientFormData>; // Usar a tipagem correta
   onSubmit: (data: ClientFormData) => void;
 }
 
 export function ClientForm({ form, onSubmit }: ClientFormProps) {
   return (
     <Form {...form}>
-      {/* 1. Adicionamos um ID e usamos o handleSubmit aqui */}
       <form id="client-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        {/* O JSX do formulário, mas SEM O BOTÃO no final */}
+        {/* O JSX do formulário continua o mesmo */}
         <FormField
           control={form.control}
           name="name"
@@ -161,7 +144,6 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
             </FormItem>
           )}
         />
-        {/* O BOTÃO FOI REMOVIDO DAQUI */}
       </form>
     </Form>
   );

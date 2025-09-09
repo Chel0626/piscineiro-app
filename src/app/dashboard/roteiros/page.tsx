@@ -15,32 +15,17 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { MapPin } from 'lucide-react';
+import { ClientFormData } from '../clientes/page'; // Importar o tipo
 
-// Reutilizamos a definição de tipo dos nossos clientes
-// Em um projeto maior, isso ficaria em um arquivo types/index.ts
-interface Client {
+interface Client extends ClientFormData { // Usar o tipo importado
   id: string;
-  name: string;
-  address: string;
-  neighborhood: string;
-  visitDay: string;
-  // ...outros campos que não precisamos exibir aqui
 }
 
-// Estrutura para agrupar os clientes por dia
 interface GroupedClients {
   [day: string]: Client[];
 }
 
-// Ordem correta dos dias da semana para exibição
-const daysOfWeek = [
-  'Segunda-feira',
-  'Terça-feira',
-  'Quarta-feira',
-  'Quinta-feira',
-  'Sexta-feira',
-  'Sábado',
-];
+const daysOfWeek = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
 
 export default function RoteirosPage() {
   const [user] = useAuthState(auth);
@@ -54,10 +39,9 @@ export default function RoteirosPage() {
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const clientsData: Client[] = [];
         querySnapshot.forEach((doc) => {
-          clientsData.push({ id: doc.id, ...(doc.data() as any) });
+          clientsData.push({ id: doc.id, ...(doc.data() as ClientFormData) });
         });
 
-        // Agrupa os clientes por dia da visita
         const grouped = clientsData.reduce((acc, client) => {
           const day = client.visitDay;
           if (!acc[day]) {
@@ -70,8 +54,6 @@ export default function RoteirosPage() {
         setGroupedClients(grouped);
         setIsLoading(false);
       });
-
-      // Limpa o listener quando o componente é desmontado
       return () => unsubscribe();
     } else {
       setIsLoading(false);
@@ -85,8 +67,8 @@ export default function RoteirosPage() {
   if (isLoading) {
     return <div>Carregando roteiros...</div>;
   }
-
-  return (
+  // ... (JSX)
+    return (
     <div>
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Roteiros da Semana</h1>
