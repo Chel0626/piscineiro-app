@@ -22,7 +22,6 @@ import { ClientFormInput } from '@/lib/validators/clientSchema';
 
 interface ClientFormProps {
   form: UseFormReturn<ClientFormInput>; 
-  // O onSubmit agora passa os dados brutos do formulário para a página.
   onSubmit: (data: ClientFormInput) => void;
 }
 

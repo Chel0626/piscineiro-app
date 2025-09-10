@@ -7,6 +7,7 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { toast } from "sonner";
+import { z } from 'zod'; // Import z para usar no catch
 
 import { clientFormSchema, ClientFormData, ClientFormInput } from '@/lib/validators/clientSchema';
 
@@ -20,12 +21,13 @@ import { MoreHorizontal } from 'lucide-react';
 
 interface Client extends ClientFormData { id: string; }
 
+// Este tipo representa o estado do formulário, onde números podem ser strings.
 const defaultFormValues: ClientFormInput = {
     name: '',
     address: '',
     neighborhood: '',
     phone: '',
-    poolVolume: '',
+    poolVolume: '', 
     serviceValue: '',
     visitDay: '',
 };
@@ -40,8 +42,7 @@ export default function ClientesPage() {
     const [editingClient, setEditingClient] = useState<Client | null>(null);
     const [deletingClientId, setDeletingClientId] = useState<string | null>(null);
     
-    // CORREÇÃO ARQUITETURAL: Zod é removido da inicialização do formulário.
-    // O formulário agora lida apenas com o tipo de entrada (ClientFormInput).
+    // CORREÇÃO FINAL: O resolver é removido. O formulário não sabe mais sobre Zod.
     const form = useForm<ClientFormInput>({
         defaultValues: defaultFormValues,
     });
@@ -74,11 +75,11 @@ export default function ClientesPage() {
         }
     }, [user]);
 
-    // O onSubmit agora recebe o tipo de ENTRADA (ClientFormInput).
+    // A função de submit agora recebe os dados "crus" do formulário (ClientFormInput).
     const handleFormSubmit = async (data: ClientFormInput) => {
         setIsSubmitting(true);
         try {
-            // CORREÇÃO ARQUITETURAL: Validação manual e explícita no momento do envio.
+            // A validação Zod acontece aqui, manualmente, dentro de um try/catch.
             const validatedData = clientFormSchema.parse(data);
 
             if (editingClient) {
@@ -104,8 +105,8 @@ export default function ClientesPage() {
             closeForm();
         } catch (error) {
             console.error('Erro de validação ou de salvamento:', error);
-            // Mostra erros de validação do Zod para o usuário.
             if (error instanceof z.ZodError) {
+                // Se o erro for do Zod, mostramos a primeira mensagem de erro.
                 toast.error(error.errors[0].message);
             } else if (error instanceof Error) {
                 toast.error(error.message);

@@ -1,6 +1,5 @@
 import * as z from 'zod';
 
-// 1. O Schema (A "Lei")
 export const clientFormSchema = z.object({
   name: z.string().min(2, { message: 'Nome deve ter no mínimo 2 caracteres.' }),
   address: z.string().min(5, { message: 'Endereço muito curto.' }),
@@ -11,10 +10,8 @@ export const clientFormSchema = z.object({
   visitDay: z.string().min(1, { message: "Por favor, selecione um dia da visita." }),
 });
 
-// 2. O Tipo de Saída (Dados Válidos)
 export type ClientFormData = z.infer<typeof clientFormSchema>;
 
-// 3. O Tipo de Entrada (A "Variável de Conflito")
 export type ClientFormInput = {
   name: string;
   address: string;
