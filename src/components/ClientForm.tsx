@@ -98,14 +98,8 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
               <FormItem>
                 <FormLabel>Volume da Piscina (m³)</FormLabel>
                 <FormControl>
-                   {/* CORREÇÃO: Mostra string vazia se o valor for 0, e converte de volta para número no onChange */}
-                  <Input 
-                    type="number" 
-                    placeholder="30" 
-                    {...field} 
-                    value={field.value === 0 ? '' : field.value} 
-                    onChange={e => field.onChange(Number(e.target.value))} 
-                  />
+                  {/* SIMPLIFICADO: A lógica complexa foi removida. Zod cuida de tudo. */}
+                  <Input type="number" placeholder="30" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -118,14 +112,8 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
               <FormItem>
                 <FormLabel>Valor (R$)</FormLabel>
                 <FormControl>
-                   {/* CORREÇÃO: Mostra string vazia se o valor for 0, e converte de volta para número no onChange */}
-                   <Input 
-                    type="number" 
-                    placeholder="250" 
-                    {...field} 
-                    value={field.value === 0 ? '' : field.value} 
-                    onChange={e => field.onChange(Number(e.target.value))} 
-                   />
+                   {/* SIMPLIFICADO: A lógica complexa foi removida. Zod cuida de tudo. */}
+                   <Input type="number" placeholder="250" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -142,7 +130,8 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione um dia" />
-                  </SelectTrigger>
+                  </T
+rig_ger>
                 </FormControl>
                 <SelectContent>
                   <SelectItem value="Segunda-feira">Segunda-feira</SelectItem>

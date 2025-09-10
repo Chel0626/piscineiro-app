@@ -21,14 +21,14 @@ import { MoreHorizontal } from 'lucide-react';
 
 interface Client extends ClientFormData { id: string; }
 
-// CORREÇÃO: Valores padrão que correspondem 100% ao schema para evitar erro de tipo.
-const defaultFormValues: ClientFormData = {
+// Com o novo schema, podemos voltar a usar undefined para campos "vazios".
+const defaultFormValues: Partial<ClientFormData> = {
     name: '',
     address: '',
     neighborhood: '',
     phone: '',
-    poolVolume: 0, // Zod espera um número, não undefined.
-    serviceValue: 0, // Zod espera um número, não undefined.
+    poolVolume: undefined,
+    serviceValue: undefined,
     visitDay: '',
 };
 
@@ -42,7 +42,6 @@ export default function ClientesPage() {
     const [editingClient, setEditingClient] = useState<Client | null>(null);
     const [deletingClientId, setDeletingClientId] = useState<string | null>(null);
     
-    // CORREÇÃO: O useForm agora é inicializado com valores que correspondem ao schema.
     const form = useForm<ClientFormData>({
         resolver: zodResolver(clientFormSchema),
         defaultValues: defaultFormValues,
@@ -154,7 +153,7 @@ export default function ClientesPage() {
             <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
                 <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
-                        <DialogTitle>{editingClient ? 'Editar Cliente' : 'Adicionar Cliente'}</DialogTitle>
+                        <DialogTitle>{editingClient ? 'Editar Cliente' : 'Adicionar Novo Cliente'}</DialogTitle>
                         <DialogDescription>Preencha ou edite as informações do cliente abaixo. Clique em salvar quando terminar.</DialogDescription>
                     </DialogHeader>
                     <ClientForm form={form} onSubmit={handleFormSubmit} />
