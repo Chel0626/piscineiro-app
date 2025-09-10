@@ -98,7 +98,14 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
               <FormItem>
                 <FormLabel>Volume da Piscina (m³)</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="30" {...field} value={field.value === undefined ? '' : field.value} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} />
+                   {/* CORREÇÃO: Trata o valor para o input e garante que o onChange envie um número */}
+                  <Input 
+                    type="number" 
+                    placeholder="30" 
+                    {...field} 
+                    value={field.value === 0 ? '' : field.value} 
+                    onChange={e => field.onChange(Number(e.target.value))} 
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -111,7 +118,14 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
               <FormItem>
                 <FormLabel>Valor (R$)</FormLabel>
                 <FormControl>
-                   <Input type="number" placeholder="250" {...field} value={field.value === undefined ? '' : field.value} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} />
+                   {/* CORREÇÃO: Trata o valor para o input e garante que o onChange envie um número */}
+                   <Input 
+                    type="number" 
+                    placeholder="250" 
+                    {...field} 
+                    value={field.value === 0 ? '' : field.value} 
+                    onChange={e => field.onChange(Number(e.target.value))} 
+                   />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -124,7 +138,7 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Dia da Visita</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione um dia" />
