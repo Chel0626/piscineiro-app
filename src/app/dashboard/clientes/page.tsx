@@ -8,10 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from "sonner";
-
-// 1. Importar o schema e o tipo da nossa fonte central
 import { clientFormSchema, ClientFormData } from '@/lib/validators/clientSchema';
-
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -19,8 +16,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { ClientForm } from '@/components/ClientForm';
 import { MoreHorizontal } from 'lucide-react';
-
-// O schema não é mais definido aqui
 
 interface Client extends ClientFormData { id: string; }
 
@@ -34,26 +29,30 @@ export default function ClientesPage() {
     const [editingClient, setEditingClient] = useState<Client | null>(null);
     const [deletingClientId, setDeletingClientId] = useState<string | null>(null);
     
-    // 2. O useForm agora funciona sem erros de tipo
     const form = useForm<ClientFormData>({
         resolver: zodResolver(clientFormSchema),
-        defaultValues: {
-            name: '',
-            address: '',
-            neighborhood: '',
-            phone: '',
-            poolVolume: undefined,
-            serviceValue: undefined,
-            visitDay: '',
-        },
+        // REMOVEMOS os defaultValues daqui para evitar o conflito de tipos no build
     });
 
+    // Esta é a mudança crucial. Usamos useEffect para popular o formulário
+    // depois que ele foi inicializado, o que evita o erro de tipo.
     useEffect(() => {
         if (isFormOpen) {
-            form.reset(editingClient ? editingClient : { 
-                name: '', address: '', neighborhood: '', phone: '', 
-                poolVolume: undefined, serviceValue: undefined, visitDay: '' 
-            });
+            if (editingClient) {
+                // Se estamos editando, preenchemos com os dados do cliente
+                form.reset(editingClient);
+            } else {
+                // Se estamos criando, preenchemos com os valores padrão limpos e com os tipos corretos
+                form.reset({
+                    name: '',
+                    address: '',
+                    neighborhood: '',
+                    phone: '',
+                    poolVolume: 0,
+                    serviceValue: 0,
+                    visitDay: '',
+                });
+            }
         }
     }, [isFormOpen, editingClient, form]);
 
@@ -107,7 +106,6 @@ export default function ClientesPage() {
         }
     };
     
-    // ... O resto do componente continua exatamente o mesmo ...
     const handleDelete = async () => {
         if (!deletingClientId) return;
         try {

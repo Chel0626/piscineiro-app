@@ -5,19 +5,13 @@ import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { toast } from 'sonner';
-
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin } from 'lucide-react';
-import { ClientFormData } from '../clientes/page'; // Importar o tipo
+// CORREÇÃO APLICADA AQUI
+import { ClientFormData } from '@/lib/validators/clientSchema';
 
-interface Client extends ClientFormData { // Usar o tipo importado
+interface Client extends ClientFormData {
   id: string;
 }
 
@@ -44,9 +38,7 @@ export default function RoteirosPage() {
 
         const grouped = clientsData.reduce((acc, client) => {
           const day = client.visitDay;
-          if (!acc[day]) {
-            acc[day] = [];
-          }
+          if (!acc[day]) { acc[day] = []; }
           acc[day].push(client);
           return acc;
         }, {} as GroupedClients);
@@ -67,16 +59,12 @@ export default function RoteirosPage() {
   if (isLoading) {
     return <div>Carregando roteiros...</div>;
   }
-  // ... (JSX)
     return (
     <div>
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Roteiros da Semana</h1>
-        <p className="text-muted-foreground">
-          Veja seus clientes organizados por dia de visita.
-        </p>
+        <p className="text-muted-foreground">Veja seus clientes organizados por dia de visita.</p>
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {daysOfWeek.map((day) => {
           const clientsForDay = groupedClients[day] || [];
@@ -84,9 +72,7 @@ export default function RoteirosPage() {
             <Card key={day}>
               <CardHeader>
                 <CardTitle>{day}</CardTitle>
-                <CardDescription>
-                  {clientsForDay.length} cliente(s) agendado(s)
-                </CardDescription>
+                <CardDescription>{clientsForDay.length} cliente(s) agendado(s)</CardDescription>
               </CardHeader>
               <CardContent>
                 {clientsForDay.length > 0 ? (
@@ -97,21 +83,15 @@ export default function RoteirosPage() {
                           <MapPin className="h-5 w-5 mt-1 text-gray-500 flex-shrink-0" />
                           <div>
                             <p className="font-semibold">{client.name}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {`${client.address}, ${client.neighborhood}`}
-                            </p>
+                            <p className="text-sm text-muted-foreground">{`${client.address}, ${client.neighborhood}`}</p>
                           </div>
                         </li>
                       ))}
                     </ul>
-                    <Button className="w-full" onClick={handleOptimizeRoute}>
-                      Otimizar Rota
-                    </Button>
+                    <Button className="w-full" onClick={handleOptimizeRoute}>Otimizar Rota</Button>
                   </div>
                 ) : (
-                  <p className="text-sm text-center text-gray-500 py-4">
-                    Nenhum cliente agendado para este dia.
-                  </p>
+                  <p className="text-sm text-center text-gray-500 py-4">Nenhum cliente agendado para este dia.</p>
                 )}
               </CardContent>
             </Card>
