@@ -21,14 +21,14 @@ import { MoreHorizontal } from 'lucide-react';
 
 interface Client extends ClientFormData { id: string; }
 
-// Valores padrão que correspondem 100% ao schema
+// CORREÇÃO: Valores padrão que correspondem 100% ao schema para evitar erro de tipo.
 const defaultFormValues: ClientFormData = {
     name: '',
     address: '',
     neighborhood: '',
     phone: '',
-    poolVolume: 0, // CORREÇÃO: Usar um número válido
-    serviceValue: 0, // CORREÇÃO: Usar um número válido
+    poolVolume: 0, // Zod espera um número, não undefined.
+    serviceValue: 0, // Zod espera um número, não undefined.
     visitDay: '',
 };
 
@@ -42,14 +42,14 @@ export default function ClientesPage() {
     const [editingClient, setEditingClient] = useState<Client | null>(null);
     const [deletingClientId, setDeletingClientId] = useState<string | null>(null);
     
+    // CORREÇÃO: O useForm agora é inicializado com valores que correspondem ao schema.
     const form = useForm<ClientFormData>({
         resolver: zodResolver(clientFormSchema),
-        defaultValues: defaultFormValues, // CORREÇÃO: Usando os valores padrão corretos
+        defaultValues: defaultFormValues,
     });
 
     useEffect(() => {
         if (isFormOpen) {
-            // Ao abrir o formulário, reseta com os valores do cliente ou com os padrões
             form.reset(editingClient ? editingClient : defaultFormValues);
         }
     }, [isFormOpen, editingClient, form]);
@@ -154,7 +154,7 @@ export default function ClientesPage() {
             <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
                 <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
-                        <DialogTitle>{editingClient ? 'Editar Cliente' : 'Adicionar Novo Cliente'}</DialogTitle>
+                        <DialogTitle>{editingClient ? 'Editar Cliente' : 'Adicionar Cliente'}</DialogTitle>
                         <DialogDescription>Preencha ou edite as informações do cliente abaixo. Clique em salvar quando terminar.</DialogDescription>
                     </DialogHeader>
                     <ClientForm form={form} onSubmit={handleFormSubmit} />

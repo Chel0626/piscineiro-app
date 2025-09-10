@@ -98,7 +98,7 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
               <FormItem>
                 <FormLabel>Volume da Piscina (m³)</FormLabel>
                 <FormControl>
-                   {/* CORREÇÃO: Trata o valor para o input e garante que o onChange envie um número */}
+                   {/* CORREÇÃO: Mostra string vazia se o valor for 0, e converte de volta para número no onChange */}
                   <Input 
                     type="number" 
                     placeholder="30" 
@@ -118,7 +118,7 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
               <FormItem>
                 <FormLabel>Valor (R$)</FormLabel>
                 <FormControl>
-                   {/* CORREÇÃO: Trata o valor para o input e garante que o onChange envie um número */}
+                   {/* CORREÇÃO: Mostra string vazia se o valor for 0, e converte de volta para número no onChange */}
                    <Input 
                     type="number" 
                     placeholder="250" 
