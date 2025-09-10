@@ -1,9 +1,15 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import admin from 'firebase-admin';
 
-const serviceAccount = JSON.parse(
-  process.env.FIREBASE_SERVICE_ACCOUNT_KEY as string
-);
+// Garante que a chave de serviço seja lida como uma string
+const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+
+if (!serviceAccountString) {
+  // Lança um erro claro se a variável de ambiente não estiver configurada
+  throw new Error('A variável de ambiente FIREBASE_SERVICE_ACCOUNT_KEY não está definida.');
+}
+
+const serviceAccount = JSON.parse(serviceAccountString);
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -39,12 +45,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, clientId: docRef.id }, { status: 201 });
   } catch (error) {
     console.error('Erro na API /api/clients/create:', error);
-    if (error instanceof Error && 'code' in error) { // Corrigido
-        const firebaseError = error as { code: string; message: string };
-        if (firebaseError.code === 'auth/id-token-expired') {
-            return NextResponse.json({ error: 'Não autorizado: Token expirado.' }, { status: 401 });
-        }
+    
+    // Tratamento de erro mais específico e seguro para Firebase Admin SDK
+    const firebaseError = error as { code?: string; message?: string };
+    if (firebaseError.code === 'auth/id-token-expired') {
+        return NextResponse.json({ error: 'Não autorizado: Token expirado.' }, { status: 401 });
     }
+    
     return NextResponse.json({ error: 'Erro interno do servidor.' }, { status: 500 });
   }
 }
