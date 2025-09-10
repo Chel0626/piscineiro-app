@@ -9,7 +9,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from "sonner";
 
-import { clientFormSchema, ClientFormData } from '@/lib/validators/clientSchema';
+// Importamos os dois tipos e o schema
+import { clientFormSchema, ClientFormData, ClientFormInput } from '@/lib/validators/clientSchema';
 
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -21,14 +22,14 @@ import { MoreHorizontal } from 'lucide-react';
 
 interface Client extends ClientFormData { id: string; }
 
-// Com o schema corrigido, podemos usar 'undefined' para indicar um campo vazio.
-const defaultFormValues: Partial<ClientFormData> = {
+// Os valores padrão agora correspondem ao tipo de ENTRADA do formulário (ClientFormInput)
+const defaultFormValues: ClientFormInput = {
     name: '',
     address: '',
     neighborhood: '',
     phone: '',
-    poolVolume: undefined,
-    serviceValue: undefined,
+    poolVolume: '', // Um input numérico vazio tem o valor de string vazia.
+    serviceValue: '', // Agora isso é explícito e correto.
     visitDay: '',
 };
 
@@ -42,15 +43,24 @@ export default function ClientesPage() {
     const [editingClient, setEditingClient] = useState<Client | null>(null);
     const [deletingClientId, setDeletingClientId] = useState<string | null>(null);
     
-    // O erro de tipo não ocorrerá mais aqui.
-    const form = useForm<ClientFormData>({
-        resolver: zodResolver(clientFormSchema),
+    // O useForm é tipado com o tipo de ENTRADA.
+    const form = useForm<ClientFormInput>({
+        resolver: zodResolver(clientFormSchema), // O resolver ainda usa o schema FINAL.
         defaultValues: defaultFormValues,
     });
 
     useEffect(() => {
         if (isFormOpen) {
-            form.reset(editingClient ? editingClient : defaultFormValues);
+            // Ao editar, os valores numéricos são convertidos para string para o formulário.
+            if (editingClient) {
+                form.reset({
+                    ...editingClient,
+                    poolVolume: String(editingClient.poolVolume),
+                    serviceValue: String(editingClient.serviceValue),
+                });
+            } else {
+                form.reset(defaultFormValues);
+            }
         }
     }, [isFormOpen, editingClient, form]);
 
@@ -68,6 +78,8 @@ export default function ClientesPage() {
         }
     }, [user]);
 
+    // A função de submit recebe os dados JÁ VALIDADOS E CONVERTIDOS pelo Zod.
+    // Note que o tipo aqui é ClientFormData (o tipo de SAÍDA).
     const handleFormSubmit = async (data: ClientFormData) => {
         setIsSubmitting(true);
         try {
@@ -157,7 +169,7 @@ export default function ClientesPage() {
                         <DialogTitle>{editingClient ? 'Editar Cliente' : 'Adicionar Novo Cliente'}</DialogTitle>
                         <DialogDescription>Preencha ou edite as informações do cliente abaixo. Clique em salvar quando terminar.</DialogDescription>
                     </DialogHeader>
-                    <ClientForm form={form} onSubmit={handleFormSubmit} />
+                    <ClientForm form={form} onSubmit={form.handleSubmit(handleFormSubmit)} />
                     <DialogFooter>
                         <Button type="submit" form="client-form" disabled={isSubmitting || authLoading}>{isSubmitting ? 'Salvando...' : 'Salvar Cliente'}</Button>
                     </DialogFooter>
