@@ -6,6 +6,7 @@ const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 
 if (!serviceAccountString) {
   // Lança um erro claro se a variável de ambiente não estiver configurada
+  // Isso fará o build falhar se a variável não estiver na Vercel, o que é o desejado.
   throw new Error('A variável de ambiente FIREBASE_SERVICE_ACCOUNT_KEY não está definida.');
 }
 
@@ -46,7 +47,6 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Erro na API /api/clients/create:', error);
     
-    // Tratamento de erro mais específico e seguro para Firebase Admin SDK
     const firebaseError = error as { code?: string; message?: string };
     if (firebaseError.code === 'auth/id-token-expired') {
         return NextResponse.json({ error: 'Não autorizado: Token expirado.' }, { status: 401 });
