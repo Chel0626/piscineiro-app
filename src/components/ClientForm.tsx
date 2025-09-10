@@ -98,7 +98,6 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
               <FormItem>
                 <FormLabel>Volume da Piscina (m³)</FormLabel>
                 <FormControl>
-                  {/* SIMPLIFICADO: A lógica complexa foi removida. Zod cuida de tudo. */}
                   <Input type="number" placeholder="30" {...field} />
                 </FormControl>
                 <FormMessage />
@@ -112,7 +111,6 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
               <FormItem>
                 <FormLabel>Valor (R$)</FormLabel>
                 <FormControl>
-                   {/* SIMPLIFICADO: A lógica complexa foi removida. Zod cuida de tudo. */}
                    <Input type="number" placeholder="250" {...field} />
                 </FormControl>
                 <FormMessage />
@@ -130,8 +128,7 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione um dia" />
-                  </T
-rig_ger>
+                  </SelectTrigger>
                 </FormControl>
                 <SelectContent>
                   <SelectItem value="Segunda-feira">Segunda-feira</SelectItem>
