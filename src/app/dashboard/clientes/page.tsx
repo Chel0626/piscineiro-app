@@ -21,7 +21,7 @@ import { MoreHorizontal } from 'lucide-react';
 
 interface Client extends ClientFormData { id: string; }
 
-// Com o novo schema, podemos voltar a usar undefined para campos "vazios".
+// Com o schema corrigido, podemos usar 'undefined' para indicar um campo vazio.
 const defaultFormValues: Partial<ClientFormData> = {
     name: '',
     address: '',
@@ -42,6 +42,7 @@ export default function ClientesPage() {
     const [editingClient, setEditingClient] = useState<Client | null>(null);
     const [deletingClientId, setDeletingClientId] = useState<string | null>(null);
     
+    // O erro de tipo não ocorrerá mais aqui.
     const form = useForm<ClientFormData>({
         resolver: zodResolver(clientFormSchema),
         defaultValues: defaultFormValues,
