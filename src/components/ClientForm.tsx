@@ -18,20 +18,16 @@ import {
 } from '@/components/ui/select';
 import { IMaskInput } from 'react-imask';
 import { UseFormReturn } from 'react-hook-form';
-// Importamos os dois tipos
-import { ClientFormData, ClientFormInput } from '@/lib/validators/clientSchema';
+import { ClientFormInput } from '@/lib/validators/clientSchema';
 
 interface ClientFormProps {
-  // O form agora é do tipo de ENTRADA
   form: UseFormReturn<ClientFormInput>; 
-  // O onSubmit ainda espera os dados FINAIS e VALIDADOS
-  onSubmit: (data: ClientFormData) => void;
+  // O onSubmit agora passa os dados brutos do formulário para a página.
+  onSubmit: (data: ClientFormInput) => void;
 }
 
 export function ClientForm({ form, onSubmit }: ClientFormProps) {
   return (
-    // O handleSubmit do react-hook-form com zodResolver vai lidar com a conversão
-    // de ClientFormInput para ClientFormData antes de chamar nosso onSubmit
     <Form {...form}>
       <form id="client-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
@@ -103,7 +99,6 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
               <FormItem>
                 <FormLabel>Volume da Piscina (m³)</FormLabel>
                 <FormControl>
-                  {/* O input agora lida com string e número sem problemas. */}
                   <Input type="number" placeholder="30" {...field} />
                 </FormControl>
                 <FormMessage />

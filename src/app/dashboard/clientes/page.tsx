@@ -6,10 +6,8 @@ import { db, auth } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from "sonner";
 
-// Importamos os dois tipos e o schema
 import { clientFormSchema, ClientFormData, ClientFormInput } from '@/lib/validators/clientSchema';
 
 import { Button } from '@/components/ui/button';
@@ -22,14 +20,13 @@ import { MoreHorizontal } from 'lucide-react';
 
 interface Client extends ClientFormData { id: string; }
 
-// Os valores padrão agora correspondem ao tipo de ENTRADA do formulário (ClientFormInput)
 const defaultFormValues: ClientFormInput = {
     name: '',
     address: '',
     neighborhood: '',
     phone: '',
-    poolVolume: '', // Um input numérico vazio tem o valor de string vazia.
-    serviceValue: '', // Agora isso é explícito e correto.
+    poolVolume: '',
+    serviceValue: '',
     visitDay: '',
 };
 
@@ -43,15 +40,14 @@ export default function ClientesPage() {
     const [editingClient, setEditingClient] = useState<Client | null>(null);
     const [deletingClientId, setDeletingClientId] = useState<string | null>(null);
     
-    // O useForm é tipado com o tipo de ENTRADA.
+    // CORREÇÃO ARQUITETURAL: Zod é removido da inicialização do formulário.
+    // O formulário agora lida apenas com o tipo de entrada (ClientFormInput).
     const form = useForm<ClientFormInput>({
-        resolver: zodResolver(clientFormSchema), // O resolver ainda usa o schema FINAL.
         defaultValues: defaultFormValues,
     });
 
     useEffect(() => {
         if (isFormOpen) {
-            // Ao editar, os valores numéricos são convertidos para string para o formulário.
             if (editingClient) {
                 form.reset({
                     ...editingClient,
@@ -78,14 +74,16 @@ export default function ClientesPage() {
         }
     }, [user]);
 
-    // A função de submit recebe os dados JÁ VALIDADOS E CONVERTIDOS pelo Zod.
-    // Note que o tipo aqui é ClientFormData (o tipo de SAÍDA).
-    const handleFormSubmit = async (data: ClientFormData) => {
+    // O onSubmit agora recebe o tipo de ENTRADA (ClientFormInput).
+    const handleFormSubmit = async (data: ClientFormInput) => {
         setIsSubmitting(true);
         try {
+            // CORREÇÃO ARQUITETURAL: Validação manual e explícita no momento do envio.
+            const validatedData = clientFormSchema.parse(data);
+
             if (editingClient) {
                 const clientDoc = doc(db, 'clients', editingClient.id);
-                await updateDoc(clientDoc, { ...data });
+                await updateDoc(clientDoc, { ...validatedData });
                 toast.success("Cliente atualizado com sucesso!");
             } else {
                 const currentUser = auth.currentUser;
@@ -95,7 +93,7 @@ export default function ClientesPage() {
                 const response = await fetch('/api/clients/create', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
-                    body: JSON.stringify(data),
+                    body: JSON.stringify(validatedData),
                 });
                 if (!response.ok) {
                     const errorData = await response.json();
@@ -105,8 +103,11 @@ export default function ClientesPage() {
             }
             closeForm();
         } catch (error) {
-            console.error('Erro ao salvar cliente:', error);
-            if (error instanceof Error) {
+            console.error('Erro de validação ou de salvamento:', error);
+            // Mostra erros de validação do Zod para o usuário.
+            if (error instanceof z.ZodError) {
+                toast.error(error.errors[0].message);
+            } else if (error instanceof Error) {
                 toast.error(error.message);
             } else {
                 toast.error("Não foi possível salvar o cliente.");
@@ -169,7 +170,7 @@ export default function ClientesPage() {
                         <DialogTitle>{editingClient ? 'Editar Cliente' : 'Adicionar Novo Cliente'}</DialogTitle>
                         <DialogDescription>Preencha ou edite as informações do cliente abaixo. Clique em salvar quando terminar.</DialogDescription>
                     </DialogHeader>
-                    <ClientForm form={form} onSubmit={form.handleSubmit(handleFormSubmit)} />
+                    <ClientForm form={form} onSubmit={handleFormSubmit} />
                     <DialogFooter>
                         <Button type="submit" form="client-form" disabled={isSubmitting || authLoading}>{isSubmitting ? 'Salvando...' : 'Salvar Cliente'}</Button>
                     </DialogFooter>
