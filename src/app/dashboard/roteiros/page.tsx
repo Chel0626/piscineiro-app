@@ -1,11 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
-import { useAuthState } from 'react-firebase-hooks/auth';
 import { toast } from 'sonner';
-
+import { useRoutines } from '@/hooks/useRoutines'; // CORREÇÃO: Usando o novo hook
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -15,50 +11,12 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { MapPin } from 'lucide-react';
-import { ClientFormData } from '@/lib/validators/clientSchema'; // CORREÇÃO APLICADA AQUI
-
-interface Client extends ClientFormData {
-  id: string;
-}
-
-interface GroupedClients {
-  [day: string]: Client[];
-}
 
 const daysOfWeek = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
 
 export default function RoteirosPage() {
-  const [user] = useAuthState(auth);
-  const [groupedClients, setGroupedClients] = useState<GroupedClients>({});
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    if (user) {
-      const q = query(collection(db, 'clients'), where('userId', '==', user.uid));
-      
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const clientsData: Client[] = [];
-        querySnapshot.forEach((doc) => {
-          clientsData.push({ id: doc.id, ...(doc.data() as ClientFormData) });
-        });
-
-        const grouped = clientsData.reduce((acc, client) => {
-          const day = client.visitDay;
-          if (!acc[day]) {
-            acc[day] = [];
-          }
-          acc[day].push(client);
-          return acc;
-        }, {} as GroupedClients);
-
-        setGroupedClients(grouped);
-        setIsLoading(false);
-      });
-      return () => unsubscribe();
-    } else {
-      setIsLoading(false);
-    }
-  }, [user]);
+  // CORREÇÃO: Lógica de busca de dados foi movida para o hook
+  const { groupedClients, isLoading } = useRoutines();
 
   const handleOptimizeRoute = () => {
     toast.info('Funcionalidade de otimização de rota em desenvolvimento!');
