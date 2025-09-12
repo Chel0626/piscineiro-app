@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { collection, deleteDoc, doc, onSnapshot, query, updateDoc, where } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
-// CORREÇÃO: Adicionamos 'UseFormReturn' à lista de importações.
+// A LINHA MAIS IMPORTANTE: Garantir que esta importação existe.
 import { useForm, UseFormReturn } from 'react-hook-form';
 import { toast } from "sonner";
 import { z } from 'zod';
@@ -124,7 +124,7 @@ export function useClients(): UseClientsReturn {
         try {
             await deleteDoc(doc(db, 'clients', deletingClientId));
             toast.success("Cliente excluído com sucesso!");
-        } catch (err) { // Renomeado para 'err' para limpar o aviso
+        } catch (err) {
             console.error("Erro ao deletar cliente:", err);
             toast.error("Não foi possível excluir o cliente.");
         } finally {
