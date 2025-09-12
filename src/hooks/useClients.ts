@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { collection, deleteDoc, doc, onSnapshot, query, updateDoc, where } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
-// A LINHA MAIS IMPORTANTE: Garantir que esta importação existe.
-import { useForm, UseFormReturn } from 'react-hook-form';
+// ESTA É A LINHA QUE PRECISA ESTAR NO SEU ARQUIVO PARA O BUILD FUNCIONAR
+import { useForm, UseFormReturn } from 'react-hook-form'; 
 import { toast } from "sonner";
 import { z } from 'zod';
 
