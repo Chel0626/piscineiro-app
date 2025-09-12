@@ -1,16 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { collection, deleteDoc, doc, onSnapshot, query, updateDoc, where } from 'firebase/firestore';
-import { db, auth } from '@/lib/firebase';
-import { useAuthState } from 'react-firebase-hooks/auth';
 import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { toast } from "sonner";
-import { z } from 'zod'; // Import z para usar no catch
-
-import { clientFormSchema, ClientFormData, ClientFormInput } from '@/lib/validators/clientSchema';
-
+import { useClients } from '@/hooks/useClients';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -19,132 +10,48 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { ClientForm } from '@/components/ClientForm';
 import { MoreHorizontal } from 'lucide-react';
 
-interface Client extends ClientFormData { id: string; }
-
-// Este tipo representa o estado do formulário, onde números podem ser strings.
-const defaultFormValues: ClientFormInput = {
-    name: '',
-    address: '',
-    neighborhood: '',
-    phone: '',
-    poolVolume: '', 
-    serviceValue: '',
-    visitDay: '',
-};
-
 export default function ClientesPage() {
-    const [user, authLoading] = useAuthState(auth); 
     const router = useRouter();
-    const [clients, setClients] = useState<Client[]>([]);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isFormOpen, setIsFormOpen] = useState(false);
-    const [isAlertOpen, setIsAlertOpen] = useState(false);
-    const [editingClient, setEditingClient] = useState<Client | null>(null);
-    const [deletingClientId, setDeletingClientId] = useState<string | null>(null);
+    // Toda a lógica agora vem do nosso hook customizado.
+    const {
+        clients,
+        form,
+        handleFormSubmit,
+        handleDelete,
+        openFormToEdit,
+        openFormToCreate,
+        closeForm,
+        openAlert,
+        closeAlert,
+        isSubmitting,
+        isFormOpen,
+        isAlertOpen,
+        editingClient,
+        authLoading,
+    } = useClients();
     
-    // CORREÇÃO FINAL: O resolver é removido. O formulário não sabe mais sobre Zod.
-    const form = useForm<ClientFormInput>({
-        defaultValues: defaultFormValues,
-    });
-
-    useEffect(() => {
-        if (isFormOpen) {
-            if (editingClient) {
-                form.reset({
-                    ...editingClient,
-                    poolVolume: String(editingClient.poolVolume),
-                    serviceValue: String(editingClient.serviceValue),
-                });
-            } else {
-                form.reset(defaultFormValues);
-            }
-        }
-    }, [isFormOpen, editingClient, form]);
-
-    useEffect(() => {
-        if (user) {
-            const q = query(collection(db, 'clients'), where('userId', '==', user.uid));
-            const unsubscribe = onSnapshot(q, (querySnapshot) => {
-                const clientsData: Client[] = [];
-                querySnapshot.forEach((doc) => {
-                    clientsData.push({ id: doc.id, ...(doc.data() as ClientFormData) });
-                });
-                setClients(clientsData);
-            });
-            return () => unsubscribe();
-        }
-    }, [user]);
-
-    // A função de submit agora recebe os dados "crus" do formulário (ClientFormInput).
-    const handleFormSubmit = async (data: ClientFormInput) => {
-        setIsSubmitting(true);
-        try {
-            // A validação Zod acontece aqui, manualmente, dentro de um try/catch.
-            const validatedData = clientFormSchema.parse(data);
-
-            if (editingClient) {
-                const clientDoc = doc(db, 'clients', editingClient.id);
-                await updateDoc(clientDoc, { ...validatedData });
-                toast.success("Cliente atualizado com sucesso!");
-            } else {
-                const currentUser = auth.currentUser;
-                if (!currentUser) { throw new Error("Usuário não está autenticado no cliente."); }
-                const idToken = await currentUser.getIdToken();
-
-                const response = await fetch('/api/clients/create', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
-                    body: JSON.stringify(validatedData),
-                });
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Falha ao criar cliente.');
-                }
-                toast.success("Cliente adicionado com sucesso!");
-            }
-            closeForm();
-        } catch (error) {
-            console.error('Erro de validação ou de salvamento:', error);
-            if (error instanceof z.ZodError) {
-                // Se o erro for do Zod, mostramos a primeira mensagem de erro.
-                toast.error(error.errors[0].message);
-            } else if (error instanceof Error) {
-                toast.error(error.message);
-            } else {
-                toast.error("Não foi possível salvar o cliente.");
-            }
-        } finally {
-            setIsSubmitting(false);
-        }
+    const handleRowClick = (clientId: string) => {
+        router.push(`/dashboard/clientes/${clientId}`);
     };
-    
-    const handleDelete = async () => {
-        if (!deletingClientId) return;
-        try {
-            await deleteDoc(doc(db, 'clients', deletingClientId));
-            toast.success("Cliente excluído com sucesso!");
-            closeAlert();
-        } catch (error) {
-            console.error('Error deleting client: ', error);
-            toast.error("Não foi possível excluir o cliente.");
-        }
-    };
-    const handleRowClick = (clientId: string) => { router.push(`/dashboard/clientes/${clientId}`); };
-    const openFormToEdit = (client: Client) => { setEditingClient(client); setIsFormOpen(true); };
-    const openFormToCreate = () => { setEditingClient(null); setIsFormOpen(true); };
-    const closeForm = () => { setEditingClient(null); setIsFormOpen(false); form.reset(defaultFormValues); };
-    const openAlert = (clientId: string) => { setDeletingClientId(clientId); setIsAlertOpen(true); };
-    const closeAlert = () => { setDeletingClientId(null); setIsAlertOpen(false); };
 
     return (
         <div>
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-3xl font-bold">Gerenciamento de Clientes</h1>
-                <Button onClick={openFormToCreate} disabled={authLoading}>{authLoading ? 'Aguarde...' : 'Adicionar Cliente'}</Button>
+                <Button onClick={openFormToCreate} disabled={authLoading}>
+                    {authLoading ? 'Aguarde...' : 'Adicionar Cliente'}
+                </Button>
             </div>
             <div className="border rounded-lg">
                 <Table>
-                    <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>Endereço</TableHead><TableHead>Dia da Visita</TableHead><TableHead className="text-right">Ações</TableHead></TableRow></TableHeader>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Nome</TableHead>
+                            <TableHead>Endereço</TableHead>
+                            <TableHead>Dia da Visita</TableHead>
+                            <TableHead className="text-right">Ações</TableHead>
+                        </TableRow>
+                    </TableHeader>
                     <TableBody>
                         {clients.map((client) => (
                             <TableRow key={client.id} onClick={() => handleRowClick(client.id)} className="cursor-pointer hover:bg-gray-100">
@@ -153,7 +60,12 @@ export default function ClientesPage() {
                                 <TableCell>{client.visitDay}</TableCell>
                                 <TableCell className="text-right">
                                     <DropdownMenu>
-                                        <DropdownMenuTrigger asChild><Button variant="ghost" className="h-8 w-8 p-0" onClick={(e) => e.stopPropagation()}><span className="sr-only">Abrir menu</span><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" className="h-8 w-8 p-0" onClick={(e) => e.stopPropagation()}>
+                                                <span className="sr-only">Abrir menu</span>
+                                                <MoreHorizontal className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
                                             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openFormToEdit(client); }}>Editar</DropdownMenuItem>
                                             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openAlert(client.id); }}>Excluir</DropdownMenuItem>
@@ -165,7 +77,7 @@ export default function ClientesPage() {
                     </TableBody>
                 </Table>
             </div>
-            <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+            <Dialog open={isFormOpen} onOpenChange={(isOpen) => !isOpen && closeForm()}>
                 <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
                         <DialogTitle>{editingClient ? 'Editar Cliente' : 'Adicionar Novo Cliente'}</DialogTitle>
@@ -173,11 +85,13 @@ export default function ClientesPage() {
                     </DialogHeader>
                     <ClientForm form={form} onSubmit={handleFormSubmit} />
                     <DialogFooter>
-                        <Button type="submit" form="client-form" disabled={isSubmitting || authLoading}>{isSubmitting ? 'Salvando...' : 'Salvar Cliente'}</Button>
+                        <Button type="submit" form="client-form" disabled={isSubmitting || authLoading}>
+                            {isSubmitting ? 'Salvando...' : 'Salvar Cliente'}
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-            <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+            <AlertDialog open={isAlertOpen} onOpenChange={(isOpen) => !isOpen && closeAlert()}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>

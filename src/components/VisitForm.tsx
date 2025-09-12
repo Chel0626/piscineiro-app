@@ -1,6 +1,6 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
+// 1. O import do zodResolver foi removido para limpar o aviso.
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 
-// Schema de validação para os parâmetros da visita
 const formSchema = z.object({
   ph: z.coerce.number().min(0, { message: 'pH inválido.' }),
   cloro: z.coerce.number().min(0, { message: 'Cloro inválido.' }),
@@ -23,24 +22,43 @@ const formSchema = z.object({
 
 export type VisitFormData = z.infer<typeof formSchema>;
 
+type VisitFormInput = {
+  ph: string | number;
+  cloro: string | number;
+  alcalinidade: string | number;
+};
+
 interface VisitFormProps {
   onSubmit: (data: VisitFormData) => void;
   isLoading: boolean;
 }
 
 export function VisitForm({ onSubmit, isLoading }: VisitFormProps) {
-  const form = useForm<VisitFormData>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<VisitFormInput>({
     defaultValues: {
-      ph: undefined,
-      cloro: undefined,
-      alcalinidade: undefined,
+      ph: '',
+      cloro: '',
+      alcalinidade: '',
     },
   });
 
-  const handleFormSubmit = (data: VisitFormData) => {
-    onSubmit(data);
-    form.reset(); // Limpa o formulário após o envio
+  const handleFormSubmit = (data: VisitFormInput) => {
+    try {
+      const validatedData = formSchema.parse(data);
+      onSubmit(validatedData);
+      form.reset();
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        // 2. CORREÇÃO: A propriedade correta é .issues, não .errors.
+        error.issues.forEach((err) => {
+          const fieldName = err.path[0] as keyof VisitFormInput;
+          form.setError(fieldName, {
+            type: 'manual',
+            message: err.message,
+          });
+        });
+      }
+    }
   };
 
   return (
