@@ -4,13 +4,13 @@ import { useEffect, useState } from 'react';
 import { collection, deleteDoc, doc, onSnapshot, query, updateDoc, where } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { useForm } from 'react-hook-form';
+// CORREÇÃO: Adicionamos 'UseFormReturn' à lista de importações.
+import { useForm, UseFormReturn } from 'react-hook-form';
 import { toast } from "sonner";
 import { z } from 'zod';
 
 import { clientFormSchema, ClientFormData, ClientFormInput } from '@/lib/validators/clientSchema';
 
-// O tipo de retorno do nosso hook para a página
 export interface UseClientsReturn {
   clients: (ClientFormData & { id: string; })[];
   form: UseFormReturn<ClientFormInput>;
@@ -47,7 +47,6 @@ export function useClients(): UseClientsReturn {
     const [editingClient, setEditingClient] = useState<(ClientFormData & { id: string; }) | null>(null);
     const [deletingClientId, setDeletingClientId] = useState<string | null>(null);
 
-    // O formulário é tipado com o tipo de ENTRADA e SEM o resolver.
     const form = useForm<ClientFormInput>({
         defaultValues: defaultFormValues,
     });
@@ -83,7 +82,6 @@ export function useClients(): UseClientsReturn {
     const handleFormSubmit = async (data: ClientFormInput) => {
         setIsSubmitting(true);
         try {
-            // Validação manual do Zod no momento do envio.
             const validatedData = clientFormSchema.parse(data);
 
             if (editingClient) {
@@ -110,7 +108,7 @@ export function useClients(): UseClientsReturn {
             closeForm();
         } catch (error) {
             if (error instanceof z.ZodError) {
-                toast.error(error.errors[0].message);
+                toast.error(error.issues[0].message);
             } else if (error instanceof Error) {
                 toast.error(error.message);
             } else {
@@ -126,7 +124,8 @@ export function useClients(): UseClientsReturn {
         try {
             await deleteDoc(doc(db, 'clients', deletingClientId));
             toast.success("Cliente excluído com sucesso!");
-        } catch (error) {
+        } catch (err) { // Renomeado para 'err' para limpar o aviso
+            console.error("Erro ao deletar cliente:", err);
             toast.error("Não foi possível excluir o cliente.");
         } finally {
             closeAlert();
