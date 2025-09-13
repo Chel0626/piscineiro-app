@@ -28,12 +28,14 @@ export interface UseClientsReturn {
   authLoading: boolean;
 }
 
-const defaultFormValues: Partial<ClientFormData> = {
+const defaultFormValues: ClientFormData = {
     name: '',
     address: '',
     neighborhood: '',
     phone: '',
     visitDay: '',
+    poolVolume: 0,
+    serviceValue: 0,
 };
 
 export function useClients(): UseClientsReturn {
@@ -70,9 +72,16 @@ export function useClients(): UseClientsReturn {
         }
     }, [user]);
 
-    const handleFormSubmit = async (data: ClientFormData) => {
+    const handleFormSubmit = async (rawData: ClientFormData) => {
         setIsSubmitting(true);
         try {
+            // Convertemos os valores numéricos para garantir que sejam numbers
+            const data: ClientFormData = {
+                ...rawData,
+                poolVolume: Number(rawData.poolVolume),
+                serviceValue: Number(rawData.serviceValue),
+            };
+
             if (editingClient) {
                 const clientDoc = doc(db, 'clients', editingClient.id);
                 await updateDoc(clientDoc, data);

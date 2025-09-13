@@ -13,7 +13,6 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '@/lib/firebase';
 import { getFunctions, httpsCallable, HttpsCallableResult } from "firebase/functions";
 import { marked } from 'marked';
-import { z } from 'zod';
 
 // Importamos o schema e o tipo do nosso arquivo.
 import { aiHelperSchema, AiHelperFormData } from '@/lib/schemas/aiHelperSchema';
@@ -35,35 +34,35 @@ export function AiHelper({ poolVolume, clientId }: AiHelperProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [iaResponse, setIaResponse] = useState<string | null>(null);
 
-  // ✅ MUDANÇA DE ESTRATÉGIA: Removemos o zodResolver da inicialização do useForm.
+  // ✅ MUDANÇA: Removemos zodResolver e fazemos validação manual
   const form = useForm<AiHelperFormData>({
     defaultValues: {
-      ph: undefined,
-      cloro: undefined,
-      alcalinidade: undefined,
+      ph: 0,
+      cloro: 0,
+      alcalinidade: 0,
       foto: undefined,
     },
   });
 
   // A função de submit agora também é responsável pela validação.
-  const onSubmit = async (data: AiHelperFormData) => {
+  const onSubmit = async (rawData: AiHelperFormData) => {
     if (!user) {
       toast.error("Você precisa estar logado para usar esta função.");
       return;
     }
 
-    // ✅ VALIDAÇÃO MANUAL:
-    // Validamos os dados usando o schema dentro de um bloco try/catch.
-    try {
-      aiHelperSchema.parse(data);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        // A propriedade correta no objeto de erro do Zod é `issues`.
-        toast.error(error.issues[0].message);
-        return;
-      }
-      // Se for outro tipo de erro, exibe uma mensagem genérica.
-      toast.error("Ocorreu um erro de validação nos dados do formulário.");
+    // ✅ VALIDAÇÃO MANUAL: Convertemos os valores para number antes da validação
+    const data = {
+      ph: Number(rawData.ph),
+      cloro: Number(rawData.cloro),
+      alcalinidade: Number(rawData.alcalinidade),
+      foto: rawData.foto,
+    };
+
+    // Validamos os dados usando o schema
+    const validationResult = aiHelperSchema.safeParse(data);
+    if (!validationResult.success) {
+      toast.error(validationResult.error.issues[0].message);
       return;
     }
 
@@ -132,7 +131,7 @@ export function AiHelper({ poolVolume, clientId }: AiHelperProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>pH</FormLabel>
-                    <FormControl><Input type="number" step="0.1" placeholder="7.2" {...field} value={field.value ?? ''} /></FormControl>
+                    <FormControl><Input type="number" step="0.1" placeholder="7.2" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -143,7 +142,7 @@ export function AiHelper({ poolVolume, clientId }: AiHelperProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Cloro (ppm)</FormLabel>
-                    <FormControl><Input type="number" step="0.1" placeholder="1.5" {...field} value={field.value ?? ''} /></FormControl>
+                    <FormControl><Input type="number" step="0.1" placeholder="1.5" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -154,7 +153,7 @@ export function AiHelper({ poolVolume, clientId }: AiHelperProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Alcalinidade (ppm)</FormLabel>
-                    <FormControl><Input type="number" step="1" placeholder="100" {...field} value={field.value ?? ''} /></FormControl>
+                    <FormControl><Input type="number" step="1" placeholder="100" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

@@ -31,7 +31,6 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
   return (
     <Form {...form}>
       <form id="client-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        {/* O restante dos campos do formulário permanece exatamente o mesmo */}
         <FormField
           control={form.control}
           name="name"
@@ -101,7 +100,13 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
               <FormItem>
                 <FormLabel>Volume da Piscina (m³)</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="30" {...field} />
+                  <Input 
+                    type="number" 
+                    placeholder="30" 
+                    {...field} 
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                    value={field.value}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -114,7 +119,13 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
               <FormItem>
                 <FormLabel>Valor (R$)</FormLabel>
                 <FormControl>
-                   <Input type="number" placeholder="250" {...field} />
+                   <Input 
+                     type="number" 
+                     placeholder="250" 
+                     {...field} 
+                     onChange={(e) => field.onChange(Number(e.target.value))}
+                     value={field.value}
+                   />
                 </FormControl>
                 <FormMessage />
               </FormItem>
