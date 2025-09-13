@@ -13,13 +13,14 @@ import { storage } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '@/lib/firebase';
+import { getFunctions, httpsCallable } from "firebase/functions";
+import { marked } from 'marked'; // Usaremos a biblioteca 'marked' para converter Markdown em HTML
 
 // Schema para validar os inputs do nosso formulário de IA
 const aiHelperSchema = z.object({
   ph: z.coerce.number().min(0, "pH inválido."),
   cloro: z.coerce.number().min(0, "Cloro inválido."),
   alcalinidade: z.coerce.number().min(0, "Alcalinidade inválida."),
-  // Valida se um arquivo foi selecionado
   foto: z.instanceof(FileList).refine(files => files?.length === 1, "A foto é obrigatória."),
 });
 
@@ -30,6 +31,9 @@ interface AiHelperProps {
   clientId: string;
 }
 
+const functions = getFunctions();
+const gerarPlanoDeAcao = httpsCallable(functions, 'gerarPlanoDeAcao');
+
 export function AiHelper({ poolVolume, clientId }: AiHelperProps) {
   const [user] = useAuthState(auth);
   const [isLoading, setIsLoading] = useState(false);
@@ -37,10 +41,12 @@ export function AiHelper({ poolVolume, clientId }: AiHelperProps) {
 
   const form = useForm<AiHelperFormData>({
     resolver: zodResolver(aiHelperSchema),
+    // CORREÇÃO: Inicializar com string vazia em vez de undefined.
+    // Isso garante que os inputs sejam "controlados" desde o início.
     defaultValues: {
-      ph: undefined,
-      cloro: undefined,
-      alcalinidade: undefined,
+      ph: '' as any,
+      cloro: '' as any,
+      alcalinidade: '' as any,
       foto: undefined,
     },
   });
@@ -55,15 +61,14 @@ export function AiHelper({ poolVolume, clientId }: AiHelperProps) {
     setIaResponse(null);
 
     try {
-      // 1. Upload da imagem para o Firebase Storage
       const file = data.foto[0];
       const storageRef = ref(storage, `diagnostics/${clientId}/${user.uid}/${new Date().toISOString()}_${file.name}`);
       const snapshot = await uploadBytes(storageRef, file);
       const imageUrl = await getDownloadURL(snapshot.ref);
 
-      // 2. Chamada para a futura Cloud Function (atualmente simulada)
-      toast.info("Simulando chamada para a IA... A integração real será o próximo passo.");
-      console.log("Dados para enviar para a Cloud Function:", {
+      toast.info("Enviando dados para o Ajudante IA...");
+      
+      const result: any = await gerarPlanoDeAcao({
         imageUrl,
         poolVolume,
         ph: data.ph,
@@ -71,33 +76,14 @@ export function AiHelper({ poolVolume, clientId }: AiHelperProps) {
         alcalinidade: data.alcalinidade,
       });
 
-      // Simulação de resposta da IA
-      const mockResponse = `
-### Plano de Ação para Piscina de ${poolVolume}m³
+      // Converte a resposta de Markdown para HTML
+      const htmlResponse = await marked.parse(result.data.plan);
+      setIaResponse(htmlResponse);
+      toast.success("Plano de ação gerado!");
 
-Com base na análise da imagem e nos parâmetros fornecidos (pH: **${data.ph}**, Cloro: **${data.cloro}**, Alcalinidade: **${data.alcalinidade}**), segue um plano de ação detalhado:
-
-1.  **Correção de Alcalinidade (Prioridade 1):**
-    * **Diagnóstico:** A alcalinidade está baixa, o que pode causar flutuações bruscas no pH.
-    * **Ação:** Adicionar **${(poolVolume * 17).toFixed(0)} gramas** de elevador de alcalinidade (bicarbonato de sódio) diretamente na piscina.
-    * **Instrução:** Deixar o filtro na posição "recircular" por 2 horas.
-
-2.  **Correção de pH (Prioridade 2):**
-    * **Diagnóstico:** O pH está ligeiramente ácido.
-    * **Ação:** Após ajustar a alcalinidade, aguardar 6 horas e medir novamente. Se ainda estiver baixo, adicionar **${(poolVolume * 5).toFixed(0)} gramas** de elevador de pH (barrilha leve).
-
-3.  **Sanitização (Cloro):**
-    * **Diagnóstico:** Nível de cloro livre está abaixo do ideal.
-    * **Ação:** Realizar uma supercloração ao final do dia. Adicionar **${(poolVolume * 14).toFixed(0)} gramas** de cloro granulado.
-    * **Instrução:** Dissolver o cloro em um balde com água da própria piscina antes de aplicar.
-
-*Este é um plano de ação simulado. A integração real com o Gemini será o próximo passo.*
-      `;
-      setIaResponse(mockResponse);
-
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao gerar plano de ação:", error);
-      toast.error("Ocorreu um erro ao processar a solicitação.");
+      toast.error(error.message || "Ocorreu um erro ao processar a solicitação.");
     } finally {
       setIsLoading(false);
     }
@@ -171,10 +157,9 @@ Com base na análise da imagem e nos parâmetros fornecidos (pH: **${data.ph}**,
         {iaResponse && (
           <div className="mt-6 border-t pt-6">
             <h4 className="font-semibold text-lg mb-2">Plano de Ação da IA:</h4>
-            {/* Usamos 'prose' do Tailwind para formatar o Markdown automaticamente */}
             <div
                 className="prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: iaResponse.replace(/\n/g, '<br />') }}
+                dangerouslySetInnerHTML={{ __html: iaResponse }}
             />
           </div>
         )}

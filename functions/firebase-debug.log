@@ -1,0 +1,89 @@
+[debug] [2025-09-13T01:31:24.913Z] ----------------------------------------------------------------------
+[debug] [2025-09-13T01:31:24.914Z] Command:       /usr/local/share/nvm/versions/node/v22.17.0/bin/node /home/codespace/nvm/current/bin/firebase emulators:start --only functions
+[debug] [2025-09-13T01:31:24.915Z] CLI Version:   14.16.0
+[debug] [2025-09-13T01:31:24.915Z] Platform:      linux
+[debug] [2025-09-13T01:31:24.915Z] Node Version:  v22.17.0
+[debug] [2025-09-13T01:31:24.915Z] Time:          Sat Sep 13 2025 01:31:24 GMT+0000 (Coordinated Universal Time)
+[debug] [2025-09-13T01:31:24.915Z] Env Overrides: GITHUB_API_URL, GITHUB_API_URL
+[debug] [2025-09-13T01:31:24.916Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-09-13T01:31:25.204Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-09-13T01:31:25.204Z] > authorizing via signed-in user (michelhm91@gmail.com)
+[info] i  emulators: Starting emulators: functions {"metadata":{"emulator":{"name":"hub"},"message":"Starting emulators: functions"}}
+[debug] [2025-09-13T01:31:25.209Z] [logging] Logging Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-09-13T01:31:25.210Z] assigned listening specs for emulators {"user":{"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}]},"metadata":{"message":"assigned listening specs for emulators"}}
+[debug] [2025-09-13T01:31:25.218Z] Emulator locator file path: /tmp/hub-piscineiro-app.json
+[debug] [2025-09-13T01:31:25.218Z] [hub] writing locator at /tmp/hub-piscineiro-app.json
+[debug] [2025-09-13T01:31:25.230Z] [functions] Functions Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-09-13T01:31:25.230Z] [eventarc] Eventarc Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-09-13T01:31:25.230Z] [tasks] Cloud Tasks Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-09-13T01:31:25.231Z] late-assigned ports for functions and eventarc emulators {"user":{"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}],"functions":[{"address":"127.0.0.1","family":"IPv4","port":5001}],"eventarc":[{"address":"127.0.0.1","family":"IPv4","port":9299}],"tasks":[{"address":"127.0.0.1","family":"IPv4","port":9499}]},"metadata":{"message":"late-assigned ports for functions and eventarc emulators"}}
+[warn] ⚠  functions: The following emulators are not running, calls to these services from the Functions emulator will affect production: apphosting, auth, firestore, database, hosting, pubsub, storage, dataconnect {"metadata":{"emulator":{"name":"functions"},"message":"The following emulators are not running, calls to these services from the Functions emulator will affect production: \u001b[1mapphosting, auth, firestore, database, hosting, pubsub, storage, dataconnect\u001b[22m"}}
+[debug] [2025-09-13T01:31:25.242Z] defaultcredentials: writing to file /home/codespace/.config/firebase/michelhm91_gmail_com_application_default_credentials.json
+[debug] [2025-09-13T01:31:25.247Z] Setting GAC to /home/codespace/.config/firebase/michelhm91_gmail_com_application_default_credentials.json {"metadata":{"emulator":{"name":"functions"},"message":"Setting GAC to /home/codespace/.config/firebase/michelhm91_gmail_com_application_default_credentials.json"}}
+[debug] [2025-09-13T01:31:25.247Z] Checked if tokens are valid: true, expires at: 1757728403846
+[debug] [2025-09-13T01:31:25.248Z] Checked if tokens are valid: true, expires at: 1757728403846
+[debug] [2025-09-13T01:31:25.248Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/piscineiro-app/adminSdkConfig [none]
+[debug] [2025-09-13T01:31:25.527Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/piscineiro-app/adminSdkConfig 200
+[debug] [2025-09-13T01:31:25.527Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/piscineiro-app/adminSdkConfig {"projectId":"piscineiro-app","storageBucket":"piscineiro-app.firebasestorage.app"}
+[info] i  functions: Watching "/workspaces/piscineiro-app/functions" for Cloud Functions... {"metadata":{"emulator":{"name":"functions"},"message":"Watching \"/workspaces/piscineiro-app/functions\" for Cloud Functions..."}}
+[debug] [2025-09-13T01:31:25.555Z] Validating nodejs source
+[debug] [2025-09-13T01:31:25.995Z] > [functions] package.json contents: {
+  "name": "functions",
+  "scripts": {
+    "lint": "eslint --ext .js,.ts .",
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "shell": "npm run build && firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "22"
+  },
+  "main": "lib/index.js",
+  "dependencies": {
+    "@google-cloud/vertexai": "^1.1.0",
+    "firebase-admin": "^13.5.0",
+    "firebase-functions": "^6.4.0"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.12.0",
+    "@typescript-eslint/parser": "^5.12.0",
+    "eslint": "^8.9.0",
+    "eslint-config-google": "^0.14.0",
+    "eslint-plugin-import": "^2.25.4",
+    "firebase-functions-test": "^3.1.0",
+    "typescript": "^4.9.0"
+  },
+  "private": true
+}
+[debug] [2025-09-13T01:31:25.996Z] Building nodejs source
+[debug] [2025-09-13T01:31:25.996Z] Failed to find version of module node: reached end of search path /workspaces/piscineiro-app/functions/node_modules
+[info] ✔  functions: Using node@22 from host. 
+[debug] [2025-09-13T01:31:26.002Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-09-13T01:31:26.005Z] Found firebase-functions binary at '/workspaces/piscineiro-app/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8964
+
+[debug] [2025-09-13T01:31:26.360Z] Got response from /__/functions.yaml {"endpoints":{"gerarPlanoDeAcao":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"callableTrigger":{},"entryPoint":"gerarPlanoDeAcao"}},"specVersion":"v1alpha1","requiredAPIs":[],"extensions":{}}
+[info] ✔  functions: Loaded functions definitions from source: gerarPlanoDeAcao. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: gerarPlanoDeAcao."}}
+[info] ✔  functions[us-central1-gerarPlanoDeAcao]: http function initialized (http://127.0.0.1:5001/piscineiro-app/us-central1/gerarPlanoDeAcao). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/piscineiro-app/us-central1/gerarPlanoDeAcao)."}}
+[debug] [2025-09-13T01:31:30.385Z] Could not find VSCode notification endpoint: FetchError: request to http://localhost:40001/vscode/notify failed, reason: . If you are not running the Firebase Data Connect VSCode extension, this is expected and not an issue.
+[info] 
+┌─────────────────────────────────────────────────────────────┐
+│ ✔  All emulators ready! It is now safe to connect your app. │
+│ i  View Emulator UI at http://127.0.0.1:4000/               │
+└─────────────────────────────────────────────────────────────┘
+
+┌───────────┬────────────────┬─────────────────────────────────┐
+│ Emulator  │ Host:Port      │ View in Emulator UI             │
+├───────────┼────────────────┼─────────────────────────────────┤
+│ Functions │ 127.0.0.1:5001 │ http://127.0.0.1:4000/functions │
+└───────────┴────────────────┴─────────────────────────────────┘
+  Emulator Hub host: 127.0.0.1 port: 4400
+  Other reserved ports: 4500
+
+Issues? Report them at https://github.com/firebase/firebase-tools/issues and attach the *-debug.log files.
+ 
