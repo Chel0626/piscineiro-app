@@ -4,18 +4,18 @@ import { useEffect, useState } from 'react';
 import { collection, deleteDoc, doc, onSnapshot, query, updateDoc, where } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { useForm, UseFormReturn } from 'react-hook-form'; 
+import { useForm, UseFormReturn } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod'; // Adicionado o zodResolver
 import { toast } from "sonner";
-import { z } from 'zod';
 
-// Agora importamos apenas um tipo, que é a fonte da verdade.
+// Importamos o schema e o tipo unificado
 import { clientFormSchema, ClientFormData } from '@/lib/validators/clientSchema';
 
 // O tipo de retorno do hook agora usa o tipo unificado.
 export interface UseClientsReturn {
   clients: (ClientFormData & { id: string; })[];
-  form: UseFormReturn<ClientFormData>; // <- Mudança aqui
-  handleFormSubmit: (data: ClientFormData) => Promise<void>; // <- Mudança aqui
+  form: UseFormReturn<ClientFormData>;
+  handleFormSubmit: (data: ClientFormData) => Promise<void>;
   handleDelete: () => Promise<void>;
   openFormToEdit: (client: ClientFormData & { id: string; }) => void;
   openFormToCreate: () => void;
@@ -29,15 +29,17 @@ export interface UseClientsReturn {
   authLoading: boolean;
 }
 
-const defaultFormValues: ClientFormData = {
+// ✅ CORREÇÃO: Usamos `undefined` para os campos numéricos, o Zod/React-Hook-Form lida com isso.
+// Removemos a necessidade do `as any`.
+const defaultFormValues: Partial<ClientFormData> = {
     name: '',
     address: '',
     neighborhood: '',
     phone: '',
-    // Valores padrão agora são numéricos ou undefined
-    poolVolume: undefined as any,
-    serviceValue: undefined as any,
     visitDay: '',
+    // Os campos numéricos podem ser 'undefined' por padrão
+    poolVolume: undefined,
+    serviceValue: undefined,
 };
 
 export function useClients(): UseClientsReturn {
@@ -75,11 +77,9 @@ export function useClients(): UseClientsReturn {
         }
     }, [user]);
 
-    // A função de submit agora recebe os dados já validados e com tipos corretos.
     const handleFormSubmit = async (data: ClientFormData) => {
         setIsSubmitting(true);
         try {
-            // A validação já foi feita pelo resolver, 'data' está seguro.
             if (editingClient) {
                 const clientDoc = doc(db, 'clients', editingClient.id);
                 await updateDoc(clientDoc, data);
@@ -109,8 +109,7 @@ export function useClients(): UseClientsReturn {
             setIsSubmitting(false);
         }
     };
-    
-    // ... o resto do hook permanece o mesmo ...
+
     const handleDelete = async () => {
         if (!deletingClientId) return;
         try {
