@@ -2,10 +2,9 @@
 
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { calculatorFormSchema, CalculatorFormData } from '@/lib/validators/calculatorSchema';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form'; // FormMessage removido
 import { Input } from '@/components/ui/input';
 
 interface ProductCalculatorProps {
@@ -22,35 +21,31 @@ export function ProductCalculator({ poolVolume }: ProductCalculatorProps) {
     },
   });
 
-  // useWatch para observar as mudanças nos campos em tempo real
   const watchedValues = useWatch({ control: form.control });
 
-  // Lógica de cálculo (regras simples conforme a documentação)
   const calcularProdutos = (data: Partial<CalculatorFormData>) => {
     const volumeLitros = poolVolume * 1000;
-    let acoes = [];
+    // CORREÇÃO: Usar 'const' pois a variável não é reatribuída.
+    const acoes = [];
 
-    // Lógica para o Cloro
     const cloroAtual = data.cloro ?? 0;
     if (cloroAtual < 1) {
-      const cloroNecessario = (volumeLitros / 1000) * 4; // 4g por m³
+      const cloroNecessario = (volumeLitros / 1000) * 4;
       acoes.push(`Adicionar ${cloroNecessario.toFixed(0)}g de cloro granulado para atingir o nível ideal (1-3 ppm).`);
     }
 
-    // Lógica para o pH
     const phAtual = data.ph ?? 7.4;
     if (phAtual > 7.6) {
-      const redutorNecessario = (volumeLitros / 1000) * 10; // 10ml por m³
+      const redutorNecessario = (volumeLitros / 1000) * 10;
       acoes.push(`Adicionar ${redutorNecessario.toFixed(0)}ml de redutor de pH para baixar o nível (ideal 7.2-7.6).`);
     } else if (phAtual < 7.2) {
-      const elevadorNecessario = (volumeLitros / 1000) * 5; // 5g por m³
+      const elevadorNecessario = (volumeLitros / 1000) * 5;
       acoes.push(`Adicionar ${elevadorNecessario.toFixed(0)}g de elevador de pH (barrilha) para aumentar o nível.`);
     }
 
-    // Lógica para a Alcalinidade
     const alcalinidadeAtual = data.alcalinidade ?? 100;
     if (alcalinidadeAtual < 80) {
-        const elevadorAlcalinidade = (volumeLitros / 1000) * 17; // 17g por m³
+        const elevadorAlcalinidade = (volumeLitros / 1000) * 17;
         acoes.push(`Adicionar ${elevadorAlcalinidade.toFixed(0)}g de elevador de alcalinidade para estabilizar o pH (ideal 80-120 ppm).`);
     }
 

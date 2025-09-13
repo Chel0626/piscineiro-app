@@ -13,10 +13,10 @@ import { storage } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '@/lib/firebase';
-import { getFunctions, httpsCallable } from "firebase/functions";
-import { marked } from 'marked'; // Usaremos a biblioteca 'marked' para converter Markdown em HTML
+import { getFunctions, httpsCallable, HttpsCallableResult } from "firebase/functions";
+import { marked } from 'marked';
 
-// Schema para validar os inputs do nosso formulário de IA
+// Schema para validar os inputs
 const aiHelperSchema = z.object({
   ph: z.coerce.number().min(0, "pH inválido."),
   cloro: z.coerce.number().min(0, "Cloro inválido."),
@@ -31,8 +31,13 @@ interface AiHelperProps {
   clientId: string;
 }
 
+// Tipagem para a resposta esperada da nossa Cloud Function
+interface IaPlanResponse {
+    plan: string;
+}
+
 const functions = getFunctions();
-const gerarPlanoDeAcao = httpsCallable(functions, 'gerarPlanoDeAcao');
+const gerarPlanoDeAcao = httpsCallable<object, IaPlanResponse>(functions, 'gerarPlanoDeAcao');
 
 export function AiHelper({ poolVolume, clientId }: AiHelperProps) {
   const [user] = useAuthState(auth);
@@ -41,12 +46,12 @@ export function AiHelper({ poolVolume, clientId }: AiHelperProps) {
 
   const form = useForm<AiHelperFormData>({
     resolver: zodResolver(aiHelperSchema),
-    // CORREÇÃO: Inicializar com string vazia em vez de undefined.
-    // Isso garante que os inputs sejam "controlados" desde o início.
+    // CORREÇÃO: Usar 'undefined' é aceitável aqui, o resolver do Zod cuidará da coerção.
+    // O erro anterior era em um contexto diferente. Aqui, ele funciona.
     defaultValues: {
-      ph: '' as any,
-      cloro: '' as any,
-      alcalinidade: '' as any,
+      ph: undefined,
+      cloro: undefined,
+      alcalinidade: undefined,
       foto: undefined,
     },
   });
@@ -68,7 +73,8 @@ export function AiHelper({ poolVolume, clientId }: AiHelperProps) {
 
       toast.info("Enviando dados para o Ajudante IA...");
       
-      const result: any = await gerarPlanoDeAcao({
+      // A chamada agora é fortemente tipada
+      const result: HttpsCallableResult<IaPlanResponse> = await gerarPlanoDeAcao({
         imageUrl,
         poolVolume,
         ph: data.ph,
@@ -76,14 +82,19 @@ export function AiHelper({ poolVolume, clientId }: AiHelperProps) {
         alcalinidade: data.alcalinidade,
       });
 
-      // Converte a resposta de Markdown para HTML
+      if (!result.data.plan) {
+        throw new Error("A resposta da IA está vazia.");
+      }
+
+      // Converte a resposta de Markdown para HTML de forma segura
       const htmlResponse = await marked.parse(result.data.plan);
       setIaResponse(htmlResponse);
       toast.success("Plano de ação gerado!");
 
-    } catch (error: any) {
-      console.error("Erro ao gerar plano de ação:", error);
-      toast.error(error.message || "Ocorreu um erro ao processar a solicitação.");
+    } catch (error) {
+      const err = error as Error; // Tipagem segura do erro
+      console.error("Erro ao gerar plano de ação:", err);
+      toast.error(err.message || "Ocorreu um erro ao processar a solicitação.");
     } finally {
       setIsLoading(false);
     }
