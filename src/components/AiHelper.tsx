@@ -7,15 +7,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from './ui/button';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { storage } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '@/lib/firebase';
 import { getFunctions, httpsCallable, HttpsCallableResult } from "firebase/functions";
 import { marked } from 'marked';
+import { z } from 'zod';
 
-// Importamos o schema e o tipo do arquivo separado
+// Importamos o schema e o tipo do nosso arquivo.
 import { aiHelperSchema, AiHelperFormData } from '@/lib/schemas/aiHelperSchema';
 
 interface AiHelperProps {
@@ -35,11 +35,8 @@ export function AiHelper({ poolVolume, clientId }: AiHelperProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [iaResponse, setIaResponse] = useState<string | null>(null);
 
-  // ✅ CORREÇÃO CRÍTICA:
-  // Inicializamos o formulário passando o schema diretamente para o resolver.
-  // Isso garante que o TypeScript saiba exatamente como validar os tipos.
+  // ✅ MUDANÇA DE ESTRATÉGIA: Removemos o zodResolver da inicialização do useForm.
   const form = useForm<AiHelperFormData>({
-    resolver: zodResolver(aiHelperSchema),
     defaultValues: {
       ph: undefined,
       cloro: undefined,
@@ -48,9 +45,25 @@ export function AiHelper({ poolVolume, clientId }: AiHelperProps) {
     },
   });
 
+  // A função de submit agora também é responsável pela validação.
   const onSubmit = async (data: AiHelperFormData) => {
     if (!user) {
       toast.error("Você precisa estar logado para usar esta função.");
+      return;
+    }
+
+    // ✅ VALIDAÇÃO MANUAL:
+    // Validamos os dados usando o schema dentro de um bloco try/catch.
+    try {
+      aiHelperSchema.parse(data);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        // A propriedade correta no objeto de erro do Zod é `issues`.
+        toast.error(error.issues[0].message);
+        return;
+      }
+      // Se for outro tipo de erro, exibe uma mensagem genérica.
+      toast.error("Ocorreu um erro de validação nos dados do formulário.");
       return;
     }
 
@@ -64,7 +77,7 @@ export function AiHelper({ poolVolume, clientId }: AiHelperProps) {
       const imageUrl = await getDownloadURL(snapshot.ref);
 
       toast.info("Enviando dados para o Ajudante IA...");
-
+      
       const result: HttpsCallableResult<IaPlanResponse> = await gerarPlanoDeAcao({
         imageUrl,
         poolVolume,

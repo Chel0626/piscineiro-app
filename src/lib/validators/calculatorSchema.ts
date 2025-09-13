@@ -1,11 +1,11 @@
 import * as z from 'zod';
 
-// Schema para os inputs do formulário da calculadora
+// CORREÇÃO: Aplicamos z.coerce.number() para forçar a conversão
+// dos valores do formulário (string) para número antes da validação.
 export const calculatorFormSchema = z.object({
   ph: z.coerce.number().optional(),
   cloro: z.coerce.number().optional(),
   alcalinidade: z.coerce.number().optional(),
 });
 
-// Tipo de dados inferido a partir do schema
 export type CalculatorFormData = z.infer<typeof calculatorFormSchema>;

@@ -1,6 +1,6 @@
 import * as z from 'zod';
 
-// Aplicando a mesma correção com z.coerce.number() e unificando os tipos.
+// Usamos z.coerce.number() para converter os valores do formulário para número antes da validação.
 export const clientFormSchema = z.object({
   name: z.string().min(2, { message: 'O nome deve ter no mínimo 2 caracteres.' }),
   address: z.string().min(5, { message: 'O endereço parece muito curto.' }),
@@ -13,5 +13,5 @@ export const clientFormSchema = z.object({
   visitDay: z.string().min(1, { message: "Por favor, selecione um dia da visita." }),
 });
 
-// A partir de agora, usamos apenas este tipo, inferido diretamente do schema.
+// Exportamos o tipo inferido para manter a consistência em todo o app.
 export type ClientFormData = z.infer<typeof clientFormSchema>;

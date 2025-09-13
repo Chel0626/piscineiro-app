@@ -8,7 +8,7 @@ import { useForm, UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from "sonner";
 
-// Importamos o schema e o nosso tipo unificado.
+// Importamos o schema e o tipo unificado do arquivo corrigido.
 import { clientFormSchema, ClientFormData } from '@/lib/validators/clientSchema';
 
 export interface UseClientsReturn {
@@ -28,7 +28,6 @@ export interface UseClientsReturn {
   authLoading: boolean;
 }
 
-// Valores padrão agora são parciais e não precisam de `as any`.
 const defaultFormValues: Partial<ClientFormData> = {
     name: '',
     address: '',

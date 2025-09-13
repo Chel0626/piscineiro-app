@@ -31,7 +31,7 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
   return (
     <Form {...form}>
       <form id="client-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        {/* ... O resto dos campos do formulário permanece exatamente o mesmo ... */}
+        {/* O restante dos campos do formulário permanece exatamente o mesmo */}
         <FormField
           control={form.control}
           name="name"
