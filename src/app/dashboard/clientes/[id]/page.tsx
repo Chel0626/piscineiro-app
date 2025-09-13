@@ -7,18 +7,19 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
-import { useClientDetails } from '@/hooks/useClientDetails'; // CORREÇÃO: Usando o novo hook
+import { useClientDetails } from '@/hooks/useClientDetails';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { VisitForm, VisitFormData } from '@/components/VisitForm';
 import { ArrowLeft } from 'lucide-react';
+import { ProductCalculator } from '@/components/ProductCalculator';
+import { AiHelper } from '@/components/AiHelper'; // 1. Importe o novo componente
 
 export default function ClienteDetailPage() {
   const params = useParams();
   const clientId = params.id as string;
   
-  // CORREÇÃO: Toda a lógica de busca de dados agora vem do hook
   const { client, visits, isLoading } = useClientDetails(clientId);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -58,11 +59,13 @@ export default function ClienteDetailPage() {
         <h1 className="text-3xl font-bold">{client.name}</h1>
       </div>
 
-      <Tabs defaultValue="data" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+      {/* 2. Ajuste o grid para 4 colunas para acomodar a nova aba */}
+      <Tabs defaultValue="history" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="data">Dados Cadastrais</TabsTrigger>
-          <TabsTrigger value="history">Histórico de Visitas</TabsTrigger>
-          <TabsTrigger value="products">Produtos Necessários</TabsTrigger>
+          <TabsTrigger value="history">Histórico e Tratamento</TabsTrigger>
+          <TabsTrigger value="products">Produtos</TabsTrigger>
+          <TabsTrigger value="ai_helper">Ajudante IA</TabsTrigger>
         </TabsList>
         
         <TabsContent value="data">
@@ -96,40 +99,44 @@ export default function ClienteDetailPage() {
         </TabsContent>
 
         <TabsContent value="history">
-          <Card>
-            <CardHeader>
-              <CardTitle>Registrar Nova Visita</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <VisitForm onSubmit={handleVisitSubmit} isLoading={isSubmitting} />
-              
-              <Separator className="my-8" />
+          <div className="space-y-8">
+            <ProductCalculator poolVolume={client.poolVolume} />
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Registrar Nova Visita</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <VisitForm onSubmit={handleVisitSubmit} isLoading={isSubmitting} />
+                
+                <Separator className="my-8" />
 
-              <h3 className="text-xl font-semibold mb-4">Visitas Anteriores</h3>
-              <div className="space-y-4">
-                {visits.length > 0 ? (
-                  visits.map((visit) => (
-                    <div key={visit.id} className="p-4 border rounded-md">
-                      <p className="font-semibold text-md mb-2">
-                        {visit.timestamp?.toDate().toLocaleDateString('pt-BR', {
-                          year: 'numeric', month: 'long', day: 'numeric',
-                        })}
-                      </p>
-                      <div className="flex gap-6 text-sm">
-                        <span><strong>pH:</strong> {visit.ph}</span>
-                        <span><strong>Cloro:</strong> {visit.cloro} ppm</span>
-                        <span><strong>Alcalinidade:</strong> {visit.alcalinidade} ppm</span>
+                <h3 className="text-xl font-semibold mb-4">Visitas Anteriores</h3>
+                <div className="space-y-4">
+                  {visits.length > 0 ? (
+                    visits.map((visit) => (
+                      <div key={visit.id} className="p-4 border rounded-md">
+                        <p className="font-semibold text-md mb-2">
+                          {visit.timestamp?.toDate().toLocaleDateString('pt-BR', {
+                            year: 'numeric', month: 'long', day: 'numeric',
+                          })}
+                        </p>
+                        <div className="flex gap-6 text-sm">
+                          <span><strong>pH:</strong> {visit.ph}</span>
+                          <span><strong>Cloro:</strong> {visit.cloro} ppm</span>
+                          <span><strong>Alcalinidade:</strong> {visit.alcalinidade} ppm</span>
+                        </div>
                       </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-center text-gray-500 py-4">
-                    Nenhum registro de visita encontrado.
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                    ))
+                  ) : (
+                    <p className="text-sm text-center text-gray-500 py-4">
+                      Nenhum registro de visita encontrado.
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="products">
@@ -142,6 +149,12 @@ export default function ClienteDetailPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        
+        {/* 3. Adicione o novo conteúdo da aba, chamando o componente AiHelper */}
+        <TabsContent value="ai_helper">
+            <AiHelper poolVolume={client.poolVolume} clientId={client.id} />
+        </TabsContent>
+
       </Tabs>
     </div>
   );
