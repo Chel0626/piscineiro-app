@@ -14,7 +14,7 @@ import { Separator } from '@/components/ui/separator';
 import { VisitForm, VisitFormData } from '@/components/VisitForm';
 import { ArrowLeft } from 'lucide-react';
 import { ProductCalculator } from '@/components/ProductCalculator';
-import { AiHelper } from '@/components/AiHelper'; // 1. Importe o novo componente
+import { AiHelper } from '@/components/AiHelper';
 
 export default function ClienteDetailPage() {
   const params = useParams();
@@ -59,14 +59,20 @@ export default function ClienteDetailPage() {
         <h1 className="text-3xl font-bold">{client.name}</h1>
       </div>
 
-      {/* 2. Ajuste o grid para 4 colunas para acomodar a nova aba */}
       <Tabs defaultValue="history" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="data">Dados Cadastrais</TabsTrigger>
-          <TabsTrigger value="history">Histórico e Tratamento</TabsTrigger>
-          <TabsTrigger value="products">Produtos</TabsTrigger>
-          <TabsTrigger value="ai_helper">Ajudante IA</TabsTrigger>
-        </TabsList>
+        {/* CORREÇÃO: 
+          - Removemos o `grid` e `grid-cols-4`.
+          - Adicionamos `relative` e `overflow-x-auto` para permitir a rolagem horizontal.
+          - `w-full` garante que o container ocupe toda a largura disponível.
+        */}
+        <div className="relative w-full overflow-x-auto">
+          <TabsList className="whitespace-nowrap">
+            <TabsTrigger value="data">Dados Cadastrais</TabsTrigger>
+            <TabsTrigger value="history">Histórico e Tratamento</TabsTrigger>
+            <TabsTrigger value="products">Produtos</TabsTrigger>
+            <TabsTrigger value="ai_helper">Ajudante IA</TabsTrigger>
+          </TabsList>
+        </div>
         
         <TabsContent value="data">
           <Card>
@@ -150,7 +156,6 @@ export default function ClienteDetailPage() {
           </Card>
         </TabsContent>
         
-        {/* 3. Adicione o novo conteúdo da aba, chamando o componente AiHelper */}
         <TabsContent value="ai_helper">
             <AiHelper poolVolume={client.poolVolume} clientId={client.id} />
         </TabsContent>
