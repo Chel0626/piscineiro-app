@@ -60,11 +60,6 @@ export default function ClienteDetailPage() {
       </div>
 
       <Tabs defaultValue="history" className="w-full">
-        {/* CORREÇÃO: 
-          - Removemos o `grid` e `grid-cols-4`.
-          - Adicionamos `relative` e `overflow-x-auto` para permitir a rolagem horizontal.
-          - `w-full` garante que o container ocupe toda a largura disponível.
-        */}
         <div className="relative w-full overflow-x-auto">
           <TabsList className="whitespace-nowrap">
             <TabsTrigger value="data">Dados Cadastrais</TabsTrigger>
@@ -157,7 +152,8 @@ export default function ClienteDetailPage() {
         </TabsContent>
         
         <TabsContent value="ai_helper">
-            <AiHelper poolVolume={client.poolVolume} clientId={client.id} />
+            {/* ✅ CORREÇÃO: Removemos a prop `clientId` que não existe mais */}
+            <AiHelper poolVolume={client.poolVolume} />
         </TabsContent>
 
       </Tabs>

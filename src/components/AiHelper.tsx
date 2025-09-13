@@ -7,8 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from './ui/button';
-import { z } from 'zod';
 import { marked } from 'marked';
+
+// Importamos o schema e o tipo do nosso arquivo.
 import { aiHelperSchema, AiHelperFormData } from '@/lib/schemas/aiHelperSchema';
 
 // Função auxiliar para converter um arquivo para base64
@@ -17,13 +18,13 @@ const fileToBase64 = (file: File): Promise<string> =>
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = () => {
-      // Remove o prefixo "data:image/jpeg;base64," para enviar apenas os dados puros
       const base64String = (reader.result as string).split(',')[1];
       resolve(base64String);
     };
     reader.onerror = (error) => reject(error);
   });
 
+// CORREÇÃO: Removemos 'clientId' pois não é mais necessário com a API Route.
 interface AiHelperProps {
   poolVolume: number;
 }
@@ -33,7 +34,6 @@ export function AiHelper({ poolVolume }: AiHelperProps) {
   const [iaResponse, setIaResponse] = useState<string | null>(null);
 
   const form = useForm<AiHelperFormData>({
-    // Não precisamos mais do resolver, pois a validação é manual
     defaultValues: {
       ph: undefined,
       cloro: undefined,
@@ -43,7 +43,6 @@ export function AiHelper({ poolVolume }: AiHelperProps) {
   });
 
   const onSubmit = async (data: AiHelperFormData) => {
-    // Validação manual para garantir que os dados estão corretos
     const validationResult = aiHelperSchema.safeParse(data);
     if (!validationResult.success) {
       toast.error(validationResult.error.issues[0].message);
@@ -59,7 +58,6 @@ export function AiHelper({ poolVolume }: AiHelperProps) {
 
       toast.info("Enviando dados para o Ajudante IA...");
 
-      // Chamada para a nossa API interna do Next.js
       const response = await fetch('/api/generate-plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
