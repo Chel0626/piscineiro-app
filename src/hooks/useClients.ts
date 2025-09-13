@@ -5,13 +5,12 @@ import { collection, deleteDoc, doc, onSnapshot, query, updateDoc, where } from 
 import { db, auth } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useForm, UseFormReturn } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod'; // Adicionado o zodResolver
+import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from "sonner";
 
-// Importamos o schema e o tipo unificado
+// Importamos o schema e o nosso tipo unificado.
 import { clientFormSchema, ClientFormData } from '@/lib/validators/clientSchema';
 
-// O tipo de retorno do hook agora usa o tipo unificado.
 export interface UseClientsReturn {
   clients: (ClientFormData & { id: string; })[];
   form: UseFormReturn<ClientFormData>;
@@ -29,17 +28,13 @@ export interface UseClientsReturn {
   authLoading: boolean;
 }
 
-// ✅ CORREÇÃO: Usamos `undefined` para os campos numéricos, o Zod/React-Hook-Form lida com isso.
-// Removemos a necessidade do `as any`.
+// Valores padrão agora são parciais e não precisam de `as any`.
 const defaultFormValues: Partial<ClientFormData> = {
     name: '',
     address: '',
     neighborhood: '',
     phone: '',
     visitDay: '',
-    // Os campos numéricos podem ser 'undefined' por padrão
-    poolVolume: undefined,
-    serviceValue: undefined,
 };
 
 export function useClients(): UseClientsReturn {
@@ -51,7 +46,6 @@ export function useClients(): UseClientsReturn {
     const [editingClient, setEditingClient] = useState<(ClientFormData & { id: string; }) | null>(null);
     const [deletingClientId, setDeletingClientId] = useState<string | null>(null);
 
-    // O useForm agora usa o resolver do Zod e o tipo unificado.
     const form = useForm<ClientFormData>({
         resolver: zodResolver(clientFormSchema),
         defaultValues: defaultFormValues,
@@ -130,19 +124,8 @@ export function useClients(): UseClientsReturn {
     const closeAlert = () => { setIsAlertOpen(false); setDeletingClientId(null); };
 
     return {
-        clients,
-        form,
-        handleFormSubmit,
-        handleDelete,
-        openFormToEdit,
-        openFormToCreate,
-        closeForm,
-        openAlert,
-        closeAlert,
-        isSubmitting,
-        isFormOpen,
-        isAlertOpen,
-        editingClient,
-        authLoading,
+        clients, form, handleFormSubmit, handleDelete, openFormToEdit,
+        openFormToCreate, closeForm, openAlert, closeAlert, isSubmitting,
+        isFormOpen, isAlertOpen, editingClient, authLoading,
     };
 }
