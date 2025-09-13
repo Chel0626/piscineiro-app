@@ -16,12 +16,14 @@ import { auth } from '@/lib/firebase';
 import { getFunctions, httpsCallable, HttpsCallableResult } from "firebase/functions";
 import { marked } from 'marked';
 
-// Schema para validar os inputs
+// CORREÇÃO: Usamos z.coerce.number() para converter os valores do formulário (que são strings) para números.
+// Isso resolve o erro de "Type 'unknown' is not assignable to type 'number'".
 const aiHelperSchema = z.object({
   ph: z.coerce.number().min(0, "pH inválido."),
   cloro: z.coerce.number().min(0, "Cloro inválido."),
   alcalinidade: z.coerce.number().min(0, "Alcalinidade inválida."),
-  foto: z.instanceof(FileList).refine(files => files?.length === 1, "A foto é obrigatória."),
+  foto: z.instanceof(FileList)
+    .refine(files => files?.length === 1, "A foto é obrigatória."),
 });
 
 type AiHelperFormData = z.infer<typeof aiHelperSchema>;
@@ -31,7 +33,6 @@ interface AiHelperProps {
   clientId: string;
 }
 
-// Tipagem para a resposta esperada da nossa Cloud Function
 interface IaPlanResponse {
     plan: string;
 }
@@ -46,8 +47,6 @@ export function AiHelper({ poolVolume, clientId }: AiHelperProps) {
 
   const form = useForm<AiHelperFormData>({
     resolver: zodResolver(aiHelperSchema),
-    // CORREÇÃO: Usar 'undefined' é aceitável aqui, o resolver do Zod cuidará da coerção.
-    // O erro anterior era em um contexto diferente. Aqui, ele funciona.
     defaultValues: {
       ph: undefined,
       cloro: undefined,
@@ -73,7 +72,6 @@ export function AiHelper({ poolVolume, clientId }: AiHelperProps) {
 
       toast.info("Enviando dados para o Ajudante IA...");
       
-      // A chamada agora é fortemente tipada
       const result: HttpsCallableResult<IaPlanResponse> = await gerarPlanoDeAcao({
         imageUrl,
         poolVolume,
@@ -86,13 +84,12 @@ export function AiHelper({ poolVolume, clientId }: AiHelperProps) {
         throw new Error("A resposta da IA está vazia.");
       }
 
-      // Converte a resposta de Markdown para HTML de forma segura
       const htmlResponse = await marked.parse(result.data.plan);
       setIaResponse(htmlResponse);
       toast.success("Plano de ação gerado!");
 
     } catch (error) {
-      const err = error as Error; // Tipagem segura do erro
+      const err = error as Error;
       console.error("Erro ao gerar plano de ação:", err);
       toast.error(err.message || "Ocorreu um erro ao processar a solicitação.");
     } finally {
@@ -119,7 +116,8 @@ export function AiHelper({ poolVolume, clientId }: AiHelperProps) {
                 <FormControl>
                   <Input type="file" accept="image/*" {...photoRef} />
                 </FormControl>
-                <FormMessage>{form.formState.errors.foto?.message}</FormMessage>
+                {/* Acessamos o erro de forma correta */}
+                <FormMessage>{form.formState.errors.foto?.message?.toString()}</FormMessage>
               </FormItem>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
