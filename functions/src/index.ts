@@ -1,7 +1,6 @@
-import * as logger from "firebase-functions/logger";
+// CORREÇÃO: Importa o logger diretamente do pacote principal.
+import { logger } from "firebase-functions";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
-
-// CORREÇÃO: Importar os tipos e enums necessários
 import { VertexAI, HarmCategory, HarmBlockThreshold, GenerateContentRequest } from "@google-cloud/vertexai";
 
 // Inicialize o Vertex AI
@@ -20,7 +19,6 @@ const generativeModel = vertex_ai.getGenerativeModel({
     "temperature": 1,
     "topP": 0.95,
   },
-  // CORREÇÃO: Usar os enums em vez de strings
   safetySettings: [
     { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
     { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
@@ -78,7 +76,6 @@ export const gerarPlanoDeAcao = onCall(async (request) => {
     },
   };
 
-  // CORREÇÃO: Montar a requisição no formato de objeto esperado pela API
   const requestPayload: GenerateContentRequest = {
     contents: [{ role: "user", parts: [{ text: prompt }, imagePart] }],
   };
