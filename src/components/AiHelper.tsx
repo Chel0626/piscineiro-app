@@ -15,7 +15,7 @@ import { auth } from '@/lib/firebase';
 import { getFunctions, httpsCallable, HttpsCallableResult } from "firebase/functions";
 import { marked } from 'marked';
 
-// Importamos o schema e o tipo do nosso novo arquivo
+// Importamos o schema e o tipo do arquivo separado
 import { aiHelperSchema, AiHelperFormData } from '@/lib/schemas/aiHelperSchema';
 
 interface AiHelperProps {
@@ -35,7 +35,9 @@ export function AiHelper({ poolVolume, clientId }: AiHelperProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [iaResponse, setIaResponse] = useState<string | null>(null);
 
-  // O restante do componente permanece o mesmo
+  // ✅ CORREÇÃO CRÍTICA:
+  // Inicializamos o formulário passando o schema diretamente para o resolver.
+  // Isso garante que o TypeScript saiba exatamente como validar os tipos.
   const form = useForm<AiHelperFormData>({
     resolver: zodResolver(aiHelperSchema),
     defaultValues: {
@@ -62,7 +64,7 @@ export function AiHelper({ poolVolume, clientId }: AiHelperProps) {
       const imageUrl = await getDownloadURL(snapshot.ref);
 
       toast.info("Enviando dados para o Ajudante IA...");
-      
+
       const result: HttpsCallableResult<IaPlanResponse> = await gerarPlanoDeAcao({
         imageUrl,
         poolVolume,
@@ -117,7 +119,7 @@ export function AiHelper({ poolVolume, clientId }: AiHelperProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>pH</FormLabel>
-                    <FormControl><Input type="number" step="0.1" placeholder="7.2" {...field} /></FormControl>
+                    <FormControl><Input type="number" step="0.1" placeholder="7.2" {...field} value={field.value ?? ''} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -128,7 +130,7 @@ export function AiHelper({ poolVolume, clientId }: AiHelperProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Cloro (ppm)</FormLabel>
-                    <FormControl><Input type="number" step="0.1" placeholder="1.5" {...field} /></FormControl>
+                    <FormControl><Input type="number" step="0.1" placeholder="1.5" {...field} value={field.value ?? ''} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -139,7 +141,7 @@ export function AiHelper({ poolVolume, clientId }: AiHelperProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Alcalinidade (ppm)</FormLabel>
-                    <FormControl><Input type="number" step="1" placeholder="100" {...field} /></FormControl>
+                    <FormControl><Input type="number" step="1" placeholder="100" {...field} value={field.value ?? ''} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
