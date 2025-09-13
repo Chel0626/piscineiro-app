@@ -7,59 +7,43 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from './ui/button';
-import { storage } from '@/lib/firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '@/lib/firebase';
-import { getFunctions, httpsCallable, HttpsCallableResult } from "firebase/functions";
+import { z } from 'zod';
 import { marked } from 'marked';
-
-// Importamos o schema e o tipo do nosso arquivo.
 import { aiHelperSchema, AiHelperFormData } from '@/lib/schemas/aiHelperSchema';
+
+// Função auxiliar para converter um arquivo para base64
+const fileToBase64 = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      // Remove o prefixo "data:image/jpeg;base64," para enviar apenas os dados puros
+      const base64String = (reader.result as string).split(',')[1];
+      resolve(base64String);
+    };
+    reader.onerror = (error) => reject(error);
+  });
 
 interface AiHelperProps {
   poolVolume: number;
-  clientId: string;
 }
 
-interface IaPlanResponse {
-    plan: string;
-}
-
-const functions = getFunctions();
-const gerarPlanoDeAcao = httpsCallable<object, IaPlanResponse>(functions, 'gerarPlanoDeAcao');
-
-export function AiHelper({ poolVolume, clientId }: AiHelperProps) {
-  const [user] = useAuthState(auth);
+export function AiHelper({ poolVolume }: AiHelperProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [iaResponse, setIaResponse] = useState<string | null>(null);
 
-  // ✅ MUDANÇA: Removemos zodResolver e fazemos validação manual
   const form = useForm<AiHelperFormData>({
+    // Não precisamos mais do resolver, pois a validação é manual
     defaultValues: {
-      ph: 0,
-      cloro: 0,
-      alcalinidade: 0,
+      ph: undefined,
+      cloro: undefined,
+      alcalinidade: undefined,
       foto: undefined,
     },
   });
 
-  // A função de submit agora também é responsável pela validação.
-  const onSubmit = async (rawData: AiHelperFormData) => {
-    if (!user) {
-      toast.error("Você precisa estar logado para usar esta função.");
-      return;
-    }
-
-    // ✅ VALIDAÇÃO MANUAL: Convertemos os valores para number antes da validação
-    const data = {
-      ph: Number(rawData.ph),
-      cloro: Number(rawData.cloro),
-      alcalinidade: Number(rawData.alcalinidade),
-      foto: rawData.foto,
-    };
-
-    // Validamos os dados usando o schema
+  const onSubmit = async (data: AiHelperFormData) => {
+    // Validação manual para garantir que os dados estão corretos
     const validationResult = aiHelperSchema.safeParse(data);
     if (!validationResult.success) {
       toast.error(validationResult.error.issues[0].message);
@@ -70,26 +54,32 @@ export function AiHelper({ poolVolume, clientId }: AiHelperProps) {
     setIaResponse(null);
 
     try {
-      const file = data.foto[0];
-      const storageRef = ref(storage, `diagnostics/${clientId}/${user.uid}/${new Date().toISOString()}_${file.name}`);
-      const snapshot = await uploadBytes(storageRef, file);
-      const imageUrl = await getDownloadURL(snapshot.ref);
+      const file = validationResult.data.foto[0];
+      const imageBase64 = await fileToBase64(file);
 
       toast.info("Enviando dados para o Ajudante IA...");
-      
-      const result: HttpsCallableResult<IaPlanResponse> = await gerarPlanoDeAcao({
-        imageUrl,
-        poolVolume,
-        ph: data.ph,
-        cloro: data.cloro,
-        alcalinidade: data.alcalinidade,
+
+      // Chamada para a nossa API interna do Next.js
+      const response = await fetch('/api/generate-plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageBase64: imageBase64,
+          mimeType: file.type,
+          poolVolume,
+          ph: validationResult.data.ph,
+          cloro: validationResult.data.cloro,
+          alcalinidade: validationResult.data.alcalinidade,
+        }),
       });
 
-      if (!result.data.plan) {
-        throw new Error("A resposta da IA está vazia.");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Falha ao gerar o plano de ação.');
       }
 
-      const htmlResponse = await marked.parse(result.data.plan);
+      const result = await response.json();
+      const htmlResponse = await marked.parse(result.plan);
       setIaResponse(htmlResponse);
       toast.success("Plano de ação gerado!");
 
@@ -131,7 +121,7 @@ export function AiHelper({ poolVolume, clientId }: AiHelperProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>pH</FormLabel>
-                    <FormControl><Input type="number" step="0.1" placeholder="7.2" {...field} /></FormControl>
+                    <FormControl><Input type="number" step="0.1" placeholder="7.2" {...field} value={field.value ?? ''} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -142,7 +132,7 @@ export function AiHelper({ poolVolume, clientId }: AiHelperProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Cloro (ppm)</FormLabel>
-                    <FormControl><Input type="number" step="0.1" placeholder="1.5" {...field} /></FormControl>
+                    <FormControl><Input type="number" step="0.1" placeholder="1.5" {...field} value={field.value ?? ''} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -153,7 +143,7 @@ export function AiHelper({ poolVolume, clientId }: AiHelperProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Alcalinidade (ppm)</FormLabel>
-                    <FormControl><Input type="number" step="1" placeholder="100" {...field} /></FormControl>
+                    <FormControl><Input type="number" step="1" placeholder="100" {...field} value={field.value ?? ''} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
