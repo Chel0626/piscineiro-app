@@ -18,17 +18,20 @@ import {
 } from '@/components/ui/select';
 import { IMaskInput } from 'react-imask';
 import { UseFormReturn } from 'react-hook-form';
-import { ClientFormInput } from '@/lib/validators/clientSchema';
+// Importamos nosso tipo unificado
+import { ClientFormData } from '@/lib/validators/clientSchema';
 
 interface ClientFormProps {
-  form: UseFormReturn<ClientFormInput>; 
-  onSubmit: (data: ClientFormInput) => void;
+  // O formulário e a função de submit agora usam o mesmo tipo
+  form: UseFormReturn<ClientFormData>; 
+  onSubmit: (data: ClientFormData) => void;
 }
 
 export function ClientForm({ form, onSubmit }: ClientFormProps) {
   return (
     <Form {...form}>
       <form id="client-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        {/* ... O resto dos campos do formulário permanece exatamente o mesmo ... */}
         <FormField
           control={form.control}
           name="name"

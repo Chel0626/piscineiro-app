@@ -1,15 +1,14 @@
 import { z } from 'zod';
 
-// Definimos o schema de validação aqui, usando z.coerce.number() para a correção.
+// Usamos z.coerce.number() para forçar a conversão de string para número.
+// Esta é a correção principal que resolve o erro de build.
 export const aiHelperSchema = z.object({
-  ph: z.coerce.number().min(0, "O valor do pH não pode ser negativo."),
-  cloro: z.coerce.number().min(0, "O valor do cloro não pode ser negativo."),
-  alcalinidade: z.coerce.number().min(0, "O valor da alcalinidade não pode ser negativo."),
+  ph: z.coerce.number({ invalid_type_error: "O pH deve ser um número." }).min(0, "O pH não pode ser negativo."),
+  cloro: z.coerce.number({ invalid_type_error: "O cloro deve ser um número." }).min(0, "O cloro não pode ser negativo."),
+  alcalinidade: z.coerce.number({ invalid_type_error: "A alcalinidade deve ser um número." }).min(0, "A alcalinidade não pode ser negativa."),
   foto: z.instanceof(FileList)
-    .refine(files => files?.length === 1, "O envio de uma foto é obrigatório.")
-    .refine(files => files?.[0]?.type.startsWith('image/'), "O arquivo precisa ser uma imagem."),
+    .refine(files => files?.length === 1, "A foto é obrigatória.")
 });
 
-// Também exportamos o tipo inferido a partir do schema.
-// Isso garante que o formulário e a validação estejam sempre em sincronia.
+// Exportamos o tipo inferido para usar no nosso componente.
 export type AiHelperFormData = z.infer<typeof aiHelperSchema>;

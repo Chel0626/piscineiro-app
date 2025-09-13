@@ -4,17 +4,18 @@ import { useEffect, useState } from 'react';
 import { collection, deleteDoc, doc, onSnapshot, query, updateDoc, where } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
-// ESTA É A LINHA QUE PRECISA ESTAR NO SEU ARQUIVO PARA O BUILD FUNCIONAR
 import { useForm, UseFormReturn } from 'react-hook-form'; 
 import { toast } from "sonner";
 import { z } from 'zod';
 
-import { clientFormSchema, ClientFormData, ClientFormInput } from '@/lib/validators/clientSchema';
+// Agora importamos apenas um tipo, que é a fonte da verdade.
+import { clientFormSchema, ClientFormData } from '@/lib/validators/clientSchema';
 
+// O tipo de retorno do hook agora usa o tipo unificado.
 export interface UseClientsReturn {
   clients: (ClientFormData & { id: string; })[];
-  form: UseFormReturn<ClientFormInput>;
-  handleFormSubmit: (data: ClientFormInput) => Promise<void>;
+  form: UseFormReturn<ClientFormData>; // <- Mudança aqui
+  handleFormSubmit: (data: ClientFormData) => Promise<void>; // <- Mudança aqui
   handleDelete: () => Promise<void>;
   openFormToEdit: (client: ClientFormData & { id: string; }) => void;
   openFormToCreate: () => void;
@@ -28,13 +29,14 @@ export interface UseClientsReturn {
   authLoading: boolean;
 }
 
-const defaultFormValues: ClientFormInput = {
+const defaultFormValues: ClientFormData = {
     name: '',
     address: '',
     neighborhood: '',
     phone: '',
-    poolVolume: '',
-    serviceValue: '',
+    // Valores padrão agora são numéricos ou undefined
+    poolVolume: undefined as any,
+    serviceValue: undefined as any,
     visitDay: '',
 };
 
@@ -47,21 +49,15 @@ export function useClients(): UseClientsReturn {
     const [editingClient, setEditingClient] = useState<(ClientFormData & { id: string; }) | null>(null);
     const [deletingClientId, setDeletingClientId] = useState<string | null>(null);
 
-    const form = useForm<ClientFormInput>({
+    // O useForm agora usa o resolver do Zod e o tipo unificado.
+    const form = useForm<ClientFormData>({
+        resolver: zodResolver(clientFormSchema),
         defaultValues: defaultFormValues,
     });
 
     useEffect(() => {
         if (isFormOpen) {
-            if (editingClient) {
-                form.reset({
-                    ...editingClient,
-                    poolVolume: String(editingClient.poolVolume),
-                    serviceValue: String(editingClient.serviceValue),
-                });
-            } else {
-                form.reset(defaultFormValues);
-            }
+            form.reset(editingClient ? editingClient : defaultFormValues);
         }
     }, [isFormOpen, editingClient, form]);
 
@@ -79,14 +75,14 @@ export function useClients(): UseClientsReturn {
         }
     }, [user]);
 
-    const handleFormSubmit = async (data: ClientFormInput) => {
+    // A função de submit agora recebe os dados já validados e com tipos corretos.
+    const handleFormSubmit = async (data: ClientFormData) => {
         setIsSubmitting(true);
         try {
-            const validatedData = clientFormSchema.parse(data);
-
+            // A validação já foi feita pelo resolver, 'data' está seguro.
             if (editingClient) {
                 const clientDoc = doc(db, 'clients', editingClient.id);
-                await updateDoc(clientDoc, { ...validatedData });
+                await updateDoc(clientDoc, data);
                 toast.success("Cliente atualizado com sucesso!");
             } else {
                 const currentUser = auth.currentUser;
@@ -96,7 +92,7 @@ export function useClients(): UseClientsReturn {
                 const response = await fetch('/api/clients/create', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
-                    body: JSON.stringify(validatedData),
+                    body: JSON.stringify(data),
                 });
 
                 if (!response.ok) {
@@ -107,18 +103,14 @@ export function useClients(): UseClientsReturn {
             }
             closeForm();
         } catch (error) {
-            if (error instanceof z.ZodError) {
-                toast.error(error.issues[0].message);
-            } else if (error instanceof Error) {
-                toast.error(error.message);
-            } else {
-                toast.error("Não foi possível salvar o cliente.");
-            }
+            const errorMessage = (error instanceof Error) ? error.message : "Não foi possível salvar o cliente.";
+            toast.error(errorMessage);
         } finally {
             setIsSubmitting(false);
         }
     };
-
+    
+    // ... o resto do hook permanece o mesmo ...
     const handleDelete = async () => {
         if (!deletingClientId) return;
         try {
