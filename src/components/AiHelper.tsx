@@ -7,7 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from './ui/button';
-import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { storage } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -16,17 +15,8 @@ import { auth } from '@/lib/firebase';
 import { getFunctions, httpsCallable, HttpsCallableResult } from "firebase/functions";
 import { marked } from 'marked';
 
-// CORREÇÃO: Usamos z.coerce.number() para converter os valores do formulário (que são strings) para números.
-// Isso resolve o erro de "Type 'unknown' is not assignable to type 'number'".
-const aiHelperSchema = z.object({
-  ph: z.coerce.number().min(0, "pH inválido."),
-  cloro: z.coerce.number().min(0, "Cloro inválido."),
-  alcalinidade: z.coerce.number().min(0, "Alcalinidade inválida."),
-  foto: z.instanceof(FileList)
-    .refine(files => files?.length === 1, "A foto é obrigatória."),
-});
-
-type AiHelperFormData = z.infer<typeof aiHelperSchema>;
+// Importamos o schema e o tipo do nosso novo arquivo
+import { aiHelperSchema, AiHelperFormData } from '@/lib/schemas/aiHelperSchema';
 
 interface AiHelperProps {
   poolVolume: number;
@@ -45,6 +35,7 @@ export function AiHelper({ poolVolume, clientId }: AiHelperProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [iaResponse, setIaResponse] = useState<string | null>(null);
 
+  // O restante do componente permanece o mesmo
   const form = useForm<AiHelperFormData>({
     resolver: zodResolver(aiHelperSchema),
     defaultValues: {
@@ -116,7 +107,6 @@ export function AiHelper({ poolVolume, clientId }: AiHelperProps) {
                 <FormControl>
                   <Input type="file" accept="image/*" {...photoRef} />
                 </FormControl>
-                {/* Acessamos o erro de forma correta */}
                 <FormMessage>{form.formState.errors.foto?.message?.toString()}</FormMessage>
               </FormItem>
             </div>
