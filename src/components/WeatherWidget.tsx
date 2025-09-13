@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sun, Cloud, CloudRain, CloudSnow, Wind, CloudSun, Zap, CloudFog } from 'lucide-react';
+// 1. Importamos os ícones de Lua e Nuvem
+import { Sun, Cloud, CloudRain, CloudSnow, CloudSun, Zap, CloudFog, Moon, Cloudy } from 'lucide-react';
 
 // Tipos para os novos dados da Open-Meteo
 interface WeatherData {
@@ -18,11 +19,15 @@ interface WeatherData {
   city: string;
 }
 
-// Mapeia os códigos de clima da Open-Meteo para ícones e descrições
-const getWeatherInfo = (code: number): { description: string; Icon: React.ElementType } => {
-  if (code === 0) return { description: 'Céu limpo', Icon: Sun };
-  if (code === 1) return { description: 'Quase limpo', Icon: Sun };
-  if (code === 2) return { description: 'Parcialmente nublado', Icon: CloudSun };
+// ✅ MUDANÇA: A função agora recebe a hora para decidir entre sol e lua.
+const getWeatherInfo = (code: number, hour: number): { description: string; Icon: React.ElementType } => {
+  const isNight = hour >= 18 || hour < 6;
+
+  // Códigos de tempo limpo ou parcialmente nublado
+  if (code === 0 || code === 1) return { description: 'Céu limpo', Icon: isNight ? Moon : Sun };
+  if (code === 2) return { description: 'Parcialmente nublado', Icon: isNight ? Cloudy : CloudSun };
+  
+  // Outros códigos que não dependem do horário
   if (code === 3) return { description: 'Nublado', Icon: Cloud };
   if (code >= 45 && code <= 48) return { description: 'Nevoeiro', Icon: CloudFog };
   if (code >= 51 && code <= 57) return { description: 'Chuvisco', Icon: CloudRain };
@@ -30,12 +35,15 @@ const getWeatherInfo = (code: number): { description: string; Icon: React.Elemen
   if (code >= 71 && code <= 77) return { description: 'Neve', Icon: CloudSnow };
   if (code >= 80 && code <= 82) return { description: 'Pancadas de chuva', Icon: CloudRain };
   if (code >= 95 && code <= 99) return { description: 'Trovoada', Icon: Zap };
-  return { description: 'Desconhecido', Icon: Sun }; // Padrão
+  
+  return { description: 'Desconhecido', Icon: isNight ? Moon : Sun }; // Padrão
 };
 
-const WeatherIcon = ({ code }: { code: number }) => {
-  const { Icon } = getWeatherInfo(code);
-  return <Icon className="h-8 w-8 text-yellow-400" />;
+// ✅ MUDANÇA: O componente de ícone agora precisa da hora.
+const WeatherIcon = ({ code, hour }: { code: number; hour: number }) => {
+  const { Icon } = getWeatherInfo(code, hour);
+  const iconColor = (hour >= 18 || hour < 6) ? "text-slate-400" : "text-yellow-400";
+  return <Icon className={`h-8 w-8 ${iconColor}`} />;
 };
 
 export function WeatherWidget() {
@@ -72,7 +80,8 @@ export function WeatherWidget() {
     );
   }
 
-  const { description } = getWeatherInfo(weather.current.weather_code);
+  const currentHour = new Date().getHours();
+  const { description } = getWeatherInfo(weather.current.weather_code, currentHour);
 
   return (
     <Card>
@@ -81,7 +90,8 @@ export function WeatherWidget() {
       </CardHeader>
       <CardContent>
         <div className="flex items-center gap-4 mb-6">
-          <WeatherIcon code={weather.current.weather_code} />
+          {/* ✅ MUDANÇA: Passamos a hora atual para o ícone principal */}
+          <WeatherIcon code={weather.current.weather_code} hour={currentHour} />
           <div>
             <p className="text-4xl font-bold">{weather.current.temp}°C</p>
             <p className="text-muted-foreground capitalize">{description}</p>
@@ -93,7 +103,8 @@ export function WeatherWidget() {
             {weather.hourly.map((hour, index) => (
               <div key={index} className="flex flex-col items-center gap-2 p-2 rounded-lg bg-gray-100 min-w-[60px]">
                 <span className="text-sm font-medium">{hour.time}h</span>
-                <WeatherIcon code={hour.weather_code} />
+                {/* ✅ MUDANÇA: Passamos a hora da previsão para cada ícone */}
+                <WeatherIcon code={hour.weather_code} hour={hour.time} />
                 <span className="font-bold">{hour.temp}°</span>
               </div>
             ))}

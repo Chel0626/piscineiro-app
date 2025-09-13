@@ -8,7 +8,6 @@ import { useForm, UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from "sonner";
 
-// Importamos o schema e o tipo unificado do arquivo corrigido.
 import { clientFormSchema, ClientFormData } from '@/lib/validators/clientSchema';
 
 export interface UseClientsReturn {
@@ -28,14 +27,16 @@ export interface UseClientsReturn {
   authLoading: boolean;
 }
 
-const defaultFormValues: ClientFormData = {
+// ✅ CORREÇÃO:
+// Mudamos o tipo para Partial<ClientFormData> e removemos os valores numéricos.
+// O formulário começará com os campos vazios, e o Zod cuidará da validação
+// de que eles são preenchidos corretamente, sem causar erro de tipo.
+const defaultFormValues: Partial<ClientFormData> = {
     name: '',
     address: '',
     neighborhood: '',
     phone: '',
     visitDay: '',
-    poolVolume: 0,
-    serviceValue: 0,
 };
 
 export function useClients(): UseClientsReturn {
@@ -57,7 +58,8 @@ export function useClients(): UseClientsReturn {
             form.reset(editingClient ? editingClient : defaultFormValues);
         }
     }, [isFormOpen, editingClient, form]);
-
+    
+    // O resto do arquivo permanece o mesmo...
     useEffect(() => {
         if (user) {
             const q = query(collection(db, 'clients'), where('userId', '==', user.uid));
@@ -72,16 +74,9 @@ export function useClients(): UseClientsReturn {
         }
     }, [user]);
 
-    const handleFormSubmit = async (rawData: ClientFormData) => {
+    const handleFormSubmit = async (data: ClientFormData) => {
         setIsSubmitting(true);
         try {
-            // Convertemos os valores numéricos para garantir que sejam numbers
-            const data: ClientFormData = {
-                ...rawData,
-                poolVolume: Number(rawData.poolVolume),
-                serviceValue: Number(rawData.serviceValue),
-            };
-
             if (editingClient) {
                 const clientDoc = doc(db, 'clients', editingClient.id);
                 await updateDoc(clientDoc, data);

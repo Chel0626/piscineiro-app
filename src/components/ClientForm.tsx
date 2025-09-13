@@ -45,32 +45,32 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
           )}
         />
         <div className="grid grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Endereço</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Rua das Flores, 123" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="neighborhood"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Bairro / Condomínio</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Condomínio Azul" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <FormField
+            control={form.control}
+            name="address"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Endereço</FormLabel>
+                <FormControl>
+                  <Input placeholder="Rua das Flores, 123" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="neighborhood"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Bairro / Condomínio</FormLabel>
+                <FormControl>
+                  <Input placeholder="Condomínio Azul" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
         <FormField
           control={form.control}
@@ -153,6 +153,27 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
                   <SelectItem value="Sábado">Sábado</SelectItem>
                 </SelectContent>
               </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Campo de dia do vencimento */}
+        <FormField
+          control={form.control}
+          name="paymentDueDate"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Dia do Vencimento</FormLabel>
+              <FormControl>
+                <Input 
+                  type="number" 
+                  placeholder="Ex: 10" 
+                  {...field}
+                  onChange={(e) => field.onChange(Number(e.target.value))}
+                  value={field.value}
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

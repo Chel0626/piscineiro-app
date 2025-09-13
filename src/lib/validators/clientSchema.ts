@@ -9,7 +9,12 @@ export const clientFormSchema = z.object({
   poolVolume: z.number().min(0, { message: 'O volume não pode ser negativo.' }),
   serviceValue: z.number().min(0, { message: 'O valor não pode ser negativo.' }),
   visitDay: z.string().min(1, { message: "Por favor, selecione um dia da visita." }),
+
+  paymentDueDate: z.number().min(1, { message: "O dia do vencimento deve ser um número." })
+    .min(1, { message: "O dia deve ser entre 1 e 31." })
+    .max(31, { message: "O dia deve ser entre 1 e 31." }),
 });
+
 
 // Exportamos o tipo inferido para manter a consistência em todo o app.
 export type ClientFormData = z.infer<typeof clientFormSchema>;
