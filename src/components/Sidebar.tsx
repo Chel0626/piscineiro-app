@@ -9,6 +9,7 @@ import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { AiHelperDialog } from './AiHelperDialog';
 import { ProductCalculatorDialog } from './ProductCalculatorDialog';
+import { BillingWidget } from './BillingWidget';
 import { Separator } from './ui/separator';
 
 const navItems = [
@@ -91,7 +92,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </div>
         </nav>
 
-        <div className="p-4 border-t border-gray-700">
+        <div className="p-4 space-y-3 border-t border-gray-700">
+          <BillingWidget />
           <Button onClick={handleLogout} variant="destructive" className="w-full">
             Sair
           </Button>
