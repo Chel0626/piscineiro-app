@@ -19,3 +19,10 @@ export const clientFormSchema = z.object({
 
 // Exportamos o tipo inferido para manter a consistência em todo o app.
 export type ClientFormData = z.infer<typeof clientFormSchema>;
+
+// Tipo extendido para incluir campos de pagamento (usado apenas na leitura de dados)
+export type ClientWithPayment = ClientFormData & {
+  id: string;
+  lastPaymentDate?: string;
+  paymentStatus?: 'paid' | 'pending' | 'overdue';
+};
