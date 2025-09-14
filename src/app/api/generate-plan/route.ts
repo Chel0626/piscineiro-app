@@ -18,10 +18,11 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     // Agora recebemos a imagem como texto (base64)
-    const { imageBase64, mimeType, poolVolume, ph, cloro, alcalinidade } = body;
+    const { imageBase64, mimeType, poolVolume, ph, cloro, alcalinidade, description } = body;
 
-    if (!imageBase64 || !mimeType || !poolVolume || ph == null || cloro == null || alcalinidade == null) {
-      return NextResponse.json({ error: 'Dados incompletos foram enviados.' }, { status: 400 });
+    // Verificar se temos pelo menos uma imagem OU uma descrição
+    if ((!imageBase64 && !description) || (poolVolume == null && ph == null && cloro == null && alcalinidade == null)) {
+      return NextResponse.json({ error: 'Dados incompletos: forneça pelo menos uma foto ou descrição, e algum parâmetro da água.' }, { status: 400 });
     }
     
     const model = genAI.getGenerativeModel({ 
@@ -34,33 +35,39 @@ export async function POST(request: NextRequest) {
         ]
     });
 
-    // A imagem já vem pronta para uso
-    const imagePart = {
-      inlineData: {
-        data: imageBase64,
-        mimeType: mimeType,
-      },
-    };
-
-    const prompt = `
+    let prompt = `
       Você é um especialista em tratamento de piscinas com 20 anos de experiência
       e segue as normas técnicas da ANAPP. Sua tarefa é criar um plano de ação
       profissional, claro e detalhado.
 
-      Analise a imagem da piscina fornecida e os seguintes parâmetros de uma
-      piscina de ${poolVolume} mil litros:
-      - pH: ${ph}
-      - Cloro Livre: ${cloro} ppm
-      - Alcalinidade Total: ${alcalinidade} ppm
+      ${poolVolume ? `Piscina de ${poolVolume} mil litros` : 'Piscina'}:
+      ${ph != null ? `- pH: ${ph}` : ''}
+      ${cloro != null ? `- Cloro Livre: ${cloro} ppm` : ''}
+      ${alcalinidade != null ? `- Alcalinidade Total: ${alcalinidade} ppm` : ''}
+      
+      ${description ? `Descrição das condições: ${description}` : ''}
+      ${imageBase64 ? 'Analise também a imagem da piscina fornecida.' : ''}
 
-      Com base na análise visual e nos parâmetros, forneça:
+      Com base ${imageBase64 ? 'na análise visual e ' : ''}nos parâmetros${description ? ' e descrição' : ''}, forneça:
       1.  Um diagnóstico claro da situação atual da água.
       2.  Um plano de ação passo a passo.
       3.  Cálculos de dosagens exatas dos produtos, se necessário.
       4.  Apresente a resposta em formato Markdown.
     `;
 
-    const result = await model.generateContent([prompt, imagePart]);
+    // Criar o conteúdo baseado no que temos disponível
+    let content: any[] = [prompt];
+    if (imageBase64 && mimeType) {
+      const imagePart = {
+        inlineData: {
+          data: imageBase64,
+          mimeType: mimeType,
+        },
+      };
+      content.push(imagePart);
+    }
+
+    const result = await model.generateContent(content);
     const responseText = result.response.text();
     
     return NextResponse.json({ plan: responseText });

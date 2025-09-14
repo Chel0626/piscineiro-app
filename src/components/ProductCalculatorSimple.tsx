@@ -36,22 +36,29 @@ export function ProductCalculator({ poolVolume: initialVolume, ph: initialPh, cl
       acoes.push(`🧪 Cloro: ${cloroNecessario.toFixed(0)}g de cloro granulado 65% (meta: 2.0 ppm)`);
     }
 
-    if (ph > 7.6) {
-      const phDiff = ph - 7.4;
-      const acidoNecessario = (phDiff * volume * 50);
-      acoes.push(`⬇️ pH: ${acidoNecessario.toFixed(0)}ml de ácido muriático (meta: 7.4)`);
-    } else if (ph < 7.2) {
-      const phDiff = 7.4 - ph;
-      const barrilhaNecessaria = (phDiff * volume * 75);
-      acoes.push(`⬆️ pH: ${barrilhaNecessaria.toFixed(0)}g de barrilha (meta: 7.4)`);
-    }
-
+    // Primeiro verificar alcalinidade, pois corrigi-la também afeta o pH
     if (alcalinidade < 80) {
       const alcDiff = 100 - alcalinidade;
       const bicarbonato = (alcDiff * volume * 1.2);
       acoes.push(`📈 Alcalinidade: ${bicarbonato.toFixed(0)}g de bicarbonato de sódio (meta: 100 ppm)`);
+      
+      // Se pH também está baixo, apenas avisar que a alcalinidade vai ajudar
+      if (ph < 7.2) {
+        acoes.push(`ℹ️ pH baixo será corrigido automaticamente com a correção da alcalinidade`);
+      }
     } else if (alcalinidade > 120) {
       acoes.push(`📉 Alcalinidade alta: Adicione ácido muriático gradualmente e teste novamente`);
+    } else {
+      // Se alcalinidade está ok, aí sim corrigir pH se necessário
+      if (ph > 7.6) {
+        const phDiff = ph - 7.4;
+        const acidoNecessario = (phDiff * volume * 50);
+        acoes.push(`⬇️ pH: ${acidoNecessario.toFixed(0)}ml de ácido muriático (meta: 7.4)`);
+      } else if (ph < 7.2) {
+        const phDiff = 7.4 - ph;
+        const barrilhaNecessaria = (phDiff * volume * 75);
+        acoes.push(`⬆️ pH: ${barrilhaNecessaria.toFixed(0)}g de barrilha (meta: 7.4)`);
+      }
     }
 
     // Produtos para decantação
