@@ -6,7 +6,7 @@ import { useClientProducts } from '@/hooks/useClientProducts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { PlusCircle, Trash2, Edit } from 'lucide-react';
+import { PlusCircle, Trash2 } from 'lucide-react';
 
 export function ClientProductManager({ clientId }: { clientId: string }) {
   const { products, isLoading, addProduct, updateProductQuantity, deleteProduct } = useClientProducts(clientId);

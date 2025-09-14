@@ -43,7 +43,7 @@ export function useClientProducts(clientId: string) {
       const productsCollectionRef = collection(db, 'clients', clientId, 'products');
       await addDoc(productsCollectionRef, { name, quantity });
       toast.success("Produto adicionado ao estoque!");
-    } catch (error) {
+    } catch {
       toast.error("Falha ao adicionar produto.");
     }
   };
@@ -53,7 +53,7 @@ export function useClientProducts(clientId: string) {
       const productDocRef = doc(db, 'clients', clientId, 'products', productId);
       await updateDoc(productDocRef, { quantity: newQuantity });
       toast.success("Quantidade atualizada.");
-    } catch (error) {
+    } catch {
       toast.error("Falha ao atualizar a quantidade.");
     }
   };
@@ -63,7 +63,7 @@ export function useClientProducts(clientId: string) {
       const productDocRef = doc(db, 'clients', clientId, 'products', productId);
       await deleteDoc(productDocRef);
       toast.success("Produto removido do estoque.");
-    } catch (error) {
+    } catch {
       toast.error("Falha ao remover produto.");
     }
   };
