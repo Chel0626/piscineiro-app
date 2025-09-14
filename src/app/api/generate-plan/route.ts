@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
         ]
     });
 
-    let prompt = `
+    const prompt = `
       Você é um especialista em tratamento de piscinas com 20 anos de experiência
       e segue as normas técnicas da ANAPP. Sua tarefa é criar um plano de ação
       profissional, claro e detalhado.
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     `;
 
     // Criar o conteúdo baseado no que temos disponível
-    let content: any[] = [prompt];
+    const content: Array<string | { inlineData: { data: string; mimeType: string } }> = [prompt];
     if (imageBase64 && mimeType) {
       const imagePart = {
         inlineData: {

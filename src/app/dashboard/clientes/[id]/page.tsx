@@ -14,7 +14,6 @@ import { Separator } from '@/components/ui/separator';
 import { VisitForm, VisitFormData } from '@/components/VisitForm';
 import { ArrowLeft } from 'lucide-react';
 import { ProductCalculator } from '@/components/ProductCalculator';
-import { AiHelper } from '@/components/AiHelper';
 import { ClientProductManager } from '@/components/ClientProductManager'; // Importe o novo componente
 
 export default function ClienteDetailPage() {
