@@ -1,6 +1,6 @@
 'use client';
 
-// 1. O import do zodResolver foi removido para limpar o aviso.
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -22,37 +22,33 @@ const formSchema = z.object({
 
 export type VisitFormData = z.infer<typeof formSchema>;
 
-type VisitFormInput = {
-  ph: string | number;
-  cloro: string | number;
-  alcalinidade: string | number;
-};
-
 interface VisitFormProps {
   onSubmit: (data: VisitFormData) => void;
   isLoading: boolean;
 }
 
 export function VisitForm({ onSubmit, isLoading }: VisitFormProps) {
-  const form = useForm<VisitFormInput>({
+  const form = useForm<VisitFormData>({
     defaultValues: {
-      ph: '',
-      cloro: '',
-      alcalinidade: '',
+      ph: 0,
+      cloro: 0,
+      alcalinidade: 0,
     },
   });
 
-  const handleFormSubmit = (data: VisitFormInput) => {
+  const handleFormSubmit = async (data: VisitFormData) => {
     try {
       const validatedData = formSchema.parse(data);
       onSubmit(validatedData);
-      form.reset();
+      form.reset({
+        ph: 0,
+        cloro: 0,
+        alcalinidade: 0,
+      });
     } catch (error) {
       if (error instanceof z.ZodError) {
-        // 2. CORREÇÃO: A propriedade correta é .issues, não .errors.
         error.issues.forEach((err) => {
-          const fieldName = err.path[0] as keyof VisitFormInput;
-          form.setError(fieldName, {
+          form.setError(err.path[0] as keyof VisitFormData, {
             type: 'manual',
             message: err.message,
           });
