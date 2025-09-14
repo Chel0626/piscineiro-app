@@ -3,6 +3,7 @@
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
+import { ClientWithPayment } from '@/lib/validators/clientSchema';
 
 export function usePayments() {
   const markAsPaid = async (clientId: string) => {
@@ -37,7 +38,7 @@ export function usePayments() {
     }
   };
 
-  const getPaymentStatus = (client: any) => {
+  const getPaymentStatus = (client: ClientWithPayment) => {
     const today = new Date();
     const currentDay = today.getDate();
     const currentMonth = today.getMonth();
