@@ -1,17 +1,12 @@
 import { WeatherWidget } from '@/components/WeatherWidget';
-import { Greeting } from '@/components/Greeting';
+import { TimeBasedWidget } from '@/components/TimeBasedWidget';
 import { DailyRouteWidget } from '@/components/DailyRouteWidget';
 import { PaymentsDueWidget } from '@/components/PaymentsDueWidget';
 
 export default function DashboardPage() {
   return (
     <div className="space-y-6">
-      <div>
-        <Greeting />
-        <p className="text-muted-foreground">
-          Aqui está um resumo do seu dia.
-        </p>
-      </div>
+      <TimeBasedWidget />
 
       <WeatherWidget />
 
