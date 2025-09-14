@@ -6,12 +6,16 @@ type TimeOfDay = 'morning' | 'afternoon' | 'night';
 
 const getTimeOfDay = (): TimeOfDay => {
   const currentHour = new Date().getHours();
-  if (currentHour < 12) {
+  
+  // Bom dia: 6h às 11h59
+  if (currentHour >= 6 && currentHour < 12) {
     return 'morning';
   }
-  if (currentHour < 18) {
+  // Boa tarde: 12h às 17h59  
+  if (currentHour >= 12 && currentHour < 18) {
     return 'afternoon';
   }
+  // Boa noite: 18h às 5h59 (incluindo madrugada)
   return 'night';
 };
 
