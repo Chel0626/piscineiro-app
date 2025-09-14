@@ -43,56 +43,66 @@ export default function ClienteDetailPage() {
   };
 
   if (isLoading) {
-    return <div className="text-center p-10">Carregando dados do cliente...</div>;
+    return <div className="text-center p-6 text-sm sm:text-base">Carregando dados do cliente...</div>;
   }
 
   if (!client) {
-    return <div className="text-center p-10">Cliente não encontrado.</div>;
+    return <div className="text-center p-6 text-sm sm:text-base">Cliente não encontrado.</div>;
   }
 
   return (
-    <div>
-      <div className="mb-6 flex items-center gap-4">
-        <Link href="/dashboard/clientes" className="p-2 rounded-md hover:bg-gray-200">
-          <ArrowLeft className="h-5 w-5" />
+    <div className="p-2 sm:p-4">
+      {/* Header responsivo */}
+      <div className="mb-4 sm:mb-6 flex items-center gap-3 sm:gap-4">
+        <Link href="/dashboard/clientes" className="p-2 rounded-md hover:bg-gray-200 flex-shrink-0">
+          <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
         </Link>
-        <h1 className="text-3xl font-bold">{client.name}</h1>
+        <h1 className="text-lg sm:text-2xl md:text-3xl font-bold truncate">{client.name}</h1>
       </div>
 
       <Tabs defaultValue="history" className="w-full">
-        {/* ✅ CORREÇÃO: Removemos a div com overflow e ajustamos a TabsList */}
-        <TabsList className="flex flex-wrap h-auto justify-start">
-          <TabsTrigger value="data">Dados Cadastrais</TabsTrigger>
-          <TabsTrigger value="history">Histórico e Tratamento</TabsTrigger>
-          <TabsTrigger value="products">Produtos</TabsTrigger>
-          <TabsTrigger value="ai_helper">Ajudante IA</TabsTrigger>
+        {/* TabsList responsiva com quebra de linha */}
+        <TabsList className="grid grid-cols-2 sm:flex sm:flex-wrap h-auto w-full sm:w-auto mb-4 sm:mb-6">
+          <TabsTrigger value="data" className="text-xs sm:text-sm px-2 sm:px-4">
+            Dados
+          </TabsTrigger>
+          <TabsTrigger value="history" className="text-xs sm:text-sm px-2 sm:px-4">
+            Histórico
+          </TabsTrigger>
+          <TabsTrigger value="products" className="text-xs sm:text-sm px-2 sm:px-4">
+            Produtos
+          </TabsTrigger>
+          <TabsTrigger value="ai_helper" className="text-xs sm:text-sm px-2 sm:px-4">
+            IA Helper
+          </TabsTrigger>
         </TabsList>
         
-        {/* O restante do arquivo continua o mesmo... */}
         <TabsContent value="data">
           <Card>
-            <CardHeader><CardTitle>Informações do Cliente</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CardHeader className="pb-3 sm:pb-6">
+              <CardTitle className="text-base sm:text-lg">Informações do Cliente</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 sm:space-y-4">
+              <div className="grid grid-cols-1 gap-3 sm:gap-4">
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Endereço</p>
-                  <p>{`${client.address}, ${client.neighborhood}`}</p>
+                  <p className="text-xs sm:text-sm font-medium text-gray-500">Endereço</p>
+                  <p className="text-sm sm:text-base">{`${client.address}, ${client.neighborhood}`}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Telefone</p>
-                  <p>{client.phone || 'Não cadastrado'}</p>
+                  <p className="text-xs sm:text-sm font-medium text-gray-500">Telefone</p>
+                  <p className="text-sm sm:text-base">{client.phone || 'Não cadastrado'}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Dia da Visita</p>
-                  <p>{client.visitDay}</p>
+                  <p className="text-xs sm:text-sm font-medium text-gray-500">Dia da Visita</p>
+                  <p className="text-sm sm:text-base">{client.visitDay}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Valor do Contrato (R$)</p>
-                  <p>{client.serviceValue.toFixed(2)}</p>
+                  <p className="text-xs sm:text-sm font-medium text-gray-500">Valor do Contrato (R$)</p>
+                  <p className="text-sm sm:text-base">{client.serviceValue.toFixed(2)}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Volume da Piscina (m³)</p>
-                  <p>{client.poolVolume} m³</p>
+                  <p className="text-xs sm:text-sm font-medium text-gray-500">Volume da Piscina (m³)</p>
+                  <p className="text-sm sm:text-base">{client.poolVolume} m³</p>
                 </div>
               </div>
             </CardContent>
@@ -100,29 +110,29 @@ export default function ClienteDetailPage() {
         </TabsContent>
 
         <TabsContent value="history">
-          <div className="space-y-8">
+          <div className="space-y-4 sm:space-y-8">
             <ProductCalculator poolVolume={client.poolVolume} />
             
             <Card>
-              <CardHeader>
-                <CardTitle>Registrar Nova Visita</CardTitle>
+              <CardHeader className="pb-3 sm:pb-6">
+                <CardTitle className="text-base sm:text-lg">Registrar Nova Visita</CardTitle>
               </CardHeader>
               <CardContent>
                 <VisitForm onSubmit={handleVisitSubmit} isLoading={isSubmitting} />
                 
-                <Separator className="my-8" />
+                <Separator className="my-4 sm:my-8" />
 
-                <h3 className="text-xl font-semibold mb-4">Visitas Anteriores</h3>
-                <div className="space-y-4">
+                <h3 className="text-base sm:text-xl font-semibold mb-3 sm:mb-4">Visitas Anteriores</h3>
+                <div className="space-y-3 sm:space-y-4">
                   {visits.length > 0 ? (
                     visits.map((visit) => (
-                      <div key={visit.id} className="p-4 border rounded-md">
-                        <p className="font-semibold text-md mb-2">
+                      <div key={visit.id} className="p-3 sm:p-4 border rounded-md">
+                        <p className="font-semibold text-sm sm:text-base mb-2">
                           {visit.timestamp?.toDate().toLocaleDateString('pt-BR', {
                             year: 'numeric', month: 'long', day: 'numeric',
                           })}
                         </p>
-                        <div className="flex gap-6 text-sm">
+                        <div className="flex flex-col sm:flex-row gap-2 sm:gap-6 text-xs sm:text-sm">
                           <span><strong>pH:</strong> {visit.ph}</span>
                           <span><strong>Cloro:</strong> {visit.cloro} ppm</span>
                           <span><strong>Alcalinidade:</strong> {visit.alcalinidade} ppm</span>
@@ -130,7 +140,7 @@ export default function ClienteDetailPage() {
                       </div>
                     ))
                   ) : (
-                    <p className="text-sm text-center text-gray-500 py-4">
+                    <p className="text-xs sm:text-sm text-center text-gray-500 py-4">
                       Nenhum registro de visita encontrado.
                     </p>
                   )}
@@ -142,17 +152,17 @@ export default function ClienteDetailPage() {
 
         <TabsContent value="products">
           <Card>
-            <CardHeader>
-              <CardTitle>Produtos Necessários</CardTitle>
+            <CardHeader className="pb-3 sm:pb-6">
+              <CardTitle className="text-base sm:text-lg">Produtos Necessários</CardTitle>
             </CardHeader>
             <CardContent>
-              <p>Em breve: Sistema de solicitação de produtos.</p>
+              <p className="text-sm sm:text-base">Em breve: Sistema de solicitação de produtos.</p>
             </CardContent>
           </Card>
         </TabsContent>
         
         <TabsContent value="ai_helper">
-            <AiHelper poolVolume={client.poolVolume} />
+          <AiHelper poolVolume={client.poolVolume} />
         </TabsContent>
 
       </Tabs>
