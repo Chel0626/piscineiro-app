@@ -1,4 +1,3 @@
-// src/components/DailyRouteWidget.tsx
 'use client';
 
 import { useClients } from '@/hooks/useClients';
@@ -7,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { ListChecks } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-// Função para obter o dia da semana atual em português
 const getCurrentDayName = () => {
   const days = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
   const todayIndex = new Date().getDay();
@@ -48,15 +46,17 @@ export function DailyRouteWidget() {
         {dailyRouteClients.length > 0 ? (
           <ul className="space-y-4">
             {dailyRouteClients.map(client => (
-              <li key={client.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div>
-                  <p className="font-semibold">{client.name}</p>
-                  <p className="text-sm text-muted-foreground">{client.neighborhood}</p>
+              // ✅ CORREÇÃO: Ajustes no layout do item da lista
+              <li key={client.id} className="flex items-center justify-between gap-4 p-3 bg-gray-50 rounded-lg">
+                <div className="flex-1 min-w-0"> {/* Permite que o texto encolha e não empurre o botão */}
+                  <p className="font-semibold truncate">{client.name}</p>
+                  <p className="text-sm text-muted-foreground truncate">{client.neighborhood}</p>
                 </div>
                 <Button 
                   variant="outline" 
                   size="sm" 
                   onClick={() => router.push(`/dashboard/clientes/${client.id}`)}
+                  className="flex-shrink-0" // Garante que o botão não seja espremido
                 >
                   <ListChecks className="mr-2 h-4 w-4" />
                   Check-in

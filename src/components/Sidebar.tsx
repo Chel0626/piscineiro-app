@@ -24,11 +24,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const handleLogout = async () => {
     await signOut(auth);
+    // Limpa o cookie de autenticação para um logout completo
     await fetch('/api/logout', { method: 'POST' });
+    // Redireciona para a página de login
     window.location.href = '/login';
   };
 
   const handleLinkClick = () => {
+    // Fecha a sidebar em telas pequenas ao clicar em um link
     if (window.innerWidth < 768) {
       onClose();
     }
@@ -46,7 +49,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       <aside
         className={cn(
-          'fixed top-0 left-0 z-40 w-64 h-screen bg-gray-800 text-white flex flex-col transition-transform duration-300 ease-in-out',
+          // ✅ CORREÇÃO: Trocamos h-screen por h-dvh (dynamic viewport height)
+          // Isso garante que a altura da sidebar se ajuste dinamicamente,
+          // nunca ficando escondida atrás da barra do navegador.
+          'fixed top-0 left-0 z-40 w-64 h-dvh bg-gray-800 text-white flex flex-col transition-transform duration-300 ease-in-out',
           'md:translate-x-0',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
@@ -58,10 +64,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </Button>
         </div>
         
-        {/* CORREÇÃO: 
-          - Adicionamos `overflow-y-auto` para que esta área de navegação role
-            se o conteúdo for maior que o espaço disponível, sem empurrar o rodapé.
-        */}
         <nav className="flex-1 px-4 py-2 overflow-y-auto">
           {navItems.map((item) => (
             <Link

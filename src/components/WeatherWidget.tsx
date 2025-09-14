@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-// 1. Importamos os ícones de Lua e Nuvem
 import { Sun, Cloud, CloudRain, CloudSnow, CloudSun, Zap, CloudFog, Moon, Cloudy } from 'lucide-react';
 
-// Tipos para os novos dados da Open-Meteo
+// ... (Tipos e função getWeatherInfo permanecem os mesmos) ...
+
 interface WeatherData {
   current: {
     temp: number;
@@ -19,15 +19,10 @@ interface WeatherData {
   city: string;
 }
 
-// ✅ MUDANÇA: A função agora recebe a hora para decidir entre sol e lua.
 const getWeatherInfo = (code: number, hour: number): { description: string; Icon: React.ElementType } => {
   const isNight = hour >= 18 || hour < 6;
-
-  // Códigos de tempo limpo ou parcialmente nublado
   if (code === 0 || code === 1) return { description: 'Céu limpo', Icon: isNight ? Moon : Sun };
   if (code === 2) return { description: 'Parcialmente nublado', Icon: isNight ? Cloudy : CloudSun };
-  
-  // Outros códigos que não dependem do horário
   if (code === 3) return { description: 'Nublado', Icon: Cloud };
   if (code >= 45 && code <= 48) return { description: 'Nevoeiro', Icon: CloudFog };
   if (code >= 51 && code <= 57) return { description: 'Chuvisco', Icon: CloudRain };
@@ -35,11 +30,9 @@ const getWeatherInfo = (code: number, hour: number): { description: string; Icon
   if (code >= 71 && code <= 77) return { description: 'Neve', Icon: CloudSnow };
   if (code >= 80 && code <= 82) return { description: 'Pancadas de chuva', Icon: CloudRain };
   if (code >= 95 && code <= 99) return { description: 'Trovoada', Icon: Zap };
-  
-  return { description: 'Desconhecido', Icon: isNight ? Moon : Sun }; // Padrão
+  return { description: 'Desconhecido', Icon: isNight ? Moon : Sun };
 };
 
-// ✅ MUDANÇA: O componente de ícone agora precisa da hora.
 const WeatherIcon = ({ code, hour }: { code: number; hour: number }) => {
   const { Icon } = getWeatherInfo(code, hour);
   const iconColor = (hour >= 18 || hour < 6) ? "text-slate-400" : "text-yellow-400";
@@ -90,7 +83,6 @@ export function WeatherWidget() {
       </CardHeader>
       <CardContent>
         <div className="flex items-center gap-4 mb-6">
-          {/* ✅ MUDANÇA: Passamos a hora atual para o ícone principal */}
           <WeatherIcon code={weather.current.weather_code} hour={currentHour} />
           <div>
             <p className="text-4xl font-bold">{weather.current.temp}°C</p>
@@ -99,11 +91,11 @@ export function WeatherWidget() {
         </div>
         <div>
           <h4 className="font-semibold mb-2">Próximas horas:</h4>
-          <div className="flex justify-between gap-2 overflow-x-auto">
+          {/* ✅ CORREÇÃO: Removemos a classe 'justify-between' */}
+          <div className="flex gap-2 overflow-x-auto">
             {weather.hourly.map((hour, index) => (
               <div key={index} className="flex flex-col items-center gap-2 p-2 rounded-lg bg-gray-100 min-w-[60px]">
                 <span className="text-sm font-medium">{hour.time}h</span>
-                {/* ✅ MUDANÇA: Passamos a hora da previsão para cada ícone */}
                 <WeatherIcon code={hour.weather_code} hour={hour.time} />
                 <span className="font-bold">{hour.temp}°</span>
               </div>

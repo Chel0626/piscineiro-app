@@ -60,15 +60,15 @@ export default function ClienteDetailPage() {
       </div>
 
       <Tabs defaultValue="history" className="w-full">
-        <div className="relative w-full overflow-x-auto">
-          <TabsList className="whitespace-nowrap">
-            <TabsTrigger value="data">Dados Cadastrais</TabsTrigger>
-            <TabsTrigger value="history">Histórico e Tratamento</TabsTrigger>
-            <TabsTrigger value="products">Produtos</TabsTrigger>
-            <TabsTrigger value="ai_helper">Ajudante IA</TabsTrigger>
-          </TabsList>
-        </div>
+        {/* ✅ CORREÇÃO: Removemos a div com overflow e ajustamos a TabsList */}
+        <TabsList className="flex flex-wrap h-auto justify-start">
+          <TabsTrigger value="data">Dados Cadastrais</TabsTrigger>
+          <TabsTrigger value="history">Histórico e Tratamento</TabsTrigger>
+          <TabsTrigger value="products">Produtos</TabsTrigger>
+          <TabsTrigger value="ai_helper">Ajudante IA</TabsTrigger>
+        </TabsList>
         
+        {/* O restante do arquivo continua o mesmo... */}
         <TabsContent value="data">
           <Card>
             <CardHeader><CardTitle>Informações do Cliente</CardTitle></CardHeader>
@@ -152,7 +152,6 @@ export default function ClienteDetailPage() {
         </TabsContent>
         
         <TabsContent value="ai_helper">
-            {/* ✅ CORREÇÃO: Removemos a prop `clientId` que não existe mais */}
             <AiHelper poolVolume={client.poolVolume} />
         </TabsContent>
 
