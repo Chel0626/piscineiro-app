@@ -26,6 +26,7 @@ const formSchema = z.object({
   alcalinidade: z.coerce.number().min(0, { message: 'Alcalinidade inválida.' }),
   productsUsed: z.array(productUsageSchema),
   productsRequested: z.array(productUsageSchema),
+  description: z.string().optional(),
 });
 
 export type VisitFormData = z.infer<typeof formSchema>;
@@ -44,6 +45,7 @@ export function VisitForm({ onSubmit, isLoading, clientId }: VisitFormProps) {
       alcalinidade: 0,
       productsUsed: [],
       productsRequested: [],
+      description: '',
     },
   });
 
@@ -65,6 +67,7 @@ export function VisitForm({ onSubmit, isLoading, clientId }: VisitFormProps) {
         alcalinidade: 0,
         productsUsed: [],
         productsRequested: [],
+        description: '',
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -116,6 +119,26 @@ export function VisitForm({ onSubmit, isLoading, clientId }: VisitFormProps) {
                 <FormLabel>Alcalinidade (ppm)</FormLabel>
                 <FormControl>
                   <Input type="number" step="1" placeholder="100" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="mt-4">
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Descrição da Visita (opcional)</FormLabel>
+                <FormControl>
+                  <textarea
+                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    placeholder="Descreva as condições da piscina, observações importantes..."
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

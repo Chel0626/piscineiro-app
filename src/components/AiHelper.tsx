@@ -26,7 +26,7 @@ const fileToBase64 = (file: File): Promise<string> =>
 
 // CORREÇÃO: Removemos 'clientId' pois não é mais necessário com a API Route.
 interface AiHelperProps {
-  poolVolume: number;
+  poolVolume?: number;
 }
 
 export function AiHelper({ poolVolume }: AiHelperProps) {
@@ -39,6 +39,7 @@ export function AiHelper({ poolVolume }: AiHelperProps) {
       cloro: undefined,
       alcalinidade: undefined,
       foto: undefined,
+      description: '',
     },
   });
 
@@ -53,8 +54,14 @@ export function AiHelper({ poolVolume }: AiHelperProps) {
     setIaResponse(null);
 
     try {
-      const file = validationResult.data.foto[0];
-      const imageBase64 = await fileToBase64(file);
+      let imageBase64: string | undefined;
+      let mimeType: string | undefined;
+
+      if (validationResult.data.foto?.[0]) {
+        const file = validationResult.data.foto[0];
+        imageBase64 = await fileToBase64(file);
+        mimeType = file.type;
+      }
 
       toast.info("Enviando dados para o Ajudante IA...");
 
@@ -62,12 +69,13 @@ export function AiHelper({ poolVolume }: AiHelperProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          imageBase64: imageBase64,
-          mimeType: file.type,
+          imageBase64,
+          mimeType,
           poolVolume,
           ph: validationResult.data.ph,
           cloro: validationResult.data.cloro,
           alcalinidade: validationResult.data.alcalinidade,
+          description: validationResult.data.description,
         }),
       });
 
@@ -105,12 +113,29 @@ export function AiHelper({ poolVolume }: AiHelperProps) {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormItem>
-                <FormLabel>Foto da Piscina</FormLabel>
+                <FormLabel>Foto da Piscina (opcional)</FormLabel>
                 <FormControl>
                   <Input type="file" accept="image/*" {...photoRef} />
                 </FormControl>
                 <FormMessage>{form.formState.errors.foto?.message?.toString()}</FormMessage>
               </FormItem>
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Descrição (caso não tenha foto)</FormLabel>
+                    <FormControl>
+                      <textarea
+                        className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        placeholder="Descreva as condições da piscina..."
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <FormField

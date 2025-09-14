@@ -1,14 +1,15 @@
 'use client';
 
+import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { calculatorFormSchema, CalculatorFormData } from '@/lib/validators/calculatorSchema';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form'; // FormMessage removido
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 
 interface ProductCalculatorProps {
-  poolVolume: number; // Volume em m³
+  poolVolume?: number; // Volume em m³
 }
 
 export function ProductCalculator({ poolVolume }: ProductCalculatorProps) {
@@ -24,7 +25,7 @@ export function ProductCalculator({ poolVolume }: ProductCalculatorProps) {
   const watchedValues = useWatch({ control: form.control });
 
   const calcularProdutos = (data: Partial<CalculatorFormData>) => {
-    const volumeLitros = poolVolume * 1000;
+    const volumeLitros = (poolVolume || 0) * 1000;
     // CORREÇÃO: Usar 'const' pois a variável não é reatribuída.
     const acoes = [];
 

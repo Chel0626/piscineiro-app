@@ -73,9 +73,7 @@ export default function ClienteDetailPage() {
           <TabsTrigger value="products" className="text-xs sm:text-sm px-2 sm:px-4">
             Produtos
           </TabsTrigger>
-          <TabsTrigger value="ai_helper" className="text-xs sm:text-sm px-2 sm:px-4">
-            IA Helper
-          </TabsTrigger>
+
         </TabsList>
         
         <TabsContent value="data">
@@ -188,9 +186,7 @@ export default function ClienteDetailPage() {
           <ClientProductManager clientId={clientId} />
         </TabsContent>
         
-        <TabsContent value="ai_helper">
-          <AiHelper poolVolume={client.poolVolume} />
-        </TabsContent>
+
 
       </Tabs>
     </div>

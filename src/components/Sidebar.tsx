@@ -7,6 +7,9 @@ import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import { AiHelperDialog } from './AiHelperDialog';
+import { ProductCalculatorDialog } from './ProductCalculatorDialog';
+import { Separator } from './ui/separator';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
@@ -79,6 +82,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               <span className="ml-3">{item.label}</span>
             </Link>
           ))}
+
+          <Separator className="my-4 bg-gray-700" />
+          
+          <div className="px-4 space-y-2">
+            <AiHelperDialog />
+            <ProductCalculatorDialog />
+          </div>
         </nav>
 
         <div className="p-4 border-t border-gray-700">
