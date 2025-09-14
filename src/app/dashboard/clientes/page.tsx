@@ -8,7 +8,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { ClientForm } from '@/components/ClientForm';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, User, MapPin, Calendar } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 
 export default function ClientesPage() {
     const router = useRouter();
@@ -34,30 +35,41 @@ export default function ClientesPage() {
         router.push(`/dashboard/clientes/${clientId}`);
     };
 
+    const handleCardClick = (clientId: string) => {
+        router.push(`/dashboard/clientes/${clientId}`);
+    };
+
     return (
-        <div>
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold">Gerenciamento de Clientes</h1>
-                <Button onClick={openFormToCreate} disabled={authLoading}>
+        <div className="p-2 sm:p-4">
+            {/* Header responsivo */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-4 sm:mb-6">
+                <h1 className="text-lg sm:text-2xl md:text-3xl font-bold">Gerenciamento de Clientes</h1>
+                <Button 
+                    onClick={openFormToCreate} 
+                    disabled={authLoading}
+                    className="w-full sm:w-auto text-sm"
+                >
                     {authLoading ? 'Aguarde...' : 'Adicionar Cliente'}
                 </Button>
             </div>
-            <div className="border rounded-lg">
+
+            {/* Layout para Desktop - Tabela */}
+            <div className="hidden sm:block border rounded-lg overflow-x-auto">
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Nome</TableHead>
-                            <TableHead>Endereço</TableHead>
-                            <TableHead>Dia da Visita</TableHead>
-                            <TableHead className="text-right">Ações</TableHead>
+                            <TableHead className="text-sm">Nome</TableHead>
+                            <TableHead className="text-sm">Endereço</TableHead>
+                            <TableHead className="text-sm">Dia da Visita</TableHead>
+                            <TableHead className="text-right text-sm">Ações</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {clients.map((client) => (
                             <TableRow key={client.id} onClick={() => handleRowClick(client.id)} className="cursor-pointer hover:bg-gray-100">
-                                <TableCell className="font-medium">{client.name}</TableCell>
-                                <TableCell>{`${client.address}, ${client.neighborhood}`}</TableCell>
-                                <TableCell>{client.visitDay}</TableCell>
+                                <TableCell className="font-medium text-sm">{client.name}</TableCell>
+                                <TableCell className="text-sm">{`${client.address}, ${client.neighborhood}`}</TableCell>
+                                <TableCell className="text-sm">{client.visitDay}</TableCell>
                                 <TableCell className="text-right">
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
@@ -77,29 +89,88 @@ export default function ClientesPage() {
                     </TableBody>
                 </Table>
             </div>
+
+            {/* Layout para Mobile - Cards */}
+            <div className="sm:hidden space-y-3">
+                {clients.map((client) => (
+                    <Card key={client.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleCardClick(client.id)}>
+                        <CardContent className="p-4">
+                            <div className="flex items-start justify-between">
+                                <div className="flex-1 min-w-0 space-y-2">
+                                    <div className="flex items-center gap-2">
+                                        <User className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                                        <p className="font-semibold text-sm truncate">{client.name}</p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <MapPin className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                                        <p className="text-xs text-gray-600 truncate">{`${client.address}, ${client.neighborhood}`}</p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Calendar className="h-4 w-4 text-green-500 flex-shrink-0" />
+                                        <p className="text-xs text-gray-600">{client.visitDay}</p>
+                                    </div>
+                                </div>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" className="h-8 w-8 p-0 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                                            <span className="sr-only">Abrir menu</span>
+                                            <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openFormToEdit(client); }}>
+                                            Editar
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openAlert(client.id); }}>
+                                            Excluir
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+
+            {/* Dialog do formulário - responsivo */}
             <Dialog open={isFormOpen} onOpenChange={(isOpen) => !isOpen && closeForm()}>
-                <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                        <DialogTitle>{editingClient ? 'Editar Cliente' : 'Adicionar Novo Cliente'}</DialogTitle>
-                        <DialogDescription>Preencha ou edite as informações do cliente abaixo. Clique em salvar quando terminar.</DialogDescription>
+                <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto mx-2 sm:mx-auto">
+                    <DialogHeader className="pb-3">
+                        <DialogTitle className="text-base sm:text-lg">
+                            {editingClient ? 'Editar Cliente' : 'Adicionar Novo Cliente'}
+                        </DialogTitle>
+                        <DialogDescription className="text-sm">
+                            Preencha ou edite as informações do cliente abaixo. Clique em salvar quando terminar.
+                        </DialogDescription>
                     </DialogHeader>
-                    <ClientForm form={form} onSubmit={handleFormSubmit} />
-                    <DialogFooter>
-                        <Button type="submit" form="client-form" disabled={isSubmitting || authLoading}>
+                    <div className="max-h-[60vh] overflow-y-auto">
+                        <ClientForm form={form} onSubmit={handleFormSubmit} />
+                    </div>
+                    <DialogFooter className="pt-3">
+                        <Button 
+                            type="submit" 
+                            form="client-form" 
+                            disabled={isSubmitting || authLoading}
+                            className="w-full sm:w-auto text-sm"
+                        >
                             {isSubmitting ? 'Salvando...' : 'Salvar Cliente'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Alert Dialog */}
             <AlertDialog open={isAlertOpen} onOpenChange={(isOpen) => !isOpen && closeAlert()}>
-                <AlertDialogContent>
+                <AlertDialogContent className="mx-2 sm:mx-auto">
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
-                        <AlertDialogDescription>Essa ação não pode ser desfeita. Isso excluirá permanentemente o cliente.</AlertDialogDescription>
+                        <AlertDialogTitle className="text-base sm:text-lg">Você tem certeza?</AlertDialogTitle>
+                        <AlertDialogDescription className="text-sm">
+                            Essa ação não pode ser desfeita. Isso excluirá permanentemente o cliente.
+                        </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDelete}>Continuar</AlertDialogAction>
+                    <AlertDialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
+                        <AlertDialogCancel className="text-sm">Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} className="text-sm">Continuar</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
