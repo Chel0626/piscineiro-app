@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sun, Cloud, CloudRain, CloudSnow, CloudSun, Zap, CloudFog, Moon, Cloudy, BookOpen } from 'lucide-react';
+import { Sun, Cloud, CloudRain, CloudSnow, CloudSun, Zap, CloudFog, Moon, Cloudy } from 'lucide-react';
 
 interface WeatherData {
   current: {
@@ -15,11 +15,6 @@ interface WeatherData {
     weather_code: number;
   }[];
   city: string;
-}
-
-interface VerseData {
-  reference: string;
-  text: string;
 }
 
 const getWeatherInfo = (code: number, hour: number): { description: string; Icon: React.ElementType } => {
@@ -44,7 +39,6 @@ const WeatherIcon = ({ code, hour }: { code: number; hour: number }) => {
 
 export function WeatherWidget() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
-  const [verse, setVerse] = useState<VerseData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -58,16 +52,6 @@ export function WeatherWidget() {
       })
       .then((data) => setWeather(data))
       .catch((err) => setError(err.message));
-
-    // Buscar versículo do dia
-    fetch('/api/verse')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          setVerse(data.verse);
-        }
-      })
-      .catch((err) => console.error('Erro ao carregar versículo:', err));
   }, []);
 
   if (error) {
@@ -118,24 +102,6 @@ export function WeatherWidget() {
             ))}
           </div>
         </div>
-
-        {/* Versículo do Dia */}
-        {verse && (
-          <div className="mt-6 p-4 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
-            <div className="flex items-start gap-3">
-              <BookOpen className="h-5 w-5 text-blue-600 mt-1 flex-shrink-0" />
-              <div>
-                <h4 className="font-semibold text-blue-800 mb-2 text-sm sm:text-base">Versículo do Dia</h4>
-                <p className="text-sm sm:text-base text-gray-700 italic leading-relaxed mb-2">
-                  &ldquo;{verse.text}&rdquo;
-                </p>
-                <p className="text-xs sm:text-sm font-medium text-blue-600">
-                  — {verse.reference}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
   );

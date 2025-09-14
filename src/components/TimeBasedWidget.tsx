@@ -1,8 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { BookOpen } from 'lucide-react';
 
 type TimeOfDay = 'morning' | 'afternoon' | 'night';
+
+interface VerseData {
+  reference: string;
+  text: string;
+}
 
 const getTimeOfDay = (): TimeOfDay => {
   const currentHour = new Date().getHours();
@@ -21,9 +27,20 @@ const getTimeOfDay = (): TimeOfDay => {
 
 export function TimeBasedWidget() {
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('morning');
+  const [verse, setVerse] = useState<VerseData | null>(null);
 
   useEffect(() => {
     setTimeOfDay(getTimeOfDay());
+    
+    // Buscar versículo do dia
+    fetch('/api/verse')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setVerse(data.verse);
+        }
+      })
+      .catch((err) => console.error('Erro ao carregar versículo:', err));
   }, []);
 
   const renderMorningScene = () => (
@@ -211,23 +228,47 @@ export function TimeBasedWidget() {
   };
 
   const getDescription = () => {
+    if (verse) {
+      return (
+        <div className="flex items-start gap-3 p-4 bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-blue-950/30 dark:to-purple-950/30 rounded-lg border border-blue-200/30 dark:border-blue-800/30">
+          <BookOpen className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-1 flex-shrink-0" />
+          <div>
+            <h4 className="font-semibold text-blue-800 dark:text-blue-300 mb-2 text-sm">Versículo do Dia</h4>
+            <p className="text-sm text-gray-700 dark:text-gray-300 italic leading-relaxed mb-2">
+              &ldquo;{verse.text}&rdquo;
+            </p>
+            <p className="text-xs font-medium text-blue-600 dark:text-blue-400">
+              — {verse.reference}
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    // Fallback para quando não tiver versículo
     switch (timeOfDay) {
       case 'morning':
-        return 'Um novo dia cheio de possibilidades! Aqui está um resumo do seu dia.';
+        return 'Um novo dia cheio de possibilidades! Que Deus abençoe seu dia.';
       case 'afternoon':
-        return 'Hora de relaxar e aproveitar o sol! Aqui está um resumo do seu dia.';
+        return 'Hora de relaxar e aproveitar o sol! Continue firme em sua jornada.';
       case 'night':
-        return 'Descanse bem e tenha bons sonhos! Aqui está um resumo do seu dia.';
+        return 'Descanse bem e tenha bons sonhos! Gratidão pelo dia de hoje.';
       default:
-        return 'Tenha um ótimo dia! Aqui está um resumo do seu dia.';
+        return 'Tenha um ótimo dia! Que Deus o abençoe.';
     }
   };
 
   return (
-    <div className="bg-white rounded-lg border p-6 shadow-sm">
+    <div className="bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700 p-6 shadow-sm">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight mb-2">{getTitle()}</h1>
-        <p className="text-muted-foreground">{getDescription()}</p>
+        <h1 className="text-3xl font-bold tracking-tight mb-4 dark:text-white">{getTitle()}</h1>
+        <div className="text-muted-foreground dark:text-gray-300">
+          {typeof getDescription() === 'string' ? (
+            <p>{getDescription()}</p>
+          ) : (
+            getDescription()
+          )}
+        </div>
       </div>
       
       {renderScene()}

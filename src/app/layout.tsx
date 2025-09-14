@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/sonner";
 import { AppLayout } from '@/components/AppLayout';
+import { ThemeProvider } from '@/components/ThemeProvider';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -17,11 +18,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-br">
+    <html lang="pt-br" suppressHydrationWarning>
       <body className={inter.className}>
-        {/* Não precisamos mais do AuthProvider aqui, o AppLayout e o middleware cuidam de tudo */}
-        <AppLayout>{children}</AppLayout>
-        <Toaster richColors />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {/* Não precisamos mais do AuthProvider aqui, o AppLayout e o middleware cuidam de tudo */}
+          <AppLayout>{children}</AppLayout>
+          <Toaster richColors />
+        </ThemeProvider>
       </body>
     </html>
   );

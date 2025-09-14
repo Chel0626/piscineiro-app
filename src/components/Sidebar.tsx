@@ -11,6 +11,7 @@ import { AiHelperDialog } from './AiHelperDialog';
 import { ProductCalculatorDialog } from './ProductCalculatorDialog';
 import { BillingWidget } from './BillingWidget';
 import { Separator } from './ui/separator';
+import { ThemeToggle } from './ui/theme-toggle';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
@@ -94,9 +95,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         <div className="p-4 space-y-3 border-t border-gray-700">
           <BillingWidget />
-          <Button onClick={handleLogout} variant="destructive" className="w-full">
-            Sair
-          </Button>
+          <div className="flex items-center justify-between">
+            <ThemeToggle />
+            <Button onClick={handleLogout} variant="destructive" className="flex-1 ml-3">
+              Sair
+            </Button>
+          </div>
         </div>
       </aside>
     </>
