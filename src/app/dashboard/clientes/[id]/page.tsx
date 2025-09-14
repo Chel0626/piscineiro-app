@@ -15,6 +15,7 @@ import { VisitForm, VisitFormData } from '@/components/VisitForm';
 import { ArrowLeft } from 'lucide-react';
 import { ProductCalculator } from '@/components/ProductCalculator';
 import { AiHelper } from '@/components/AiHelper';
+import { ClientProductManager } from '@/components/ClientProductManager'; // Importe o novo componente
 
 export default function ClienteDetailPage() {
   const params = useParams();
@@ -118,7 +119,11 @@ export default function ClienteDetailPage() {
                 <CardTitle className="text-base sm:text-lg">Registrar Nova Visita</CardTitle>
               </CardHeader>
               <CardContent>
-                <VisitForm onSubmit={handleVisitSubmit} isLoading={isSubmitting} />
+                <VisitForm 
+                  onSubmit={handleVisitSubmit} 
+                  isLoading={isSubmitting}
+                  clientId={clientId} 
+                />
                 
                 <Separator className="my-4 sm:my-8" />
 
@@ -132,10 +137,38 @@ export default function ClienteDetailPage() {
                             year: 'numeric', month: 'long', day: 'numeric',
                           })}
                         </p>
-                        <div className="flex flex-col sm:flex-row gap-2 sm:gap-6 text-xs sm:text-sm">
-                          <span><strong>pH:</strong> {visit.ph}</span>
-                          <span><strong>Cloro:</strong> {visit.cloro} ppm</span>
-                          <span><strong>Alcalinidade:</strong> {visit.alcalinidade} ppm</span>
+                        <div className="space-y-3">
+                          <div className="flex flex-col sm:flex-row gap-2 sm:gap-6 text-xs sm:text-sm">
+                            <span><strong>pH:</strong> {visit.ph}</span>
+                            <span><strong>Cloro:</strong> {visit.cloro} ppm</span>
+                            <span><strong>Alcalinidade:</strong> {visit.alcalinidade} ppm</span>
+                          </div>
+                          
+                          {visit.productsUsed?.length > 0 && (
+                            <div className="text-xs sm:text-sm">
+                              <strong>Produtos Utilizados:</strong>
+                              <div className="mt-1 space-y-1">
+                                {visit.productsUsed.map((product, index) => (
+                                  <div key={index}>
+                                    {product.productName} (x{product.quantity})
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {visit.productsRequested?.length > 0 && (
+                            <div className="text-xs sm:text-sm">
+                              <strong>Produtos Solicitados:</strong>
+                              <div className="mt-1 space-y-1">
+                                {visit.productsRequested.map((product, index) => (
+                                  <div key={index}>
+                                    {product.productName} (x{product.quantity})
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))
@@ -151,14 +184,8 @@ export default function ClienteDetailPage() {
         </TabsContent>
 
         <TabsContent value="products">
-          <Card>
-            <CardHeader className="pb-3 sm:pb-6">
-              <CardTitle className="text-base sm:text-lg">Produtos Necessários</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm sm:text-base">Em breve: Sistema de solicitação de produtos.</p>
-            </CardContent>
-          </Card>
+          {/* ✅ Substituímos o conteúdo da aba "Produtos" pelo novo componente */}
+          <ClientProductManager clientId={clientId} />
         </TabsContent>
         
         <TabsContent value="ai_helper">

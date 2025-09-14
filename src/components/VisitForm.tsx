@@ -13,11 +13,19 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { ProductUsage, VisitProductManager } from './VisitProductManager';
+
+const productUsageSchema = z.object({
+  productName: z.string(),
+  quantity: z.number().min(1),
+});
 
 const formSchema = z.object({
   ph: z.coerce.number().min(0, { message: 'pH inválido.' }),
   cloro: z.coerce.number().min(0, { message: 'Cloro inválido.' }),
   alcalinidade: z.coerce.number().min(0, { message: 'Alcalinidade inválida.' }),
+  productsUsed: z.array(productUsageSchema),
+  productsRequested: z.array(productUsageSchema),
 });
 
 export type VisitFormData = z.infer<typeof formSchema>;
@@ -25,16 +33,27 @@ export type VisitFormData = z.infer<typeof formSchema>;
 interface VisitFormProps {
   onSubmit: (data: VisitFormData) => void;
   isLoading: boolean;
+  clientId: string;
 }
 
-export function VisitForm({ onSubmit, isLoading }: VisitFormProps) {
+export function VisitForm({ onSubmit, isLoading, clientId }: VisitFormProps) {
   const form = useForm<VisitFormData>({
     defaultValues: {
       ph: 0,
       cloro: 0,
       alcalinidade: 0,
+      productsUsed: [],
+      productsRequested: [],
     },
   });
+
+  const handleProductsUsedChange = (products: ProductUsage[]) => {
+    form.setValue('productsUsed', products);
+  };
+
+  const handleProductsRequestedChange = (products: ProductUsage[]) => {
+    form.setValue('productsRequested', products);
+  };
 
   const handleFormSubmit = async (data: VisitFormData) => {
     try {
@@ -44,6 +63,8 @@ export function VisitForm({ onSubmit, isLoading }: VisitFormProps) {
         ph: 0,
         cloro: 0,
         alcalinidade: 0,
+        productsUsed: [],
+        productsRequested: [],
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -101,7 +122,16 @@ export function VisitForm({ onSubmit, isLoading }: VisitFormProps) {
             )}
           />
         </div>
-        <Button type="submit" className="w-full" disabled={isLoading}>
+
+        <div className="mt-6">
+          <VisitProductManager
+            clientId={clientId}
+            onProductsUsedChange={handleProductsUsedChange}
+            onProductsRequestedChange={handleProductsRequestedChange}
+          />
+        </div>
+
+        <Button type="submit" className="w-full mt-6" disabled={isLoading}>
           {isLoading ? 'Salvando...' : 'Salvar Visita'}
         </Button>
       </form>
