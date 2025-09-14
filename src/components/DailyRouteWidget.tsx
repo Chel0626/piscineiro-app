@@ -18,14 +18,14 @@ export function DailyRouteWidget() {
 
   if (authLoading) {
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Roteiro do Dia</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <p>Carregando clientes...</p>
-            </CardContent>
-        </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base sm:text-lg">Roteiro do Dia</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm">Carregando clientes...</p>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -34,9 +34,9 @@ export function DailyRouteWidget() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Roteiro de Hoje ({today})</CardTitle>
-        <CardDescription>
+      <CardHeader className="pb-3 sm:pb-6">
+        <CardTitle className="text-base sm:text-lg">Roteiro de Hoje ({today})</CardTitle>
+        <CardDescription className="text-sm">
           {dailyRouteClients.length > 0
             ? `Você tem ${dailyRouteClients.length} cliente(s) para visitar hoje.`
             : 'Você não tem visitas agendadas para hoje.'}
@@ -44,28 +44,30 @@ export function DailyRouteWidget() {
       </CardHeader>
       <CardContent>
         {dailyRouteClients.length > 0 ? (
-          <ul className="space-y-4">
+          <ul className="space-y-3">
             {dailyRouteClients.map(client => (
-              // ✅ CORREÇÃO: Ajustes no layout do item da lista
-              <li key={client.id} className="flex items-center justify-between gap-4 p-3 bg-gray-50 rounded-lg">
-                <div className="flex-1 min-w-0"> {/* Permite que o texto encolha e não empurre o botão */}
-                  <p className="font-semibold truncate">{client.name}</p>
-                  <p className="text-sm text-muted-foreground truncate">{client.neighborhood}</p>
+              <li key={client.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                {/* Informações do cliente */}
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm sm:text-base truncate">{client.name}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">{client.neighborhood}</p>
                 </div>
+                
+                {/* Botão de check-in */}
                 <Button 
                   variant="outline" 
                   size="sm" 
                   onClick={() => router.push(`/dashboard/clientes/${client.id}`)}
-                  className="flex-shrink-0" // Garante que o botão não seja espremido
+                  className="w-full sm:w-auto flex-shrink-0 text-xs sm:text-sm"
                 >
-                  <ListChecks className="mr-2 h-4 w-4" />
+                  <ListChecks className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                   Check-in
                 </Button>
               </li>
             ))}
           </ul>
         ) : (
-          <div className="text-center text-gray-500 py-4">
+          <div className="text-center text-gray-500 py-4 text-sm">
             Aproveite o dia de descanso!
           </div>
         )}
