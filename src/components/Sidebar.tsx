@@ -57,7 +57,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           // ✅ CORREÇÃO: Trocamos h-screen por h-dvh (dynamic viewport height)
           // Isso garante que a altura da sidebar se ajuste dinamicamente,
           // nunca ficando escondida atrás da barra do navegador.
-          'fixed top-0 left-0 z-40 w-64 h-dvh bg-gray-800 text-white flex flex-col transition-transform duration-300 ease-in-out',
+          'fixed top-0 left-0 z-40 w-64 h-dvh bg-gray-800 dark:bg-gray-900 text-white flex flex-col transition-transform duration-300 ease-in-out border-r border-gray-700 dark:border-gray-800',
           'md:translate-x-0',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
@@ -76,8 +76,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               href={item.href}
               onClick={handleLinkClick}
               className={cn(
-                'flex items-center px-4 py-2 mt-2 text-gray-300 rounded-lg hover:bg-gray-700 hover:text-white',
-                { 'bg-gray-700 text-white': pathname === item.href, }
+                'flex items-center px-4 py-2 mt-2 text-gray-300 dark:text-gray-400 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-800 hover:text-white transition-colors',
+                { 'bg-gray-700 dark:bg-gray-800 text-white': pathname === item.href, }
               )}
             >
               <item.icon className="h-5 w-5" />
@@ -85,7 +85,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             </Link>
           ))}
 
-          <Separator className="my-4 bg-gray-700" />
+          <Separator className="my-4 bg-gray-700 dark:bg-gray-600" />
           
           <div className="px-4 space-y-2">
             <AiHelperDialog />
@@ -93,7 +93,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </div>
         </nav>
 
-        <div className="p-4 space-y-3 border-t border-gray-700">
+        <div className="p-4 space-y-3 border-t border-gray-700 dark:border-gray-600">
           <BillingWidget />
           <div className="flex items-center justify-between">
             <ThemeToggle />

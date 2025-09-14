@@ -56,7 +56,7 @@ export function WeatherWidget() {
 
   if (error) {
     return (
-      <Card className="bg-red-100 border-red-400 text-red-700">
+      <Card className="bg-red-100 dark:bg-red-900 border-red-400 dark:border-red-600 text-red-700 dark:text-red-300">
         <CardHeader><CardTitle className="text-sm sm:text-base">Erro na Previsão do Tempo</CardTitle></CardHeader>
         <CardContent><p className="text-sm">{error}</p></CardContent>
       </Card>
@@ -65,9 +65,9 @@ export function WeatherWidget() {
 
   if (!weather) {
     return (
-      <Card>
-        <CardHeader><CardTitle className="text-sm sm:text-base">Previsão do Tempo</CardTitle></CardHeader>
-        <CardContent><p className="text-sm">Carregando...</p></CardContent>
+      <Card className="dark:bg-gray-800 dark:border-gray-700">
+        <CardHeader><CardTitle className="text-sm sm:text-base dark:text-white">Previsão do Tempo</CardTitle></CardHeader>
+        <CardContent><p className="text-sm dark:text-gray-300">Carregando...</p></CardContent>
       </Card>
     );
   }
@@ -76,28 +76,28 @@ export function WeatherWidget() {
   const { description } = getWeatherInfo(weather.current.weather_code, currentHour);
 
   return (
-    <Card>
+    <Card className="dark:bg-gray-800 dark:border-gray-700">
       <CardHeader className="pb-3 sm:pb-6">
-        <CardTitle className="text-base sm:text-lg">Previsão para {weather.city}</CardTitle>
+        <CardTitle className="text-base sm:text-lg dark:text-white">Previsão para {weather.city}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center gap-3 sm:gap-4">
           <WeatherIcon code={weather.current.weather_code} hour={currentHour} />
           <div>
-            <p className="text-2xl sm:text-4xl font-bold">{weather.current.temp}°C</p>
-            <p className="text-sm text-muted-foreground capitalize">{description}</p>
+            <p className="text-2xl sm:text-4xl font-bold dark:text-white">{weather.current.temp}°C</p>
+            <p className="text-sm text-muted-foreground dark:text-gray-400 capitalize">{description}</p>
           </div>
         </div>
         
         <div>
-          <h4 className="font-semibold mb-3 text-sm sm:text-base">Próximas horas:</h4>
+          <h4 className="font-semibold mb-3 text-sm sm:text-base dark:text-white">Próximas horas:</h4>
           {/* Grid responsivo que se adapta ao tamanho da tela */}
           <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2 sm:gap-3">
             {weather.hourly.slice(0, 8).map((hour, index) => (
-              <div key={index} className="flex flex-col items-center gap-1 sm:gap-2 p-2 sm:p-3 rounded-lg bg-gray-100">
-                <span className="text-xs sm:text-sm font-medium">{hour.time}h</span>
+              <div key={index} className="flex flex-col items-center gap-1 sm:gap-2 p-2 sm:p-3 rounded-lg bg-gray-100 dark:bg-gray-700">
+                <span className="text-xs sm:text-sm font-medium dark:text-gray-300">{hour.time}h</span>
                 <WeatherIcon code={hour.weather_code} hour={hour.time} />
-                <span className="text-xs sm:text-sm font-bold">{hour.temp}°</span>
+                <span className="text-xs sm:text-sm font-bold dark:text-white">{hour.temp}°</span>
               </div>
             ))}
           </div>

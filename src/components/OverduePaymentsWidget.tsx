@@ -38,16 +38,16 @@ export function OverduePaymentsWidget() {
   };
 
   return (
-    <Card className="border-red-200 bg-red-50">
+    <Card className="border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/30">
       <CardHeader>
-        <CardTitle className="text-red-700 flex items-center gap-2">
+        <CardTitle className="text-red-700 dark:text-red-400 flex items-center gap-2">
           <AlertTriangle className="h-5 w-5" />
           Pagamentos Vencidos
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="dark:text-red-300">
           {overdueClients.length} cliente(s) com mensalidade em atraso.
           <br />
-          <strong className="text-red-600">Total: R$ {getTotalOverdue().toFixed(2)}</strong>
+          <strong className="text-red-600 dark:text-red-400">Total: R$ {getTotalOverdue().toFixed(2)}</strong>
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -58,22 +58,22 @@ export function OverduePaymentsWidget() {
             return (
               <li 
                 key={client.id} 
-                className="flex items-center justify-between p-3 bg-white border border-red-200 rounded-lg cursor-pointer hover:bg-red-50"
+                className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 border border-red-200 dark:border-red-700 rounded-lg cursor-pointer hover:bg-red-50 dark:hover:bg-red-800/30"
                 onClick={() => router.push(`/dashboard/clientes/${client.id}`)}
               >
                 <div className="flex items-center gap-3">
-                  <User className="h-5 w-5 text-red-500" />
+                  <User className="h-5 w-5 text-red-500 dark:text-red-400" />
                   <div>
-                    <p className="font-semibold">{client.name}</p>
-                    <p className="text-sm text-muted-foreground">{client.neighborhood}</p>
-                    <p className="text-xs text-red-600">
+                    <p className="font-semibold dark:text-white">{client.name}</p>
+                    <p className="text-sm text-muted-foreground dark:text-gray-400">{client.neighborhood}</p>
+                    <p className="text-xs text-red-600 dark:text-red-400">
                       {daysOverdue > 0 ? `${daysOverdue} dia(s) em atraso` : 'Venceu hoje'}
                     </p>
                   </div>
                 </div>
                 
                 <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2 text-red-600 font-semibold">
+                  <div className="flex items-center gap-2 text-red-600 dark:text-red-400 font-semibold">
                     <DollarSign className="h-4 w-4" />
                     <span>R$ {client.serviceValue.toFixed(2)}</span>
                   </div>
@@ -81,7 +81,7 @@ export function OverduePaymentsWidget() {
                   <Button
                     size="sm"
                     variant="outline"
-                    className="text-green-600 border-green-600 hover:bg-green-50"
+                    className="text-green-600 dark:text-green-400 border-green-600 dark:border-green-400 hover:bg-green-50 dark:hover:bg-green-900/30"
                     onClick={(e) => handleMarkAsPaid(client.id, e)}
                   >
                     <CheckCircle className="h-4 w-4 mr-1" />

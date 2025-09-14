@@ -39,16 +39,16 @@ export function PaymentsDueWidget() {
   };
 
   return (
-    <Card className="border-orange-200 bg-orange-50">
+    <Card className="border-orange-200 dark:border-orange-700 bg-orange-50 dark:bg-orange-900/30">
       <CardHeader>
-        <CardTitle className="text-orange-700 flex items-center gap-2">
+        <CardTitle className="text-orange-700 dark:text-orange-400 flex items-center gap-2">
           <Clock className="h-5 w-5" />
           Vencimentos de Hoje
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="dark:text-orange-300">
           {dueClients.length} cliente(s) com mensalidade vencendo hoje.
           <br />
-          <strong className="text-orange-600">Total: R$ {getTotalDue().toFixed(2)}</strong>
+          <strong className="text-orange-600 dark:text-orange-400">Total: R$ {getTotalDue().toFixed(2)}</strong>
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -56,20 +56,20 @@ export function PaymentsDueWidget() {
           {dueClients.map(client => (
             <li 
               key={client.id} 
-              className="flex items-center justify-between p-3 bg-white border border-orange-200 rounded-lg cursor-pointer hover:bg-orange-50"
+              className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 border border-orange-200 dark:border-orange-700 rounded-lg cursor-pointer hover:bg-orange-50 dark:hover:bg-orange-800/30"
               onClick={() => router.push(`/dashboard/clientes/${client.id}`)}
             >
               <div className="flex items-center gap-3">
-                <User className="h-5 w-5 text-orange-500" />
+                <User className="h-5 w-5 text-orange-500 dark:text-orange-400" />
                 <div>
-                    <p className="font-semibold">{client.name}</p>
-                    <p className="text-sm text-muted-foreground">{client.neighborhood}</p>
-                    <p className="text-xs text-orange-600">Vence hoje</p>
+                    <p className="font-semibold dark:text-white">{client.name}</p>
+                    <p className="text-sm text-muted-foreground dark:text-gray-400">{client.neighborhood}</p>
+                    <p className="text-xs text-orange-600 dark:text-orange-400">Vence hoje</p>
                 </div>
               </div>
               
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 text-orange-600 font-semibold">
+                <div className="flex items-center gap-2 text-orange-600 dark:text-orange-400 font-semibold">
                   <DollarSign className="h-4 w-4" />
                   <span>R$ {client.serviceValue.toFixed(2)}</span>
                 </div>
@@ -77,7 +77,7 @@ export function PaymentsDueWidget() {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="text-green-600 border-green-600 hover:bg-green-50"
+                  className="text-green-600 dark:text-green-400 border-green-600 dark:border-green-400 hover:bg-green-50 dark:hover:bg-green-900/30"
                   onClick={(e) => handleMarkAsPaid(client.id, e)}
                 >
                   <CheckCircle className="h-4 w-4 mr-1" />
