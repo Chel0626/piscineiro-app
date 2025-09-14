@@ -1,53 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { DollarSign, TrendingUp, Calendar, Eye } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Separator } from './ui/separator';
-
-interface BillingData {
-  totalMensal: number;
-  totalAnual: number;
-  clientesAtivos: number;
-  proximoVencimento: string;
-  recebimentosPendentes: number;
-}
+import { useBilling } from '@/hooks/useBilling';
 
 export function BillingWidget() {
-  const [billingData, setBillingData] = useState<BillingData>({
-    totalMensal: 0,
-    totalAnual: 0,
-    clientesAtivos: 0,
-    proximoVencimento: '',
-    recebimentosPendentes: 0
-  });
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Simular carregamento de dados - aqui você integraria com seu backend
-    const fetchBillingData = async () => {
-      try {
-        // TODO: Substituir por chamada real à API
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        setBillingData({
-          totalMensal: 4850.00,
-          totalAnual: 58200.00,
-          clientesAtivos: 23,
-          proximoVencimento: '2025-09-20',
-          recebimentosPendentes: 2
-        });
-      } catch (error) {
-        console.error('Erro ao carregar dados de faturamento:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchBillingData();
-  }, []);
+  const billingData = useBilling();
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -60,22 +21,6 @@ export function BillingWidget() {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
-
-  if (isLoading) {
-    return (
-      <div className="w-full p-3 bg-gray-700 rounded-lg animate-pulse overflow-hidden">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <DollarSign className="h-4 w-4 flex-shrink-0" />
-            <div className="h-4 bg-gray-600 rounded w-20"></div>
-          </div>
-          <div className="h-4 w-4 bg-gray-600 rounded flex-shrink-0"></div>
-        </div>
-        <div className="h-5 bg-gray-600 rounded w-24 mb-1"></div>
-        <div className="h-3 bg-gray-600 rounded w-16"></div>
-      </div>
-    );
-  }
 
   return (
     <Dialog>

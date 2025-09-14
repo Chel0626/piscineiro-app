@@ -49,14 +49,14 @@ function SortableClientItem({ client }: { client: Client }) {
       ref={setNodeRef}
       style={style}
       {...attributes}
-      className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+      className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
     >
       <button {...listeners} className="cursor-grab touch-none p-1">
-        <GripVertical className="h-5 w-5 text-gray-400" />
+        <GripVertical className="h-5 w-5 text-gray-400 dark:text-gray-500" />
       </button>
-      <MapPin className="h-5 w-5 text-gray-500 flex-shrink-0" />
+      <MapPin className="h-5 w-5 text-gray-500 dark:text-gray-400 flex-shrink-0" />
       <div className="flex-1 min-w-0">
-        <p className="font-semibold truncate">{client.name}</p>
+        <p className="font-semibold truncate text-gray-900 dark:text-gray-100">{client.name}</p>
         <p className="text-sm text-muted-foreground truncate">
           {`${client.address}, ${client.neighborhood}`}
         </p>
@@ -150,7 +150,7 @@ export default function RoteirosPage() {
                       </ul>
                     </SortableContext>
                   ) : (
-                    <p className="text-sm text-center text-gray-500 py-4">
+                    <p className="text-sm text-center text-gray-500 dark:text-gray-400 py-4">
                       Nenhum cliente agendado.
                     </p>
                   )}
