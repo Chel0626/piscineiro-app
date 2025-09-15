@@ -57,7 +57,7 @@ function SortableClientItem({ client }: { client: Client }) {
       <MapPin className="h-5 w-5 text-gray-500 dark:text-gray-400 flex-shrink-0" />
       <div className="flex-1 min-w-0">
         <p className="font-semibold truncate text-gray-900 dark:text-gray-100">{client.name}</p>
-        <p className="text-sm text-muted-foreground truncate">
+        <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
           {`${client.address}, ${client.neighborhood}`}
         </p>
       </div>

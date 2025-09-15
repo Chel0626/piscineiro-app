@@ -6,8 +6,9 @@ import { usePayments } from '@/hooks/usePayments';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
-import { User, DollarSign, CheckCircle, Clock } from 'lucide-react';
+import { User, DollarSign, CheckCircle, Clock, MessageCircle } from 'lucide-react';
 import { ClientWithPayment } from '@/lib/validators/clientSchema';
+import { toast } from 'sonner';
 
 export function PaymentsDueWidget() {
   const { clients, authLoading } = useClients();
@@ -32,6 +33,21 @@ export function PaymentsDueWidget() {
   const handleMarkAsPaid = async (clientId: string, e: React.MouseEvent) => {
     e.stopPropagation(); // Impede que clique no card
     await markAsPaid(clientId);
+  };
+
+  const handleSendWhatsApp = (client: ClientWithPayment, e: React.MouseEvent) => {
+    e.stopPropagation(); // Impede que clique no card
+    
+    if (!client.phone) {
+      toast.error('Cliente não possui telefone cadastrado.');
+      return;
+    }
+
+    const message = `Olá, ${client.name}, tudo bem?\nNosso mês venceu. Obrigado!`;
+    const whatsappUrl = `https://wa.me/55${client.phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+    
+    window.open(whatsappUrl, '_blank');
+    toast.success('WhatsApp aberto com a mensagem de cobrança!');
   };
 
   const getTotalDue = () => {
@@ -68,7 +84,7 @@ export function PaymentsDueWidget() {
                 </div>
               </div>
               
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <div className="flex items-center gap-2 text-orange-600 dark:text-orange-400 font-semibold">
                   <DollarSign className="h-4 w-4" />
                   <span>R$ {client.serviceValue.toFixed(2)}</span>
@@ -82,6 +98,17 @@ export function PaymentsDueWidget() {
                 >
                   <CheckCircle className="h-4 w-4 mr-1" />
                   Pago
+                </Button>
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-blue-600 dark:text-blue-400 border-blue-600 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30"
+                  onClick={(e) => handleSendWhatsApp(client, e)}
+                  disabled={!client.phone}
+                >
+                  <MessageCircle className="h-4 w-4 mr-1" />
+                  Cobrar
                 </Button>
               </div>
             </li>

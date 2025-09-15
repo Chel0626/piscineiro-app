@@ -44,7 +44,7 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100">
+    <div className="flex min-h-screen items-center justify-center bg-gray-100 dark:bg-gray-900">
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-2xl">Cadastro</CardTitle>
@@ -66,9 +66,9 @@ export default function SignupPage() {
             <Button className="w-full" type="submit" disabled={isLoading}>
               {isLoading ? 'Criando conta...' : 'Criar Conta'}
             </Button>
-            <p className="mt-4 text-center text-sm text-gray-600">
+            <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-300">
               Já tem uma conta?{' '}
-              <Link href="/login" className="underline">Faça login</Link>
+              <Link href="/login" className="underline hover:text-blue-600 dark:hover:text-blue-400">Faça login</Link>
             </p>
           </CardFooter>
         </form>
