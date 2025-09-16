@@ -1,7 +1,6 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/context/AuthContext';
 import { getUserRole, AUTHORIZED_TEST_EMAILS } from '@/lib/userRoles';
@@ -14,7 +13,7 @@ export default function AdminPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!authLoading && (!user || getUserRole(user.email) !== 'admin')) {
+    if (!authLoading && (!user || !user.email || getUserRole(user.email) !== 'admin')) {
       router.push('/dashboard');
     }
   }, [user, authLoading, router]);
@@ -23,7 +22,7 @@ export default function AdminPage() {
     return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
   }
 
-  if (!user || getUserRole(user.email) !== 'admin') {
+  if (!user || !user.email || getUserRole(user.email) !== 'admin') {
     return null;
   }
 
