@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, Route, X, Package } from 'lucide-react';
+import { Home, Users, Route, X, Package, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { signOut } from 'firebase/auth';
@@ -13,6 +13,8 @@ import { FillReminderButton } from './FillReminderButton';
 import { BillingWidget } from './BillingWidget';
 import { Separator } from './ui/separator';
 import { ThemeToggle } from './ui/theme-toggle';
+import { useAuth } from '@/context/AuthContext';
+import { getUserRole } from '@/lib/userRoles';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
@@ -28,6 +30,9 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const { user } = useAuth();
+
+  const isAdmin = user?.email && getUserRole(user.email) === 'admin';
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -86,6 +91,21 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               <span className="ml-3">{item.label}</span>
             </Link>
           ))}
+
+          {/* Link Admin - apenas para administradores */}
+          {isAdmin && (
+            <Link
+              href="/dashboard/admin"
+              onClick={handleLinkClick}
+              className={cn(
+                'flex items-center px-4 py-2 mt-2 text-gray-300 dark:text-gray-400 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-800 hover:text-white transition-colors',
+                { 'bg-gray-700 dark:bg-gray-800 text-white': pathname === '/dashboard/admin' }
+              )}
+            >
+              <Shield className="h-5 w-5" />
+              <span className="ml-3">Admin</span>
+            </Link>
+          )}
 
           <Separator className="my-4 bg-gray-700 dark:bg-gray-600" />
           
