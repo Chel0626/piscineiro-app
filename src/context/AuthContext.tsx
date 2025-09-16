@@ -32,16 +32,15 @@ export function AuthContextProvider({ children }: { children: ReactNode }) {
       if (user) {
         setUser(user);
         
-        // Verificar se o usuário está autorizado
-        const authorized = user.email ? isAuthorizedUser(user.email) : false;
-        setIsAuthorized(authorized);
-        
-        // Salvar email no cookie para o middleware
-        if (authorized) {
+        // Sempre salvar o email no cookie (para o middleware verificar)
+        if (user.email) {
           document.cookie = `user-email=${user.email}; path=/; max-age=86400;`;
+          
+          // Verificar se o usuário está autorizado
+          const authorized = isAuthorizedUser(user.email);
+          setIsAuthorized(authorized);
         } else {
-          // Remove o cookie se não autorizado
-          document.cookie = 'user-email=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+          setIsAuthorized(false);
         }
       } else {
         setUser(null);
