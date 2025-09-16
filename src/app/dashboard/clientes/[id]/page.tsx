@@ -61,18 +61,26 @@ export default function ClienteDetailPage() {
       </div>
 
       <Tabs defaultValue="history" className="w-full">
-        {/* TabsList responsiva com quebra de linha */}
-        <TabsList className="grid grid-cols-2 sm:flex sm:flex-wrap h-auto w-full sm:w-auto mb-4 sm:mb-6">
-          <TabsTrigger value="data" className="text-xs sm:text-sm px-2 sm:px-4">
-            Dados
+        {/* TabsList melhorada com espaçamento adequado */}
+        <TabsList className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-1 h-auto w-full bg-gray-100 dark:bg-gray-800 p-2 mb-6">
+          <TabsTrigger 
+            value="data" 
+            className="text-sm sm:text-base px-4 py-3 data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-700 rounded-md font-medium transition-all"
+          >
+            📋 Dados
           </TabsTrigger>
-          <TabsTrigger value="history" className="text-xs sm:text-sm px-2 sm:px-4">
-            Histórico
+          <TabsTrigger 
+            value="history" 
+            className="text-sm sm:text-base px-4 py-3 data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-700 rounded-md font-medium transition-all"
+          >
+            📝 Histórico
           </TabsTrigger>
-          <TabsTrigger value="products" className="text-xs sm:text-sm px-2 sm:px-4">
-            Produtos
+          <TabsTrigger 
+            value="products" 
+            className="text-sm sm:text-base px-4 py-3 data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-700 rounded-md font-medium transition-all"
+          >
+            🧪 Produtos
           </TabsTrigger>
-
         </TabsList>
         
         <TabsContent value="data">
