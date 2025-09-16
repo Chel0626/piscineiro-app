@@ -57,15 +57,15 @@ function SortableClientItem({ client }: { client: Client }) {
       ref={setNodeRef}
       style={style}
       {...attributes}
-      className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+      className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
     >
-      <button {...listeners} className="cursor-grab touch-none p-1">
-        <GripVertical className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+      <button {...listeners} className="cursor-grab touch-none p-1 flex-shrink-0">
+        <GripVertical className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 dark:text-gray-500" />
       </button>
-      <MapPin className="h-5 w-5 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+      <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 dark:text-gray-400 flex-shrink-0" />
       <div className="flex-1 min-w-0">
-        <p className="font-semibold truncate text-gray-900 dark:text-gray-100">{client.name}</p>
-        <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
+        <p className="font-semibold truncate text-gray-900 dark:text-gray-100 text-sm sm:text-base">{client.name}</p>
+        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 truncate">
           {`${client.address}, ${client.neighborhood}`}
         </p>
       </div>
@@ -128,17 +128,17 @@ export default function RoteirosPage() {
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
     >
-      <div>
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold">Roteiros da Semana</h1>
-          <p className="text-muted-foreground">
+      <div className="px-2 sm:px-0">
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold">Roteiros da Semana</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">
             Selecione um dia e arraste os clientes para reordenar sua rota de visitas.
           </p>
         </div>
 
         {/* Botões dos dias da semana */}
-        <div className="mb-6">
-          <div className="flex flex-wrap gap-2">
+        <div className="mb-4 sm:mb-6 px-2 sm:px-0">
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
             {daysOfWeek.map((day) => {
               const clientsCount = localGroupedClients[day.key]?.length || 0;
               const isSelected = selectedDay === day.key;
@@ -148,10 +148,10 @@ export default function RoteirosPage() {
                   key={day.key}
                   variant={isSelected ? "default" : "outline"}
                   onClick={() => setSelectedDay(day.key)}
-                  className="flex flex-col h-16 px-4 py-2 min-w-[100px] relative"
+                  className="flex flex-col h-16 px-2 py-2 relative w-full text-center"
                 >
-                  <span className="font-medium">{day.short}</span>
-                  <span className="text-xs opacity-75">{day.label}</span>
+                  <span className="font-medium text-xs sm:text-sm">{day.short}</span>
+                  <span className="text-xs opacity-75 hidden sm:block">{day.label}</span>
                   {clientsCount > 0 && (
                     <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                       {clientsCount}
@@ -164,31 +164,31 @@ export default function RoteirosPage() {
         </div>
 
         {/* Card do dia selecionado */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
+        <Card className="mx-2 sm:mx-0">
+          <CardHeader className="px-4 sm:px-6">
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+              <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
               {selectedDayInfo?.label}
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-sm">
               {selectedDayClients.length} cliente(s) agendado(s)
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 sm:px-6">
             {selectedDayClients.length > 0 ? (
               <SortableContext
                 items={selectedDayClients.map(c => c.id)}
                 strategy={verticalListSortingStrategy}
               >
-                <ul className="space-y-3">
+                <ul className="space-y-2 sm:space-y-3">
                   {selectedDayClients.map((client) => (
                     <SortableClientItem key={client.id} client={client} />
                   ))}
                 </ul>
               </SortableContext>
             ) : (
-              <div className="text-center py-8">
-                <Calendar className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+              <div className="text-center py-6 sm:py-8">
+                <Calendar className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-gray-400 mb-4" />
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   Nenhum cliente agendado para {selectedDayInfo?.label}.
                 </p>
