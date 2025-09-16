@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useRoutines } from '@/hooks/useRoutines';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { MapPin, GripVertical } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { MapPin, GripVertical, Calendar } from 'lucide-react';
 import {
   DndContext,
   closestCenter,
@@ -27,7 +28,14 @@ import { ClientFormData } from '@/lib/validators/clientSchema';
 // Tipagem para os clientes
 type Client = ClientFormData & { id: string; };
 
-const daysOfWeek = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+const daysOfWeek = [
+  { key: 'Segunda-feira', label: 'Segunda', short: 'SEG' },
+  { key: 'Terça-feira', label: 'Terça', short: 'TER' },
+  { key: 'Quarta-feira', label: 'Quarta', short: 'QUA' },
+  { key: 'Quinta-feira', label: 'Quinta', short: 'QUI' },
+  { key: 'Sexta-feira', label: 'Sexta', short: 'SEX' },
+  { key: 'Sábado', label: 'Sábado', short: 'SAB' },
+];
 
 // --- Componente para cada item arrastável ---
 function SortableClientItem({ client }: { client: Client }) {
@@ -70,6 +78,8 @@ export default function RoteirosPage() {
   const { groupedClients, isLoading } = useRoutines();
   // Estado local para gerenciar a ordem dos clientes de cada dia
   const [localGroupedClients, setLocalGroupedClients] = useState(groupedClients);
+  // Estado para controlar qual dia está selecionado
+  const [selectedDay, setSelectedDay] = useState(daysOfWeek[0].key);
 
   // Sincroniza o estado local quando os dados do Firebase são carregados
   useEffect(() => {
@@ -87,30 +97,30 @@ export default function RoteirosPage() {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      // Encontra em qual dia o item foi movido
-      const dayKey = Object.keys(localGroupedClients).find(day => 
-        localGroupedClients[day].some(client => client.id === active.id)
-      );
-
-      if (dayKey) {
-        setLocalGroupedClients(prev => {
-          const clientsForDay = prev[dayKey];
-          const oldIndex = clientsForDay.findIndex(c => c.id === active.id);
-          const newIndex = clientsForDay.findIndex(c => c.id === over.id);
-          
+      // Trabalha apenas com o dia selecionado
+      setLocalGroupedClients(prev => {
+        const clientsForDay = prev[selectedDay] || [];
+        const oldIndex = clientsForDay.findIndex(c => c.id === active.id);
+        const newIndex = clientsForDay.findIndex(c => c.id === over.id);
+        
+        if (oldIndex !== -1 && newIndex !== -1) {
           return {
             ...prev,
-            [dayKey]: arrayMove(clientsForDay, oldIndex, newIndex),
+            [selectedDay]: arrayMove(clientsForDay, oldIndex, newIndex),
           };
-        });
-        toast.success("Ordem da rota atualizada!");
-      }
+        }
+        return prev;
+      });
+      toast.success("Ordem da rota atualizada!");
     }
   }
 
   if (isLoading) {
     return <div>Carregando roteiros...</div>;
   }
+
+  const selectedDayClients = localGroupedClients[selectedDay] || [];
+  const selectedDayInfo = daysOfWeek.find(day => day.key === selectedDay);
   
   return (
     <DndContext
@@ -122,43 +132,70 @@ export default function RoteirosPage() {
         <div className="mb-6">
           <h1 className="text-3xl font-bold">Roteiros da Semana</h1>
           <p className="text-muted-foreground">
-            Arraste os clientes para reordenar sua rota de visitas.
+            Selecione um dia e arraste os clientes para reordenar sua rota de visitas.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {daysOfWeek.map((day) => {
-            const clientsForDay = localGroupedClients[day] || [];
-            return (
-              <Card key={day}>
-                <CardHeader>
-                  <CardTitle>{day}</CardTitle>
-                  <CardDescription>
-                    {clientsForDay.length} cliente(s) agendado(s)
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {clientsForDay.length > 0 ? (
-                    <SortableContext
-                      items={clientsForDay.map(c => c.id)}
-                      strategy={verticalListSortingStrategy}
-                    >
-                      <ul className="space-y-3">
-                        {clientsForDay.map((client) => (
-                          <SortableClientItem key={client.id} client={client} />
-                        ))}
-                      </ul>
-                    </SortableContext>
-                  ) : (
-                    <p className="text-sm text-center text-gray-500 dark:text-gray-400 py-4">
-                      Nenhum cliente agendado.
-                    </p>
+        {/* Botões dos dias da semana */}
+        <div className="mb-6">
+          <div className="flex flex-wrap gap-2">
+            {daysOfWeek.map((day) => {
+              const clientsCount = localGroupedClients[day.key]?.length || 0;
+              const isSelected = selectedDay === day.key;
+              
+              return (
+                <Button
+                  key={day.key}
+                  variant={isSelected ? "default" : "outline"}
+                  onClick={() => setSelectedDay(day.key)}
+                  className="flex flex-col h-16 px-4 py-2 min-w-[100px] relative"
+                >
+                  <span className="font-medium">{day.short}</span>
+                  <span className="text-xs opacity-75">{day.label}</span>
+                  {clientsCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {clientsCount}
+                    </span>
                   )}
-                </CardContent>
-              </Card>
-            );
-          })}
+                </Button>
+              );
+            })}
+          </div>
         </div>
+
+        {/* Card do dia selecionado */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              {selectedDayInfo?.label}
+            </CardTitle>
+            <CardDescription>
+              {selectedDayClients.length} cliente(s) agendado(s)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {selectedDayClients.length > 0 ? (
+              <SortableContext
+                items={selectedDayClients.map(c => c.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <ul className="space-y-3">
+                  {selectedDayClients.map((client) => (
+                    <SortableClientItem key={client.id} client={client} />
+                  ))}
+                </ul>
+              </SortableContext>
+            ) : (
+              <div className="text-center py-8">
+                <Calendar className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Nenhum cliente agendado para {selectedDayInfo?.label}.
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </DndContext>
   );
