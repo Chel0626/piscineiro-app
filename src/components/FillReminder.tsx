@@ -42,8 +42,13 @@ export function FillReminder({ onStateChange }: FillReminderProps) {
 
   // Inicializar áudio
   useEffect(() => {
-    audioRef.current = new Audio('/notification.mp3'); // Você pode adicionar um arquivo de som
-    audioRef.current.volume = 0.8;
+    try {
+      audioRef.current = new Audio('/notification.mp3');
+      audioRef.current.volume = 0.8;
+    } catch (error) {
+      console.warn('Áudio de notificação não disponível:', error);
+      audioRef.current = null;
+    }
   }, []);
 
   // Timer

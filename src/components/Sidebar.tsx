@@ -92,7 +92,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <div className="space-y-2">
             <AiHelperDialog />
             <ProductCalculatorDialog />
-            <FillReminderButton onStateChange={() => {}} />
+            <FillReminderButton />
           </div>
         </nav>
 

@@ -1,28 +1,30 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { FillReminder, FillReminderState } from './FillReminder';
+import { FillReminderSimple } from './FillReminderSimple';
+import { useFillReminder, FillReminderState } from '@/context/FillReminderContext';
 import { Droplets, CheckCircle } from 'lucide-react';
 
 interface FillReminderButtonProps {
-  onStateChange: (state: FillReminderState) => void;
+  onStateChange?: (state: FillReminderState) => void;
 }
 
 export function FillReminderButton({ onStateChange }: FillReminderButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [reminderState, setReminderState] = useState<FillReminderState>({
-    isActive: false,
-    timeRemaining: 0,
-    totalTime: 0,
-    isCompleted: false
-  });
+  const { state: reminderState } = useFillReminder(); // Usar estado global
 
-  const handleStateChange = (state: FillReminderState) => {
-    setReminderState(state);
-    onStateChange(state);
-  };
+  // Notificar mudanças de estado para componentes pai (se necessário)
+  const handleStateChange = useCallback((state: FillReminderState) => {
+    console.log('Estado do lembrete alterado:', state);
+    onStateChange?.(state);
+  }, [onStateChange]);
+
+  // Notificar sempre que o estado global mudar
+  useEffect(() => {
+    handleStateChange(reminderState);
+  }, [reminderState, handleStateChange]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -74,12 +76,18 @@ export function FillReminderButton({ onStateChange }: FillReminderButtonProps) {
     return `${baseClass} text-gray-300 dark:text-gray-400 hover:bg-gray-700 dark:hover:bg-gray-800 hover:text-white`;
   }, [reminderState.isCompleted, reminderState.isActive]);
 
+  const handleDialogOpen = (open: boolean) => {
+    console.log('Dialog state changed:', open);
+    setIsOpen(open);
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={handleDialogOpen}>
       <DialogTrigger asChild>
         <Button
           variant="ghost"
           className={buttonClassName}
+          onClick={() => console.log('Botão de abastecimento clicado')}
         >
           {buttonContent}
           
@@ -107,7 +115,7 @@ export function FillReminderButton({ onStateChange }: FillReminderButtonProps) {
         </DialogHeader>
         
         <div className="mt-4">
-          <FillReminder onStateChange={handleStateChange} />
+          <FillReminderSimple onStateChange={handleStateChange} />
         </div>
       </DialogContent>
     </Dialog>
