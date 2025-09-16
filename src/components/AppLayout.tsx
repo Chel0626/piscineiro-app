@@ -43,7 +43,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               <Button variant="outline" size="icon" onClick={() => setIsSidebarOpen(true)}>
                 <Menu className="h-6 w-6" />
               </Button>
-              <h2 className="text-xl font-semibold ml-4 dark:text-white">PiscineiroApp</h2>
+              <div className="flex items-center gap-2 ml-4">
+                <img src="/logo-icon.svg" alt="PiscineiroApp" className="w-6 h-6" />
+                <h2 className="text-xl font-semibold dark:text-white">PiscineiroApp</h2>
+              </div>
             </div>
             
             {children}
