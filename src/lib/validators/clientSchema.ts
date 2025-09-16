@@ -9,16 +9,33 @@ export const clientFormSchema = z.object({
   email: z.string().email({ message: 'Email inválido.' }).optional(),
   poolVolume: z.number().min(0, { message: 'O volume não pode ser negativo.' }),
   serviceValue: z.number().min(0, { message: 'O valor não pode ser negativo.' }),
-  visitDay: z.string().min(1, { message: "Por favor, selecione um dia da visita." }),
+  
+  // Mudança: de visitDay para visitFrequency e visitDays
+  visitFrequency: z.enum(['weekly', 'biweekly'], { message: "Por favor, selecione a frequência de visitas." }),
+  visitDays: z.array(z.string()).min(1, { message: "Por favor, selecione pelo menos um dia da visita." })
+    .max(2, { message: "Máximo de 2 dias por semana." }),
 
   paymentDueDate: z.number().min(1, { message: "O dia do vencimento deve ser um número." })
     .min(1, { message: "O dia deve ser entre 1 e 31." })
     .max(31, { message: "O dia deve ser entre 1 e 31." }),
 });
 
+// Schema para compatibilidade com dados antigos (migração)
+export const legacyClientSchema = z.object({
+  name: z.string(),
+  address: z.string(),
+  neighborhood: z.string(),
+  phone: z.string().optional(),
+  email: z.string().optional(),
+  poolVolume: z.number(),
+  serviceValue: z.number(),
+  visitDay: z.string(), // Campo antigo
+  paymentDueDate: z.number(),
+});
 
 // Exportamos o tipo inferido para manter a consistência em todo o app.
 export type ClientFormData = z.infer<typeof clientFormSchema>;
+export type LegacyClientData = z.infer<typeof legacyClientSchema>;
 
 // Tipo extendido para incluir campos de pagamento (usado apenas na leitura de dados)
 export type ClientWithPayment = ClientFormData & {
@@ -26,3 +43,12 @@ export type ClientWithPayment = ClientFormData & {
   lastPaymentDate?: string;
   paymentStatus?: 'paid' | 'pending' | 'overdue';
 };
+
+// Função para migrar dados antigos para o novo formato
+export function migrateClientData(legacyData: LegacyClientData): ClientFormData {
+  return {
+    ...legacyData,
+    visitFrequency: 'weekly' as const,
+    visitDays: [legacyData.visitDay],
+  };
+}

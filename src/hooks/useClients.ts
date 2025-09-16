@@ -36,7 +36,8 @@ const defaultFormValues: Partial<ClientFormData> = {
     address: '',
     neighborhood: '',
     phone: '',
-    visitDay: '',
+    visitFrequency: 'weekly',
+    visitDays: [],
 };
 
 export function useClients(): UseClientsReturn {

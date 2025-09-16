@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { ClientFormData } from '@/lib/validators/clientSchema';
+import { ClientFormData, LegacyClientData, migrateClientData } from '@/lib/validators/clientSchema';
 
 // A definição desta interface era a provável causa do erro de parsing
 interface Client extends ClientFormData {
@@ -32,15 +32,28 @@ export function useRoutines() {
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const clientsData: Client[] = [];
       querySnapshot.forEach((doc) => {
-        clientsData.push({ id: doc.id, ...(doc.data() as ClientFormData) });
+        const data = doc.data();
+        
+        // Verificar se é um cliente antigo e migrar se necessário
+        let clientData: ClientFormData;
+        if (data.visitDay && !data.visitDays) {
+          // Migrar dados antigos
+          clientData = migrateClientData(data as LegacyClientData);
+        } else {
+          clientData = data as ClientFormData;
+        }
+        
+        clientsData.push({ id: doc.id, ...clientData });
       });
 
       const grouped = clientsData.reduce((acc, client) => {
-        const day = client.visitDay;
-        if (!acc[day]) {
-          acc[day] = [];
-        }
-        acc[day].push(client);
+        // Agora cada cliente pode ter múltiplos dias
+        client.visitDays.forEach(day => {
+          if (!acc[day]) {
+            acc[day] = [];
+          }
+          acc[day].push(client);
+        });
         return acc;
       }, {} as GroupedClients);
 

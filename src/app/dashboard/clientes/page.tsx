@@ -69,7 +69,10 @@ export default function ClientesPage() {
                             <TableRow key={client.id} onClick={() => handleRowClick(client.id)} className="cursor-pointer hover:bg-gray-100">
                                 <TableCell className="font-medium text-sm">{client.name}</TableCell>
                                 <TableCell className="text-sm">{`${client.address}, ${client.neighborhood}`}</TableCell>
-                                <TableCell className="text-sm">{client.visitDay}</TableCell>
+                                <TableCell className="text-sm">
+                                  {client.visitDays ? client.visitDays.join(', ') : 
+                                   (client as typeof client & { visitDay?: string }).visitDay || 'Não definido'}
+                                </TableCell>
                                 <TableCell className="text-right">
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
@@ -107,7 +110,10 @@ export default function ClientesPage() {
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <Calendar className="h-4 w-4 text-green-500 flex-shrink-0" />
-                                        <p className="text-xs text-gray-600">{client.visitDay}</p>
+                                        <p className="text-xs text-gray-600">
+                                          {client.visitDays ? client.visitDays.join(', ') : 
+                                           (client as typeof client & { visitDay?: string }).visitDay || 'Não definido'}
+                                        </p>
                                     </div>
                                 </div>
                                 <DropdownMenu>

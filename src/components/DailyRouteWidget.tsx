@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { ClientFormData } from '@/lib/validators/clientSchema';
 
 const getCurrentDayName = () => {
   const days = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
@@ -21,7 +22,15 @@ export function DailyRouteWidget() {
   const [visitedToday, setVisitedToday] = useState<Set<string>>(new Set());
 
   const today = getCurrentDayName();
-  const dailyRouteClients = clients.filter(client => client.visitDay === today);
+  const dailyRouteClients = clients.filter(client => {
+    // Verificar compatibilidade com dados antigos
+    if (client.visitDays) {
+      return client.visitDays.includes(today);
+    }
+    // Fallback para dados antigos com tipo específico
+    const legacyClient = client as ClientFormData & { visitDay?: string };
+    return legacyClient.visitDay === today;
+  });
 
   // Verificar quais clientes já foram visitados hoje
   useEffect(() => {

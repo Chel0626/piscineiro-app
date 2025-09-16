@@ -91,8 +91,19 @@ export default function ClienteDetailPage() {
                   <p className="text-sm sm:text-base">{client.phone || 'Não cadastrado'}</p>
                 </div>
                 <div>
-                  <p className="text-xs sm:text-sm font-medium text-gray-500">Dia da Visita</p>
-                  <p className="text-sm sm:text-base">{client.visitDay}</p>
+                  <p className="text-xs sm:text-sm font-medium text-gray-500">Frequência</p>
+                  <p className="text-sm sm:text-base">
+                    {client.visitFrequency === 'biweekly' ? '2x por semana' : '1x por semana'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs sm:text-sm font-medium text-gray-500">
+                    {client.visitDays?.length > 1 ? 'Dias das Visitas' : 'Dia da Visita'}
+                  </p>
+                  <p className="text-sm sm:text-base">
+                    {client.visitDays ? client.visitDays.join(', ') : 
+                     (client as typeof client & { visitDay?: string }).visitDay || 'Não definido'}
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs sm:text-sm font-medium text-gray-500">Valor do Contrato (R$)</p>

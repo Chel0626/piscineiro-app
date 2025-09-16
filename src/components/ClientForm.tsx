@@ -140,31 +140,70 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
           />
         </div>
         
-        <FormField
-          control={form.control}
-          name="visitDay"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-sm font-medium">Dia da Visita</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl>
-                  <SelectTrigger className="text-sm">
-                    <SelectValue placeholder="Selecione um dia" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="Segunda-feira" className="text-sm">Segunda-feira</SelectItem>
-                  <SelectItem value="Terça-feira" className="text-sm">Terça-feira</SelectItem>
-                  <SelectItem value="Quarta-feira" className="text-sm">Quarta-feira</SelectItem>
-                  <SelectItem value="Quinta-feira" className="text-sm">Quinta-feira</SelectItem>
-                  <SelectItem value="Sexta-feira" className="text-sm">Sexta-feira</SelectItem>
-                  <SelectItem value="Sábado" className="text-sm">Sábado</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="space-y-3 sm:space-y-4">
+          <FormField
+            control={form.control}
+            name="visitFrequency"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium">Frequência de Visitas</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger className="text-sm">
+                      <SelectValue placeholder="Selecione a frequência" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="weekly" className="text-sm">1x por semana</SelectItem>
+                    <SelectItem value="biweekly" className="text-sm">2x por semana</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="visitDays"
+            render={({ field }) => {
+              const selectedFrequency = form.watch('visitFrequency');
+              const maxDays = selectedFrequency === 'biweekly' ? 2 : 1;
+              
+              return (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">
+                    {selectedFrequency === 'biweekly' ? 'Dias das Visitas (máximo 2)' : 'Dia da Visita'}
+                  </FormLabel>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'].map((day) => (
+                      <label key={day} className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={field.value?.includes(day) || false}
+                          onChange={(e) => {
+                            const currentDays = field.value || [];
+                            if (e.target.checked) {
+                              if (currentDays.length < maxDays) {
+                                field.onChange([...currentDays, day]);
+                              }
+                            } else {
+                              field.onChange(currentDays.filter(d => d !== day));
+                            }
+                          }}
+                          disabled={!field.value?.includes(day) && (field.value?.length || 0) >= maxDays}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-xs sm:text-sm">{day.split('-')[0]}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
+          />
+        </div>
 
         <FormField
           control={form.control}

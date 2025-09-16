@@ -74,46 +74,50 @@ export function OverduePaymentsWidget() {
             return (
               <li 
                 key={client.id} 
-                className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 border border-red-200 dark:border-red-700 rounded-lg cursor-pointer hover:bg-red-50 dark:hover:bg-red-800/30"
+                className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-white dark:bg-gray-800 border border-red-200 dark:border-red-700 rounded-lg cursor-pointer hover:bg-red-50 dark:hover:bg-red-800/30"
                 onClick={() => router.push(`/dashboard/clientes/${client.id}`)}
               >
-                <div className="flex items-center gap-3">
-                  <User className="h-5 w-5 text-red-500 dark:text-red-400" />
-                  <div>
-                    <p className="font-semibold dark:text-white">{client.name}</p>
-                    <p className="text-sm text-muted-foreground dark:text-gray-400">{client.neighborhood}</p>
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <User className="h-5 w-5 text-red-500 dark:text-red-400 flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold dark:text-white truncate">{client.name}</p>
+                    <p className="text-sm text-muted-foreground dark:text-gray-400 truncate">{client.neighborhood}</p>
                     <p className="text-xs text-red-600 dark:text-red-400">
                       {daysOverdue > 0 ? `${daysOverdue} dia(s) em atraso` : 'Venceu hoje'}
                     </p>
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 flex-shrink-0">
                   <div className="flex items-center gap-2 text-red-600 dark:text-red-400 font-semibold">
                     <DollarSign className="h-4 w-4" />
-                    <span>R$ {client.serviceValue.toFixed(2)}</span>
+                    <span className="whitespace-nowrap">R$ {client.serviceValue.toFixed(2)}</span>
                   </div>
                   
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="text-green-600 dark:text-green-400 border-green-600 dark:border-green-400 hover:bg-green-50 dark:hover:bg-green-900/30"
-                    onClick={(e) => handleMarkAsPaid(client.id, e)}
-                  >
-                    <CheckCircle className="h-4 w-4 mr-1" />
-                    Pago
-                  </Button>
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-green-600 dark:text-green-400 border-green-600 dark:border-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 flex-1 sm:flex-none"
+                      onClick={(e) => handleMarkAsPaid(client.id, e)}
+                    >
+                      <CheckCircle className="h-4 w-4 mr-1" />
+                      <span className="hidden sm:inline">Pago</span>
+                      <span className="sm:hidden">✓</span>
+                    </Button>
 
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="text-blue-600 dark:text-blue-400 border-blue-600 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30"
-                    onClick={(e) => handleSendWhatsApp(client, e)}
-                    disabled={!client.phone}
-                  >
-                    <MessageCircle className="h-4 w-4 mr-1" />
-                    Cobrar
-                  </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-blue-600 dark:text-blue-400 border-blue-600 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 flex-1 sm:flex-none"
+                      onClick={(e) => handleSendWhatsApp(client, e)}
+                      disabled={!client.phone}
+                    >
+                      <MessageCircle className="h-4 w-4 mr-1" />
+                      <span className="hidden sm:inline">Cobrar</span>
+                      <span className="sm:hidden">💬</span>
+                    </Button>
+                  </div>
                 </div>
               </li>
             );
