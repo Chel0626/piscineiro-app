@@ -7,10 +7,82 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from './ui/button';
-import { marked } from 'marked';
+import { Badge } from '@/components/ui/badge';
+import { CheckCircle, AlertTriangle, Droplets, FlaskConical } from 'lucide-react';
 
 // Importamos o schema e o tipo do nosso arquivo.
 import { aiHelperSchema, AiHelperFormData } from '@/lib/schemas/aiHelperSchema';
+
+// Interface para resposta estruturada
+interface StructuredResponse {
+  diagnosis: string[];
+  actionPlan: string[];
+  urgency: 'low' | 'medium' | 'high';
+}
+
+// Função para estruturar a resposta da IA
+function parseAiResponse(rawResponse: string): StructuredResponse {
+  const lines = rawResponse.split('\n').filter(line => line.trim());
+  
+  const diagnosis: string[] = [];
+  const actionPlan: string[] = [];
+  let currentSection = '';
+  let urgency: 'low' | 'medium' | 'high' = 'medium';
+
+  // Detectar urgência baseada em palavras-chave
+  const lowKeywords = ['manutenção', 'rotina', 'preventivo'];
+  const highKeywords = ['urgente', 'crítico', 'imediato', 'perigoso', 'algicida de choque'];
+  
+  const responseText = rawResponse.toLowerCase();
+  if (highKeywords.some(keyword => responseText.includes(keyword))) {
+    urgency = 'high';
+  } else if (lowKeywords.some(keyword => responseText.includes(keyword))) {
+    urgency = 'low';
+  }
+
+  for (const line of lines) {
+    const cleanLine = line.trim();
+    
+    // Identificar seções
+    if (cleanLine.toLowerCase().includes('diagnóstico') || cleanLine.toLowerCase().includes('análise')) {
+      currentSection = 'diagnosis';
+      continue;
+    }
+    if (cleanLine.toLowerCase().includes('plano') || cleanLine.toLowerCase().includes('ação') || cleanLine.toLowerCase().includes('procedimento')) {
+      currentSection = 'actionPlan';
+      continue;
+    }
+    
+    // Extrair itens numerados ou com marcadores
+    if (cleanLine.match(/^\d+\.|^[-*•]/)) {
+      const cleanItem = cleanLine.replace(/^\d+\.|^[-*•]\s*/, '').trim();
+      if (cleanItem) {
+        if (currentSection === 'diagnosis') {
+          diagnosis.push(cleanItem);
+        } else {
+          actionPlan.push(cleanItem);
+        }
+      }
+    } else if (cleanLine && !cleanLine.includes('#')) {
+      // Se não encontrou seções específicas, tenta distribuir inteligentemente
+      if (cleanLine.toLowerCase().includes('ph') || cleanLine.toLowerCase().includes('cloro') || cleanLine.toLowerCase().includes('alcalinidade')) {
+        diagnosis.push(cleanLine);
+      } else if (cleanLine.toLowerCase().includes('aplicar') || cleanLine.toLowerCase().includes('escovar') || cleanLine.toLowerCase().includes('filtrar')) {
+        actionPlan.push(cleanLine);
+      }
+    }
+  }
+
+  // Se não conseguiu categorizar, dividir na metade
+  if (diagnosis.length === 0 && actionPlan.length === 0) {
+    const allItems = rawResponse.split(/\d+\.|\n/).filter(item => item.trim()).map(item => item.trim());
+    const midPoint = Math.ceil(allItems.length / 2);
+    diagnosis.push(...allItems.slice(0, midPoint));
+    actionPlan.push(...allItems.slice(midPoint));
+  }
+
+  return { diagnosis, actionPlan, urgency };
+}
 
 // Função auxiliar para converter um arquivo para base64
 const fileToBase64 = (file: File): Promise<string> =>
@@ -31,7 +103,7 @@ interface AiHelperProps {
 
 export function AiHelper({ poolVolume }: AiHelperProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [iaResponse, setIaResponse] = useState<string | null>(null);
+  const [structuredResponse, setStructuredResponse] = useState<StructuredResponse | null>(null);
 
   const form = useForm<AiHelperFormData>({
     defaultValues: {
@@ -51,7 +123,7 @@ export function AiHelper({ poolVolume }: AiHelperProps) {
     }
 
     setIsLoading(true);
-    setIaResponse(null);
+    setStructuredResponse(null);
 
     try {
       let imageBase64: string | undefined;
@@ -85,8 +157,8 @@ export function AiHelper({ poolVolume }: AiHelperProps) {
       }
 
       const result = await response.json();
-      const htmlResponse = await marked.parse(result.plan);
-      setIaResponse(htmlResponse);
+      const structured = parseAiResponse(result.plan);
+      setStructuredResponse(structured);
       toast.success("Plano de ação gerado!");
 
     } catch (error) {
@@ -180,13 +252,74 @@ export function AiHelper({ poolVolume }: AiHelperProps) {
         
         {isLoading && <div className="text-center p-4">Analisando dados e gerando plano...</div>}
         
-        {iaResponse && (
-          <div className="mt-6 border-t pt-6">
-            <h4 className="font-semibold text-lg mb-2">Plano de Ação da IA:</h4>
-            <div
-                className="prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: iaResponse }}
-            />
+        {structuredResponse && (
+          <div className="mt-6 space-y-6">
+            {/* Diagnóstico */}
+            <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-blue-800 dark:text-blue-200">
+                  <FlaskConical className="h-5 w-5" />
+                  Diagnóstico
+                  {structuredResponse.urgency && (
+                    <Badge 
+                      variant={
+                        structuredResponse.urgency === 'high' ? 'destructive' :
+                        structuredResponse.urgency === 'medium' ? 'secondary' :
+                        'outline'
+                      }
+                    >
+                      {structuredResponse.urgency === 'high' ? 'Urgente' :
+                       structuredResponse.urgency === 'medium' ? 'Atenção' :
+                       'Normal'}
+                    </Badge>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {structuredResponse.diagnosis.map((item, index) => (
+                    <div key={index} className="flex items-start gap-2">
+                      <Droplets className="h-4 w-4 mt-0.5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Plano de Ação */}
+            <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-green-800 dark:text-green-200">
+                  <CheckCircle className="h-5 w-5" />
+                  Plano de Ação
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {structuredResponse.actionPlan.map((step, index) => (
+                    <div key={index} className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-6 h-6 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-full flex items-center justify-center text-sm font-medium">
+                        {index + 1}
+                      </div>
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{step}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Alertas de Urgência */}
+            {structuredResponse.urgency === 'high' && (
+              <Card className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950">
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-2 text-red-800 dark:text-red-200">
+                    <AlertTriangle className="h-5 w-5" />
+                    <span className="font-medium">Atenção: Situação requer intervenção imediata!</span>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         )}
       </CardContent>

@@ -12,9 +12,12 @@ export function ProductCalculatorDialog() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" className="w-full justify-start">
-          <Calculator className="mr-2 h-4 w-4" />
-          Calculadora de Produtos
+        <Button
+          variant="ghost" 
+          className="w-full justify-start px-4 py-2 mt-2 text-gray-300 dark:text-gray-400 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-800 hover:text-white transition-colors h-auto"
+        >
+          <Calculator className="h-5 w-5" />
+          <span className="ml-3">Calculadora de Produtos</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">

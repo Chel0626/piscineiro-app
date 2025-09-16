@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, Route, X } from 'lucide-react';
+import { Home, Users, Route, X, Package } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { AiHelperDialog } from './AiHelperDialog';
 import { ProductCalculatorDialog } from './ProductCalculatorDialog';
+import { FillReminderButton } from './FillReminderButton';
 import { BillingWidget } from './BillingWidget';
 import { Separator } from './ui/separator';
 import { ThemeToggle } from './ui/theme-toggle';
@@ -17,6 +18,7 @@ const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
   { href: '/dashboard/clientes', label: 'Clientes', icon: Users },
   { href: '/dashboard/roteiros', label: 'Roteiros', icon: Route },
+  { href: '/dashboard/produtos-do-dia', label: 'Produtos do Dia', icon: Package },
 ];
 
 interface SidebarProps {
@@ -87,9 +89,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
           <Separator className="my-4 bg-gray-700 dark:bg-gray-600" />
           
-          <div className="px-4 space-y-2">
+          <div className="space-y-2">
             <AiHelperDialog />
             <ProductCalculatorDialog />
+            <FillReminderButton onStateChange={() => {}} />
           </div>
         </nav>
 

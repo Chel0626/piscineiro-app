@@ -1,18 +1,22 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useState, useMemo } from 'react';
 import { useClients } from '@/hooks/useClients';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { ClientForm } from '@/components/ClientForm';
-import { MoreHorizontal, User, MapPin, Calendar } from 'lucide-react';
+import { MoreHorizontal, User, MapPin, Calendar, Search } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 
 export default function ClientesPage() {
     const router = useRouter();
+    const [searchTerm, setSearchTerm] = useState('');
+    
     // Toda a lógica agora vem do nosso hook customizado.
     const {
         clients,
@@ -30,6 +34,18 @@ export default function ClientesPage() {
         editingClient,
         authLoading,
     } = useClients();
+
+    // Filtrar clientes baseado na busca
+    const filteredClients = useMemo(() => {
+        if (!searchTerm.trim()) return clients;
+        
+        const searchLower = searchTerm.toLowerCase();
+        return clients.filter(client => 
+            client.name.toLowerCase().includes(searchLower) ||
+            client.address.toLowerCase().includes(searchLower) ||
+            client.neighborhood.toLowerCase().includes(searchLower)
+        );
+    }, [clients, searchTerm]);
     
     const handleRowClick = (clientId: string) => {
         router.push(`/dashboard/clientes/${clientId}`);
@@ -53,6 +69,24 @@ export default function ClientesPage() {
                 </Button>
             </div>
 
+            {/* Campo de busca */}
+            <div className="mb-4 sm:mb-6">
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Input
+                        placeholder="Buscar cliente por nome, endereço ou bairro..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10"
+                    />
+                </div>
+                {searchTerm && (
+                    <p className="text-sm text-gray-500 mt-2">
+                        {filteredClients.length} cliente(s) encontrado(s) de {clients.length} total
+                    </p>
+                )}
+            </div>
+
             {/* Layout para Desktop - Tabela */}
             <div className="hidden sm:block border rounded-lg overflow-x-auto">
                 <Table>
@@ -65,7 +99,7 @@ export default function ClientesPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {clients.map((client) => (
+                        {filteredClients.map((client) => (
                             <TableRow key={client.id} onClick={() => handleRowClick(client.id)} className="cursor-pointer hover:bg-gray-100">
                                 <TableCell className="font-medium text-sm">{client.name}</TableCell>
                                 <TableCell className="text-sm">{`${client.address}, ${client.neighborhood}`}</TableCell>
@@ -95,7 +129,7 @@ export default function ClientesPage() {
 
             {/* Layout para Mobile - Cards */}
             <div className="sm:hidden space-y-3">
-                {clients.map((client) => (
+                {filteredClients.map((client) => (
                     <Card key={client.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleCardClick(client.id)}>
                         <CardContent className="p-4">
                             <div className="flex items-start justify-between">

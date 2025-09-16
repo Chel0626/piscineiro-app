@@ -6,7 +6,8 @@ import { useClientDetails } from '@/hooks/useClientDetails';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Separator } from './ui/separator';
 import { useClientProducts } from '@/hooks/useClientProducts';
-import { PlusCircle, MinusCircle, ShoppingCart, Mail } from 'lucide-react';
+import { ProductSelector } from './ProductSelector';
+import { PlusCircle, MinusCircle, ShoppingCart, Mail, Package } from 'lucide-react';
 import { toast } from 'sonner';
 
 export interface ProductUsage {
@@ -127,25 +128,53 @@ export function VisitProductManager({
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {products.map((product) => (
-                <div key={product.id} className="flex items-center justify-between p-2 border rounded-lg">
-                  <span className="text-sm">{product.name}</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleAddProductUsed(product.name)}
-                  >
-                    <PlusCircle className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
+            {/* Produtos do estoque do cliente */}
+            <div>
+              <h4 className="text-sm font-medium mb-3 text-gray-700 dark:text-gray-300">
+                Estoque do Cliente
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {products.map((product) => (
+                  <div key={product.id} className="flex items-center justify-between p-2 border rounded-lg">
+                    <span className="text-sm">{product.name}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleAddProductUsed(product.name)}
+                    >
+                      <PlusCircle className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                {products.length === 0 && (
+                  <div className="col-span-2 text-center p-4 text-gray-500 dark:text-gray-400 text-sm">
+                    Nenhum produto no estoque
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Adicionar produtos do catálogo ou personalizados */}
+            <div>
+              <h4 className="text-sm font-medium mb-3 text-gray-700 dark:text-gray-300">
+                Adicionar Outros Produtos
+              </h4>
+              <ProductSelector
+                onSelectProduct={handleAddProductUsed}
+                buttonText="Adicionar produto utilizado"
+                buttonIcon={<Package className="h-4 w-4 mr-1" />}
+                title="Selecionar Produto Utilizado"
+                description="Escolha do catálogo ou adicione um produto personalizado que foi utilizado."
+              />
             </div>
             
             {productsUsed.length > 0 && (
               <>
                 <Separator />
                 <div className="space-y-2">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Produtos Utilizados
+                  </h4>
                   {productsUsed.map((product) => (
                     <div key={product.productName} className="flex items-center justify-between">
                       <span className="text-sm">
@@ -173,19 +202,44 @@ export function VisitProductManager({
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {products.map((product) => (
-                <div key={product.id} className="flex items-center justify-between p-2 border rounded-lg">
-                  <span className="text-sm">{product.name}</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleAddProductRequested(product.name)}
-                  >
-                    <ShoppingCart className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
+            {/* Produtos do estoque do cliente */}
+            <div>
+              <h4 className="text-sm font-medium mb-3 text-gray-700 dark:text-gray-300">
+                Estoque do Cliente
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {products.map((product) => (
+                  <div key={product.id} className="flex items-center justify-between p-2 border rounded-lg">
+                    <span className="text-sm">{product.name}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleAddProductRequested(product.name)}
+                    >
+                      <ShoppingCart className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                {products.length === 0 && (
+                  <div className="col-span-2 text-center p-4 text-gray-500 dark:text-gray-400 text-sm">
+                    Nenhum produto no estoque
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Adicionar produtos do catálogo ou personalizados */}
+            <div>
+              <h4 className="text-sm font-medium mb-3 text-gray-700 dark:text-gray-300">
+                Solicitar Outros Produtos
+              </h4>
+              <ProductSelector
+                onSelectProduct={handleAddProductRequested}
+                buttonText="Solicitar produto"
+                buttonIcon={<ShoppingCart className="h-4 w-4 mr-1" />}
+                title="Selecionar Produto para Solicitar"
+                description="Escolha do catálogo ou adicione um produto personalizado para solicitar ao cliente."
+              />
             </div>
             
             {productsRequested.length > 0 && (
@@ -193,6 +247,9 @@ export function VisitProductManager({
                 <Separator />
                 <div className="space-y-4">
                   <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Produtos Solicitados
+                    </h4>
                     {productsRequested.map((product) => (
                       <div key={product.productName} className="flex items-center justify-between">
                         <span className="text-sm">

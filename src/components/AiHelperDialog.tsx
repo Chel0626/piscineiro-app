@@ -14,11 +14,10 @@ export function AiHelperDialog() {
       <DialogTrigger asChild>
         <Button
           variant="ghost"
-          size="sm"
-          className="w-full justify-start"
+          className="w-full justify-start px-4 py-2 mt-2 text-gray-300 dark:text-gray-400 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-800 hover:text-white transition-colors h-auto"
         >
-          <BrainCircuit className="mr-2 h-4 w-4" />
-          IA Helper
+          <BrainCircuit className="h-5 w-5" />
+          <span className="ml-3">IA Helper</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
