@@ -1,119 +1,60 @@
-<!-- Logo SVG baseado na imagem fornecida --><!-- Logo SVG baseado na imagem fornecida -->
-
-<svg width="120" height="80" viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg"><svg width="120" height="80" viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg">
-
-  <!-- Fundo escuro transparente -->  <!-- Fundo escuro transparente -->
-
+<!-- Logo SVG baseado na imagem fornecida -->
+<svg width="120" height="80" viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fundo escuro transparente -->
+  
+  <!-- Peneira da piscina -->
+  <g transform="translate(15, 8)">
+    <!-- Cabo da peneira -->
+    <line x1="5" y1="35" x2="15" y2="5" stroke="#00BFFF" stroke-width="2" stroke-linecap="round"/>
     
-
-  <!-- Peneira da piscina -->  <!-- Peneira da piscina -->
-
-  <g transform="translate(15, 8)">  <g transform="translate(15, 8)">
-
-    <!-- Cabo da peneira -->    <!-- Cabo da peneira -->
-
-    <line x1="5" y1="35" x2="15" y2="5" stroke="#00BFFF" stroke-width="2" stroke-linecap="round"/>    <line x1="5" y1="35" x2="15" y2="5" stroke="#00BFFF" stroke-width="2" stroke-linecap="round"/>
-
-        
-
-    <!-- Cabeça da peneira -->    <!-- Cabeça da peneira -->
-
-    <rect x="8" y="2" width="12" height="16" rx="2" fill="none" stroke="#00BFFF" stroke-width="1.5"/>    <rect x="8" y="2" width="12" height="16" rx="2" fill="none" stroke="#00BFFF" stroke-width="1.5"/>
-
-        
-
-    <!-- Grade da peneira -->    <!-- Grade da peneira -->
-
-    <g stroke="#0080FF" stroke-width="0.5">    <g stroke="#0080FF" stroke-width="0.5">
-
-      <line x1="10" y1="4" x2="10" y2="16"/>      <line x1="10" y1="4" x2="10" y2="16"/>
-
-      <line x1="12" y1="4" x2="12" y2="16"/>      <line x1="12" y1="4" x2="12" y2="16"/>
-
-      <line x1="14" y1="4" x2="14" y2="16"/>      <line x1="14" y1="4" x2="14" y2="16"/>
-
-      <line x1="16" y1="4" x2="16" y2="16"/>      <line x1="16" y1="4" x2="16" y2="16"/>
-
-      <line x1="18" y1="4" x2="18" y2="16"/>      <line x1="18" y1="4" x2="18" y2="16"/>
-
-            
-
-      <line x1="9" y1="6" x2="19" y2="6"/>      <line x1="9" y1="6" x2="19" y2="6"/>
-
-      <line x1="9" y1="8" x2="19" y2="8"/>      <line x1="9" y1="8" x2="19" y2="8"/>
-
-      <line x1="9" y1="10" x2="19" y2="10"/>      <line x1="9" y1="10" x2="19" y2="10"/>
-
-      <line x1="9" y1="12" x2="19" y2="12"/>      <line x1="9" y1="12" x2="19" y2="12"/>
-
-      <line x1="9" y1="14" x2="19" y2="14"/>      <line x1="9" y1="14" x2="19" y2="14"/>
-
-    </g>    </g>
-
-        
-
-    <!-- Círculos (bolinhas) -->    <!-- Círculos (bolinhas) -->
-
-    <circle cx="11" cy="15" r="1" fill="#0080FF"/>    <circle cx="11" cy="15" r="1" fill="#0080FF"/>
-
-    <circle cx="15" cy="13" r="1" fill="#0080FF"/>    <circle cx="15" cy="13" r="1" fill="#0080FF"/>
-
-    <circle cx="17" cy="15" r="1" fill="#0080FF"/>    <circle cx="17" cy="15" r="1" fill="#0080FF"/>
-
-  </g>  </g>
-
+    <!-- Cabeça da peneira -->
+    <rect x="8" y="2" width="12" height="16" rx="2" fill="none" stroke="#00BFFF" stroke-width="1.5"/>
     
-
-  <!-- Letra P grande -->  <!-- Letra P grande -->
-
-  <g transform="translate(35, 10)">  <g transform="translate(35, 10)">
-
-    <!-- Corpo do P -->    <!-- Corpo do P -->
-
-    <path d="M0 0 L0 50 L4 50 L4 26 L20 26 C28 26 32 22 32 16 L32 10 C32 4 28 0 20 0 Z M4 4 L20 4 C24 4 28 6 28 10 L28 16 C28 20 24 22 20 22 L4 22 Z"     <path d="M0 0 L0 50 L4 50 L4 26 L20 26 C28 26 32 22 32 16 L32 10 C32 4 28 0 20 0 Z M4 4 L20 4 C24 4 28 6 28 10 L28 16 C28 20 24 22 20 22 L4 22 Z" 
-
-          fill="#00BFFF"           fill="#00BFFF" 
-
-          stroke="#00D4FF"           stroke="#00D4FF" 
-
-          stroke-width="0.5"/>          stroke-width="0.5"/>
-
-  </g>  </g>
-
+    <!-- Grade da peneira -->
+    <g stroke="#0080FF" stroke-width="0.5">
+      <line x1="10" y1="4" x2="10" y2="16"/>
+      <line x1="12" y1="4" x2="12" y2="16"/>
+      <line x1="14" y1="4" x2="14" y2="16"/>
+      <line x1="16" y1="4" x2="16" y2="16"/>
+      <line x1="18" y1="4" x2="18" y2="16"/>
+      
+      <line x1="9" y1="6" x2="19" y2="6"/>
+      <line x1="9" y1="8" x2="19" y2="8"/>
+      <line x1="9" y1="10" x2="19" y2="10"/>
+      <line x1="9" y1="12" x2="19" y2="12"/>
+      <line x1="9" y1="14" x2="19" y2="14"/>
+    </g>
     
-
-  <!-- Texto APP -->  <!-- Texto APP -->
-
-  <text x="20" y="72" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#00BFFF">APP</text>  <text x="20" y="72" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#00BFFF">APP</text>
-
-    
-
-  <!-- Efeito de brilho -->  <!-- Efeito de brilho -->
-
-  <defs>  <defs>
-
-    <filter id="glow">    <filter id="glow">
-
-      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-
-      <feMerge>       <feMerge> 
-
-        <feMergeNode in="coloredBlur"/>        <feMergeNode in="coloredBlur"/>
-
-        <feMergeNode in="SourceGraphic"/>        <feMergeNode in="SourceGraphic"/>
-
-      </feMerge>      </feMerge>
-
-    </filter>    </filter>
-
-  </defs>  </defs>
-
-    
-
-  <style>  <style>
-
-    .glow { filter: url(#glow); }    .glow { filter: url(#glow); }
-
-  </style>  </style>
-
-</svg></svg>
+    <!-- Círculos (bolinhas) -->
+    <circle cx="11" cy="15" r="1" fill="#0080FF"/>
+    <circle cx="15" cy="13" r="1" fill="#0080FF"/>
+    <circle cx="17" cy="15" r="1" fill="#0080FF"/>
+  </g>
+  
+  <!-- Letra P grande -->
+  <g transform="translate(35, 10)">
+    <!-- Corpo do P -->
+    <path d="M0 0 L0 50 L4 50 L4 26 L20 26 C28 26 32 22 32 16 L32 10 C32 4 28 0 20 0 Z M4 4 L20 4 C24 4 28 6 28 10 L28 16 C28 20 24 22 20 22 L4 22 Z" 
+          fill="#00BFFF" 
+          stroke="#00D4FF" 
+          stroke-width="0.5"/>
+  </g>
+  
+  <!-- Texto APP -->
+  <text x="20" y="72" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#00BFFF">APP</text>
+  
+  <!-- Efeito de brilho -->
+  <defs>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <style>
+    .glow { filter: url(#glow); }
+  </style>
+</svg>

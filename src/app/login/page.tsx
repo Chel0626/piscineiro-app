@@ -25,12 +25,26 @@ export default function LoginPage() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       const idToken = await user.getIdToken();
+      
+      // Verificar se usuário está autorizado antes de chamar a API
+      const isAuthorized = user.email && ['michelhm91@gmail.com', 'testador1@gmail.com', 'testador2@gmail.com', 'testador3@gmail.com', 'testador4@gmail.com', 'testador5@gmail.com'].includes(user.email);
+      
+      if (!isAuthorized) {
+        setError('Você não tem autorização para acessar este aplicativo.');
+        await auth.signOut();
+        return;
+      }
+      
       await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: idToken }),
       });
-      router.push('/dashboard');
+      
+      // Aguardar um pouco para o AuthContext processar
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 500);
     } catch (err) { // Corrigido
       console.error(err);
       setError('Falha ao fazer login. Verifique seu e-mail e senha.');
