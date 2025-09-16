@@ -1,35 +1,20 @@
 'use client';
 
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { Sidebar } from './Sidebar';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from './ui/button';
 import { Menu } from 'lucide-react';
 import { FillReminderProvider } from '@/context/FillReminderContext';
-import { useAuth } from '@/context/AuthContext';
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
-  const { user, authLoading, isAuthorized } = useAuth();
   // Estado para controlar se a sidebar está aberta ou fechada em telas pequenas
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   const isProtectedRoute = pathname.startsWith('/dashboard');
 
-  // Verificar autorização para rotas protegidas
-  useEffect(() => {
-    if (!authLoading && isProtectedRoute && user && !isAuthorized) {
-      router.push('/access-denied');
-    }
-  }, [authLoading, isProtectedRoute, user, isAuthorized, router]);
-
   if (isProtectedRoute) {
-    // Se ainda está carregando ou usuário não autorizado, não renderiza o layout
-    if (authLoading || (user && !isAuthorized)) {
-      return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
-    }
-
     return (
       <FillReminderProvider>
         <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
