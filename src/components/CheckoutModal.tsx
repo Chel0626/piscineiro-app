@@ -167,38 +167,6 @@ export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps)
             )}
           </Card>
 
-          {/* Seção 3: Produtos a Solicitar */}
-          <Card className="border-purple-200 dark:border-purple-800">
-            <CardHeader 
-              className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-              onClick={() => toggleSection('products')}
-            >
-              <CardTitle className="flex items-center justify-between text-lg">
-                <div className="flex items-center gap-2">
-                  <ShoppingCart className="h-5 w-5 text-purple-600" />
-                  Produtos a Solicitar
-                </div>
-                {openSections.products ? (
-                  <ChevronDown className="h-5 w-5" />
-                ) : (
-                  <ChevronRight className="h-5 w-5" />
-                )}
-              </CardTitle>
-            </CardHeader>
-            {openSections.products && (
-              <CardContent>
-                <div className="text-center py-8 text-gray-600 dark:text-gray-400">
-                  <ShoppingCart className="h-12 w-12 mx-auto mb-3 text-gray-400" />
-                  <p className="text-lg font-medium mb-2">Produtos a Solicitar</p>
-                  <p className="text-sm">
-                    Funcionalidade em desenvolvimento.<br />
-                    Em breve você poderá solicitar produtos diretamente aqui.
-                  </p>
-                </div>
-              </CardContent>
-            )}
-          </Card>
-
           {/* Ações de Finalização */}
           {visitData && (
             <Card className="border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/30">
@@ -212,7 +180,7 @@ export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps)
                 <p className="text-sm text-orange-600 dark:text-orange-400">
                   Visita registrada com sucesso! Você pode enviar o relatório para o cliente.
                 </p>
-                <div className="flex gap-3">
+                <div className="flex flex-col gap-3">
                   <Button 
                     onClick={handleSendWhatsApp}
                     className="flex items-center gap-2"
@@ -220,6 +188,14 @@ export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps)
                   >
                     <MessageCircle className="h-4 w-4" />
                     Enviar Relatório via WhatsApp
+                  </Button>
+                  <Button 
+                    onClick={() => toast.info('Funcionalidade em desenvolvimento')}
+                    className="flex items-center gap-2"
+                    variant="outline"
+                  >
+                    <ShoppingCart className="h-4 w-4" />
+                    Produtos a Solicitar
                   </Button>
                   <Button 
                     onClick={handleClose}
