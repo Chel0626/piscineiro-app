@@ -162,7 +162,7 @@ export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps)
             </CardHeader>
             {openSections.calculator && (
               <CardContent>
-                <ProductCalculator />
+                <ProductCalculator poolVolume={client?.poolVolume} />
               </CardContent>
             )}
           </Card>
