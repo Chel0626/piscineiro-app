@@ -23,12 +23,13 @@ const formSchema = z.object({
   cloro: z.coerce.number().min(0, { message: 'Cloro inválido.' }),
   alcalinidade: z.coerce.number().min(0, { message: 'Alcalinidade inválida.' }),
   description: z.string().optional(),
-  arrivalTime: z.string().optional(),
   departureTime: z.string().optional(),
-  poolPhoto: z.string().optional(), // URL da foto armazenada
+  poolPhoto: z.string().optional(),
 });
 
-export type VisitFormData = z.infer<typeof formSchema>;
+type VisitFormData = z.infer<typeof formSchema>;
+
+export type { VisitFormData };
 
 interface VisitFormProps {
   onSubmit: (data: VisitFormData) => void;
@@ -55,8 +56,7 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
       cloro: initialData?.cloro || 0,
       alcalinidade: initialData?.alcalinidade || 0,
       description: initialData?.description || '',
-      arrivalTime: initialData?.arrivalTime || getCurrentTime(),
-      departureTime: initialData?.departureTime || '',
+      departureTime: initialData?.departureTime || getCurrentTime(),
       poolPhoto: initialData?.poolPhoto || '',
     },
   });
@@ -120,12 +120,6 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
     form.setValue('poolPhoto', '');
   };
 
-  // Função para definir horário de saída
-  const setDepartureTime = () => {
-    const currentTime = getCurrentTime();
-    form.setValue('departureTime', currentTime);
-  };
-
   const handleFormSubmit = async (data: VisitFormData) => {
     try {
       const validatedData = formSchema.parse(data);
@@ -145,7 +139,6 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
         cloro: 0,
         alcalinidade: 0,
         description: '',
-        arrivalTime: getCurrentTime(), // Novo horário de chegada
         departureTime: '',
         poolPhoto: '',
       });
@@ -183,12 +176,10 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
     let message = `🏊 Relatório da Manutenção - ${client.name}\n`;
     message += `📅 Data: ${new Date().toLocaleDateString('pt-BR')}\n`;
     
-    // Horários de atendimento
-    if (data.arrivalTime || data.departureTime) {
-      message += `⏰ Horários:\n`;
-      if (data.arrivalTime) message += `• Chegada: ${data.arrivalTime}\n`;
+    // Gerar mensagem para WhatsApp
+    if (data.departureTime) {
+      message += `⏰ *Horários:*\n`;
       if (data.departureTime) message += `• Saída: ${data.departureTime}\n`;
-      message += `\n`;
     }
     
     // Parâmetros da água
@@ -277,28 +268,7 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
         </div>
 
         {/* Seção de Horários */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="arrivalTime"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
-                  Horário de Chegada
-                </FormLabel>
-                <FormControl>
-                  <Input 
-                    type="time" 
-                    {...field} 
-                    readOnly 
-                    className="bg-gray-50 dark:bg-gray-800"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        <div className="grid grid-cols-1 gap-4">
           <FormField
             control={form.control}
             name="departureTime"
@@ -312,15 +282,14 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
                   <FormControl>
                     <Input 
                       type="time" 
-                      {...field}
-                      placeholder="--:--"
+                      {...field} 
                     />
                   </FormControl>
-                  <Button
-                    type="button"
-                    variant="outline"
+                  <Button 
+                    type="button" 
+                    variant="outline" 
                     size="sm"
-                    onClick={setDepartureTime}
+                    onClick={() => form.setValue('departureTime', getCurrentTime())}
                   >
                     Agora
                   </Button>
@@ -329,9 +298,7 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
               </FormItem>
             )}
           />
-        </div>
-
-        {/* Seção de Foto da Piscina */}
+        </div>        {/* Seção de Foto da Piscina */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
