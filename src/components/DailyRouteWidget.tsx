@@ -4,11 +4,11 @@ import { useClients } from '@/hooks/useClients';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ListChecks, CheckCircle } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { ClientFormData } from '@/lib/validators/clientSchema';
+import { CheckoutModal } from '@/components/CheckoutModal';
 
 const getCurrentDayName = () => {
   const days = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
@@ -18,10 +18,11 @@ const getCurrentDayName = () => {
 
 export function DailyRouteWidget() {
   const { clients, authLoading } = useClients();
-  const router = useRouter();
   const [visitedToday, setVisitedToday] = useState<Set<string>>(new Set());
   const [showAllPending, setShowAllPending] = useState(false);
   const [showAllCompleted, setShowAllCompleted] = useState(false);
+  const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
+  const [selectedClientId, setSelectedClientId] = useState<string>('');
 
   const today = getCurrentDayName();
   const dailyRouteClients = clients.filter(client => {
@@ -91,6 +92,11 @@ export function DailyRouteWidget() {
   const displayedPendingClients = showAllPending ? pendingClients : pendingClients.slice(0, 2);
   const displayedCompletedClients = showAllCompleted ? completedClients : completedClients.slice(0, 2);
 
+  const handleCheckout = (clientId: string) => {
+    setSelectedClientId(clientId);
+    setCheckoutModalOpen(true);
+  };
+
   return (
     <Card>
       <CardHeader className="pb-3 sm:pb-6">
@@ -119,11 +125,11 @@ export function DailyRouteWidget() {
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    onClick={() => router.push(`/dashboard/clientes/${client.id}`)}
+                    onClick={() => handleCheckout(client.id)}
                     className="w-full sm:w-auto flex-shrink-0 text-xs sm:text-sm"
                   >
                     <ListChecks className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                    Check-in
+                    Check-out
                   </Button>
                 </li>
               ))}
@@ -189,6 +195,13 @@ export function DailyRouteWidget() {
           </div>
         )}
       </CardContent>
+
+      {/* Modal de Check-out */}
+      <CheckoutModal
+        clientId={selectedClientId}
+        isOpen={checkoutModalOpen}
+        onClose={() => setCheckoutModalOpen(false)}
+      />
     </Card>
   );
 }
