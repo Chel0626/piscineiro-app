@@ -13,23 +13,15 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { ProductUsage, VisitProductManager } from './VisitProductManager';
 import { useClientDetails } from '@/hooks/useClientDetails';
 import { toast } from 'sonner';
 import { Send, Camera, Clock, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-const productUsageSchema = z.object({
-  productName: z.string(),
-  quantity: z.number().min(1),
-});
-
 const formSchema = z.object({
   ph: z.coerce.number().min(0, { message: 'pH inválido.' }),
   cloro: z.coerce.number().min(0, { message: 'Cloro inválido.' }),
   alcalinidade: z.coerce.number().min(0, { message: 'Alcalinidade inválida.' }),
-  productsUsed: z.array(productUsageSchema),
-  productsRequested: z.array(productUsageSchema),
   description: z.string().optional(),
   arrivalTime: z.string().optional(),
   departureTime: z.string().optional(),
@@ -62,8 +54,6 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
       ph: initialData?.ph || 0,
       cloro: initialData?.cloro || 0,
       alcalinidade: initialData?.alcalinidade || 0,
-      productsUsed: initialData?.productsUsed || [],
-      productsRequested: initialData?.productsRequested || [],
       description: initialData?.description || '',
       arrivalTime: initialData?.arrivalTime || getCurrentTime(),
       departureTime: initialData?.departureTime || '',
@@ -136,14 +126,6 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
     form.setValue('departureTime', currentTime);
   };
 
-  const handleProductsUsedChange = (products: ProductUsage[]) => {
-    form.setValue('productsUsed', products);
-  };
-
-  const handleProductsRequestedChange = (products: ProductUsage[]) => {
-    form.setValue('productsRequested', products);
-  };
-
   const handleFormSubmit = async (data: VisitFormData) => {
     try {
       const validatedData = formSchema.parse(data);
@@ -162,8 +144,6 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
         ph: 0,
         cloro: 0,
         alcalinidade: 0,
-        productsUsed: [],
-        productsRequested: [],
         description: '',
         arrivalTime: getCurrentTime(), // Novo horário de chegada
         departureTime: '',
@@ -216,22 +196,6 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
     if (data.ph) message += `• pH: ${data.ph}\n`;
     if (data.cloro) message += `• Cloro: ${data.cloro} ppm\n`;
     if (data.alcalinidade) message += `• Alcalinidade: ${data.alcalinidade} ppm\n`;
-    
-    // Produtos utilizados
-    if (data.productsUsed && data.productsUsed.length > 0) {
-      message += `\n🧪 Produtos Utilizados:\n`;
-      data.productsUsed.forEach(product => {
-        message += `• ${product.productName} (${product.quantity}x)\n`;
-      });
-    }
-    
-    // Produtos solicitados
-    if (data.productsRequested && data.productsRequested.length > 0) {
-      message += `\n🛒 Produtos Necessários:\n`;
-      data.productsRequested.forEach(product => {
-        message += `• ${product.productName} (${product.quantity}x)\n`;
-      });
-    }
     
     // Descrição/observações
     if (data.description) {
@@ -442,14 +406,6 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
             <canvas ref={canvasRef} style={{ display: 'none' }} />
           </CardContent>
         </Card>
-
-        <div className="mt-6">
-          <VisitProductManager
-            clientId={clientId}
-            onProductsUsedChange={handleProductsUsedChange}
-            onProductsRequestedChange={handleProductsRequestedChange}
-          />
-        </div>
 
         <div className="mt-6 space-y-3">
           <Button 

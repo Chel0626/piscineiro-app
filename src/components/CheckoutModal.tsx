@@ -10,8 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { VisitForm, VisitFormData } from '@/components/VisitForm';
 import { ProductCalculator } from '@/components/ProductCalculator';
-import { ClientProductManager } from '@/components/ClientProductManager';
-import { ChevronDown, ChevronRight, ClipboardList, Calculator, Package, CheckCircle, MessageCircle } from 'lucide-react';
+import { ChevronDown, ChevronRight, ClipboardList, Calculator, ShoppingCart, CheckCircle, MessageCircle } from 'lucide-react';
 
 interface CheckoutModalProps {
   clientId: string;
@@ -168,7 +167,7 @@ export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps)
             )}
           </Card>
 
-          {/* Seção 3: Produtos Utilizados/Solicitar */}
+          {/* Seção 3: Produtos a Solicitar */}
           <Card className="border-purple-200 dark:border-purple-800">
             <CardHeader 
               className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
@@ -176,8 +175,8 @@ export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps)
             >
               <CardTitle className="flex items-center justify-between text-lg">
                 <div className="flex items-center gap-2">
-                  <Package className="h-5 w-5 text-purple-600" />
-                  Produtos Utilizados & Solicitações
+                  <ShoppingCart className="h-5 w-5 text-purple-600" />
+                  Produtos a Solicitar
                 </div>
                 {openSections.products ? (
                   <ChevronDown className="h-5 w-5" />
@@ -188,7 +187,14 @@ export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps)
             </CardHeader>
             {openSections.products && (
               <CardContent>
-                <ClientProductManager clientId={clientId} />
+                <div className="text-center py-8 text-gray-600 dark:text-gray-400">
+                  <ShoppingCart className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+                  <p className="text-lg font-medium mb-2">Produtos a Solicitar</p>
+                  <p className="text-sm">
+                    Funcionalidade em desenvolvimento.<br />
+                    Em breve você poderá solicitar produtos diretamente aqui.
+                  </p>
+                </div>
               </CardContent>
             )}
           </Card>

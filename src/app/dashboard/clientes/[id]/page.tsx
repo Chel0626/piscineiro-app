@@ -257,32 +257,6 @@ export default function ClienteDetailPage() {
                               <span><strong>Cloro:</strong> {visit.cloro} ppm</span>
                               <span><strong>Alcalinidade:</strong> {visit.alcalinidade} ppm</span>
                             </div>
-                            
-                            {visit.productsUsed?.length > 0 && (
-                              <div className="text-xs sm:text-sm">
-                                <strong>Produtos Utilizados:</strong>
-                                <div className="mt-1 space-y-1">
-                                  {visit.productsUsed.map((product, index) => (
-                                    <div key={index}>
-                                      {product.productName} (x{product.quantity})
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                            
-                            {visit.productsRequested?.length > 0 && (
-                              <div className="text-xs sm:text-sm">
-                                <strong>Produtos Solicitados:</strong>
-                                <div className="mt-1 space-y-1">
-                                  {visit.productsRequested.map((product, index) => (
-                                    <div key={index}>
-                                      {product.productName} (x{product.quantity})
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
 
                             {visit.description && (
                               <div className="text-xs sm:text-sm">
