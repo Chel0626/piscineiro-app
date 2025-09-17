@@ -15,8 +15,8 @@ interface ProductCalculatorProps {
 export function ProductCalculator({ poolVolume: initialVolume, ph: initialPh, cloro: initialCloro, alcalinidade: initialAlcalinidade }: ProductCalculatorProps) {
   const [volume, setVolume] = useState<number>(initialVolume || 0);
   const [ph, setPh] = useState<number>(initialPh || 7.4);
-  const [cloro, setCloro] = useState<number>(initialCloro || 2.0);
-  const [alcalinidade, setAlcalinidade] = useState<number>(initialAlcalinidade || 100);
+  const [cloro, setCloro] = useState<number>(initialCloro || 3.0);
+  const [alcalinidade, setAlcalinidade] = useState<number>(initialAlcalinidade || 12);
 
   const calcularProdutos = () => {
     if (volume === 0) {
@@ -25,52 +25,59 @@ export function ProductCalculator({ poolVolume: initialVolume, ph: initialPh, cl
 
     const acoes: string[] = [];
 
-    // Parâmetros ideais:
-    // pH: 7.2 - 7.6 (ideal: 7.4)
-    // Cloro livre: 1.0 - 3.0 ppm (ideal: 2.0)
-    // Alcalinidade: 80 - 120 ppm (ideal: 100)
+    // NOVA ESPECIFICAÇÃO DE CÁLCULOS
     
-    if (cloro < 1.0) {
-      const cloroDiff = 2.0 - cloro;
-      const cloroNecessario = (cloroDiff * volume * 1.5);
-      acoes.push(`🧪 Cloro: ${cloroNecessario.toFixed(0)}g de cloro granulado 65% (meta: 2.0 ppm)`);
+    // 1. CLORO GRANULADO
+    // Meta: 3ppm - Fórmula: 4g x litragem em m³ x quanto falta para chegar em 3ppm
+    if (cloro < 3.0) {
+      const cloroFaltante = 3.0 - cloro;
+      const cloroNecessario = 4 * volume * cloroFaltante;
+      acoes.push(`🧪 Cloro Granulado: ${cloroNecessario.toFixed(0)}g (meta: 3.0 ppm)`);
     }
 
-    // Primeiro verificar alcalinidade, pois corrigi-la também afeta o pH
-    if (alcalinidade < 80) {
-      const alcDiff = 100 - alcalinidade;
-      const bicarbonato = (alcDiff * volume * 1.2);
-      acoes.push(`📈 Alcalinidade: ${bicarbonato.toFixed(0)}g de bicarbonato de sódio (meta: 100 ppm)`);
-      
-      // Se pH também está baixo, apenas avisar que a alcalinidade vai ajudar
-      if (ph < 7.2) {
-        acoes.push(`ℹ️ pH baixo será corrigido automaticamente com a correção da alcalinidade`);
-      }
-    } else if (alcalinidade > 120) {
-      acoes.push(`📉 Alcalinidade alta: Adicione ácido muriático gradualmente e teste novamente`);
-    } else {
-      // Se alcalinidade está ok, aí sim corrigir pH se necessário
-      if (ph > 7.6) {
-        const phDiff = ph - 7.4;
-        const acidoNecessario = (phDiff * volume * 50);
-        acoes.push(`⬇️ pH: ${acidoNecessario.toFixed(0)}ml de ácido muriático (meta: 7.4)`);
-      } else if (ph < 7.2) {
-        const phDiff = 7.4 - ph;
-        const barrilhaNecessaria = (phDiff * volume * 75);
-        acoes.push(`⬆️ pH: ${barrilhaNecessaria.toFixed(0)}g de barrilha (meta: 7.4)`);
-      }
+    // OXIDAÇÃO DE CHOQUE (quando cloro está zerado)
+    if (cloro === 0) {
+      const choqueOxidacao = volume * 20;
+      acoes.push(`⚡ Oxidação de Choque: ${choqueOxidacao.toFixed(0)}g de Cloro Granulado`);
     }
 
-    // Produtos para decantação
-    acoes.push(`\n💧 **Para Decantação:**`);
-    const sulfatoAluminio = volume * 4;
-    acoes.push(`• Sulfato de Alumínio: ${sulfatoAluminio.toFixed(0)}g`);
-    
-    const clarificante = volume * 0.5;
-    acoes.push(`• Clarificante: ${clarificante.toFixed(1)}ml`);
+    // 2. ELEVADOR DE ALCALINIDADE
+    // Meta: 12 - Fórmula: 17g x litragem em m³ x quanto falta para chegar em 12
+    if (alcalinidade < 12) {
+      const alcalinidadeFaltante = 12 - alcalinidade;
+      const elevadorAlcalinidadeGramas = 17 * volume * alcalinidadeFaltante;
+      const elevadorAlcalinidadeKg = elevadorAlcalinidadeGramas / 1000;
+      acoes.push(`� Elevador de Alcalinidade: ${elevadorAlcalinidadeKg.toFixed(2)}kg (meta: 12)`);
+    }
 
-    if (acoes.length === 3) {
-      acoes.unshift("✅ Parâmetros dentro do ideal! Apenas produtos para decantação:");
+    // 3. REDUTOR DE pH
+    // Fórmula: litragem em m³ x 10ml
+    if (ph > 7.6) {
+      const redutorPh = volume * 10;
+      acoes.push(`⬇️ Redutor de pH: ${redutorPh.toFixed(0)}ml`);
+    }
+
+    // 4. ALGICIDA
+    // Manutenção/Choque: litragem x 6ml
+    const algicida = volume * 6;
+    acoes.push(`🌱 Algicida (manutenção/choque): ${algicida.toFixed(0)}ml`);
+
+    // 5. SULFATO DE ALUMÍNIO
+    // Fórmula: litragem x 15g
+    const sulfatoAluminio = volume * 15;
+    acoes.push(`🧪 Sulfato de Alumínio: ${sulfatoAluminio.toFixed(0)}g`);
+
+    // 6. CLARIFICANTE
+    // Para manutenção: 1,5ml x litragem em m³
+    const clarificanteManutencao = volume * 1.5;
+    acoes.push(`💧 Clarificante (manutenção): ${clarificanteManutencao.toFixed(1)}ml`);
+    
+    // Para decantação: 6ml x litragem em m³
+    const clarificanteDecantacao = volume * 6;
+    acoes.push(`💧 Clarificante (decantação): ${clarificanteDecantacao.toFixed(0)}ml`);
+
+    if (acoes.length === 0) {
+      acoes.push("✅ Use as fórmulas acima conforme necessário.");
     }
 
     return acoes;
@@ -83,9 +90,9 @@ export function ProductCalculator({ poolVolume: initialVolume, ph: initialPh, cl
       <CardHeader>
         <CardTitle>Calculadora de Produtos</CardTitle>
         <CardDescription>
-          Calcule as quantidades necessárias para correção dos parâmetros e decantação.
+          Calcule as quantidades necessárias para correção dos parâmetros e manutenção.
           <br />
-          <strong>Metas:</strong> pH: 7.2-7.6 | Cloro: 1.0-3.0 ppm | Alcalinidade: 80-120 ppm
+          <strong>Metas:</strong> pH: 7.2-7.6 | Cloro: 3.0 ppm | Alcalinidade: 12
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -122,18 +129,18 @@ export function ProductCalculator({ poolVolume: initialVolume, ph: initialPh, cl
                 id="cloro"
                 type="number"
                 step="0.1"
-                placeholder="2.0"
+                placeholder="3.0"
                 value={cloro || ''}
                 onChange={(e) => setCloro(Number(e.target.value) || 0)}
               />
             </div>
             <div>
-              <Label htmlFor="alcalinidade">Alcalinidade (ppm)</Label>
+              <Label htmlFor="alcalinidade">Alcalinidade</Label>
               <Input
                 id="alcalinidade"
                 type="number"
                 step="1"
-                placeholder="100"
+                placeholder="12"
                 value={alcalinidade || ''}
                 onChange={(e) => setAlcalinidade(Number(e.target.value) || 0)}
               />

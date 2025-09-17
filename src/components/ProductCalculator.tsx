@@ -24,33 +24,56 @@ export function ProductCalculator({ poolVolume }: ProductCalculatorProps) {
   const watchedValues = useWatch({ control: form.control });
 
   const calcularProdutos = (data: Partial<CalculatorFormData>) => {
-    const volumeLitros = (poolVolume || 0) * 1000;
-    // CORREÇÃO: Usar 'const' pois a variável não é reatribuída.
+    const volume = poolVolume || 0;
     const acoes = [];
 
+    // NOVOS CÁLCULOS CONFORME ESPECIFICAÇÃO
+
+    // 1. CLORO GRANULADO - Meta: 3ppm
     const cloroAtual = data.cloro ?? 0;
-    if (cloroAtual < 1) {
-      const cloroNecessario = (volumeLitros / 1000) * 4;
-      acoes.push(`Adicionar ${cloroNecessario.toFixed(0)}g de cloro granulado para atingir o nível ideal (1-3 ppm).`);
+    if (cloroAtual < 3.0) {
+      const cloroFaltante = 3.0 - cloroAtual;
+      const cloroNecessario = 4 * volume * cloroFaltante;
+      acoes.push(`Cloro Granulado: ${cloroNecessario.toFixed(0)}g (meta: 3.0 ppm)`);
     }
 
+    // Oxidação de choque se cloro está zerado
+    if (cloroAtual === 0) {
+      const choqueOxidacao = volume * 20;
+      acoes.push(`Oxidação de Choque: ${choqueOxidacao.toFixed(0)}g de Cloro Granulado`);
+    }
+
+    // 2. ELEVADOR DE ALCALINIDADE - Meta: 12
+    const alcalinidadeAtual = data.alcalinidade ?? 12;
+    if (alcalinidadeAtual < 12) {
+      const alcalinidadeFaltante = 12 - alcalinidadeAtual;
+      const elevadorAlcalinidadeGramas = 17 * volume * alcalinidadeFaltante;
+      const elevadorAlcalinidadeKg = elevadorAlcalinidadeGramas / 1000;
+      acoes.push(`Elevador de Alcalinidade: ${elevadorAlcalinidadeKg.toFixed(2)}kg (meta: 12)`);
+    }
+
+    // 3. REDUTOR DE pH
     const phAtual = data.ph ?? 7.4;
     if (phAtual > 7.6) {
-      const redutorNecessario = (volumeLitros / 1000) * 10;
-      acoes.push(`Adicionar ${redutorNecessario.toFixed(0)}ml de redutor de pH para baixar o nível (ideal 7.2-7.6).`);
-    } else if (phAtual < 7.2) {
-      const elevadorNecessario = (volumeLitros / 1000) * 5;
-      acoes.push(`Adicionar ${elevadorNecessario.toFixed(0)}g de elevador de pH (barrilha) para aumentar o nível.`);
+      const redutorPh = volume * 10;
+      acoes.push(`Redutor de pH: ${redutorPh.toFixed(0)}ml`);
     }
 
-    const alcalinidadeAtual = data.alcalinidade ?? 100;
-    if (alcalinidadeAtual < 80) {
-        const elevadorAlcalinidade = (volumeLitros / 1000) * 17;
-        acoes.push(`Adicionar ${elevadorAlcalinidade.toFixed(0)}g de elevador de alcalinidade para estabilizar o pH (ideal 80-120 ppm).`);
-    }
+    // 4. PRODUTOS COMPLEMENTARES
+    const algicida = volume * 6;
+    acoes.push(`Algicida (manutenção/choque): ${algicida.toFixed(0)}ml`);
 
-    if (acoes.length === 0 && (data.cloro || data.ph || data.alcalinidade)) {
-        return ["Parâmetros dentro do ideal. Apenas manutenção."];
+    const sulfatoAluminio = volume * 15;
+    acoes.push(`Sulfato de Alumínio: ${sulfatoAluminio.toFixed(0)}g`);
+
+    const clarificanteManutencao = volume * 1.5;
+    acoes.push(`Clarificante (manutenção): ${clarificanteManutencao.toFixed(1)}ml`);
+
+    const clarificanteDecantacao = volume * 6;
+    acoes.push(`Clarificante (decantação): ${clarificanteDecantacao.toFixed(0)}ml`);
+
+    if (acoes.length === 0) {
+      return ["Use as fórmulas de cálculo conforme necessário."];
     }
 
     return acoes;
@@ -62,7 +85,7 @@ export function ProductCalculator({ poolVolume }: ProductCalculatorProps) {
     <Card>
       <CardHeader>
         <CardTitle>Calculadora de Produtos</CardTitle>
-        <CardDescription>Insira os parâmetros atuais para calcular a dosagem.</CardDescription>
+        <CardDescription>Insira os parâmetros atuais para calcular a dosagem. Metas: pH 7.2-7.6 | Cloro 3.0 ppm | Alcalinidade 12</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -87,7 +110,7 @@ export function ProductCalculator({ poolVolume }: ProductCalculatorProps) {
                   <FormItem>
                     <FormLabel>Cloro (ppm)</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.1" placeholder="1.5" {...field} />
+                      <Input type="number" step="0.1" placeholder="3.0" {...field} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -99,7 +122,7 @@ export function ProductCalculator({ poolVolume }: ProductCalculatorProps) {
                   <FormItem>
                     <FormLabel>Alcalinidade (ppm)</FormLabel>
                     <FormControl>
-                      <Input type="number" step="1" placeholder="100" {...field} />
+                      <Input type="number" step="1" placeholder="12" {...field} />
                     </FormControl>
                   </FormItem>
                 )}

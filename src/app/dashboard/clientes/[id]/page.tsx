@@ -80,10 +80,6 @@ export default function ClienteDetailPage() {
     }
   };
 
-  const getVisitToEdit = (visitId: string) => {
-    return visits.find(visit => visit.id === visitId);
-  };
-
   if (isLoading) {
     return <div className="text-center p-6 text-sm sm:text-base">Carregando dados do cliente...</div>;
   }
