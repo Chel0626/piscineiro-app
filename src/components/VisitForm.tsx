@@ -14,10 +14,9 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { ProductUsage, VisitProductManager } from './VisitProductManager';
-import { FillReminder, FillReminderState } from './FillReminder';
 import { useClientDetails } from '@/hooks/useClientDetails';
 import { toast } from 'sonner';
-import { Send, Droplets, AlertTriangle } from 'lucide-react';
+import { Send } from 'lucide-react';
 
 const productUsageSchema = z.object({
   productName: z.string(),
@@ -31,7 +30,6 @@ const formSchema = z.object({
   productsUsed: z.array(productUsageSchema),
   productsRequested: z.array(productUsageSchema),
   description: z.string().optional(),
-  photo: z.any().optional(),
 });
 
 export type VisitFormData = z.infer<typeof formSchema>;
@@ -40,26 +38,20 @@ interface VisitFormProps {
   onSubmit: (data: VisitFormData) => void;
   isLoading: boolean;
   clientId: string;
+  initialData?: Partial<VisitFormData>;
 }
 
-export function VisitForm({ onSubmit, isLoading, clientId }: VisitFormProps) {
+export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitFormProps) {
   const { client } = useClientDetails(clientId);
-  const [fillReminderState, setFillReminderState] = useState<FillReminderState>({
-    isActive: false,
-    timeRemaining: 0,
-    totalTime: 0,
-    isCompleted: false
-  });
   
   const form = useForm<VisitFormData>({
     defaultValues: {
-      ph: 0,
-      cloro: 0,
-      alcalinidade: 0,
-      productsUsed: [],
-      productsRequested: [],
-      description: '',
-      photo: undefined,
+      ph: initialData?.ph || 0,
+      cloro: initialData?.cloro || 0,
+      alcalinidade: initialData?.alcalinidade || 0,
+      productsUsed: initialData?.productsUsed || [],
+      productsRequested: initialData?.productsRequested || [],
+      description: initialData?.description || '',
     },
   });
 
@@ -72,21 +64,19 @@ export function VisitForm({ onSubmit, isLoading, clientId }: VisitFormProps) {
   };
 
   const handleFormSubmit = async (data: VisitFormData) => {
-    // Verificar se o abastecimento foi concluído (se estiver ativo)
-    if (fillReminderState.isActive && !fillReminderState.isCompleted) {
-      toast.error('Finalize o abastecimento da piscina antes de fazer o checkout!', {
-        description: 'O timer de abastecimento ainda está ativo.',
-        action: {
-          label: 'Ver Timer',
-          onClick: () => {}
-        }
-      });
-      return;
-    }
-
     try {
       const validatedData = formSchema.parse(data);
-      onSubmit(validatedData);
+      
+      // Filtrar campos undefined antes de enviar ao Firebase
+      const cleanedData = {
+        ...validatedData,
+        // Remove description se for vazia
+        ...(validatedData.description && validatedData.description.trim() 
+          ? { description: validatedData.description.trim() } 
+          : {})
+      };
+      
+      onSubmit(cleanedData);
       form.reset({
         ph: 0,
         cloro: 0,
@@ -94,7 +84,6 @@ export function VisitForm({ onSubmit, isLoading, clientId }: VisitFormProps) {
         productsUsed: [],
         productsRequested: [],
         description: '',
-        photo: undefined,
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -225,25 +214,6 @@ export function VisitForm({ onSubmit, isLoading, clientId }: VisitFormProps) {
               </FormItem>
             )}
           />
-          
-          <FormField
-            control={form.control}
-            name="photo"
-            render={({ field: { onChange, ...field } }) => (
-              <FormItem>
-                <FormLabel>Foto da Piscina (opcional)</FormLabel>
-                <FormControl>
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => onChange(e.target.files)}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
         </div>
 
         <div className="mt-6">
@@ -254,46 +224,11 @@ export function VisitForm({ onSubmit, isLoading, clientId }: VisitFormProps) {
           />
         </div>
 
-        {/* Lembrete de Abastecimento */}
-        <div className="mt-6 p-4 border rounded-lg bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Droplets className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-              <span className="font-medium text-blue-800 dark:text-blue-200">
-                Controle de Abastecimento
-              </span>
-            </div>
-            <FillReminder onStateChange={setFillReminderState} />
-          </div>
-          
-          {fillReminderState.isActive && (
-            <div className="text-sm text-blue-700 dark:text-blue-300">
-              ⏱️ Timer ativo - Finalize o abastecimento antes do checkout
-            </div>
-          )}
-          
-          {fillReminderState.isCompleted && (
-            <div className="text-sm text-green-700 dark:text-green-300">
-              ✅ Abastecimento concluído
-            </div>
-          )}
-        </div>
-
         <div className="mt-6 space-y-3">
-          {/* Alerta se timer estiver ativo */}
-          {fillReminderState.isActive && !fillReminderState.isCompleted && (
-            <div className="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg">
-              <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-              <span className="text-sm text-amber-800 dark:text-amber-200">
-                Checkout bloqueado até finalizar o abastecimento
-              </span>
-            </div>
-          )}
-          
           <Button 
             type="submit" 
             className="w-full" 
-            disabled={isLoading || (fillReminderState.isActive && !fillReminderState.isCompleted)}
+            disabled={isLoading}
           >
             {isLoading ? 'Salvando...' : 'Finalizar Visita (Checkout)'}
           </Button>

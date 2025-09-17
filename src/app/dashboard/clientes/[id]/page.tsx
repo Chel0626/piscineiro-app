@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
@@ -11,8 +11,10 @@ import { useClientDetails } from '@/hooks/useClientDetails';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { VisitForm, VisitFormData } from '@/components/VisitForm';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2 } from 'lucide-react';
 import { ProductCalculator } from '@/components/ProductCalculator';
 import { ClientProductManager } from '@/components/ClientProductManager'; // Importe o novo componente
 
@@ -23,6 +25,8 @@ export default function ClienteDetailPage() {
   const { client, visits, isLoading } = useClientDetails(clientId);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingVisitId, setEditingVisitId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
   const handleVisitSubmit = async (data: VisitFormData) => {
     if (!clientId) return;
@@ -40,6 +44,44 @@ export default function ClienteDetailPage() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleEditVisit = async (visitId: string, data: VisitFormData) => {
+    if (!clientId) return;
+    setIsSubmitting(true);
+    try {
+      const visitDocRef = doc(db, 'clients', clientId, 'visits', visitId);
+      await updateDoc(visitDocRef, {
+        ...data,
+        // Manter o timestamp original
+      });
+      toast.success('Visita editada com sucesso!');
+      setEditingVisitId(null);
+    } catch (error) {
+      console.error('Erro ao editar visita:', error);
+      toast.error('Não foi possível editar a visita.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteVisit = async (visitId: string) => {
+    if (!clientId) return;
+    setIsDeleting(visitId);
+    try {
+      const visitDocRef = doc(db, 'clients', clientId, 'visits', visitId);
+      await deleteDoc(visitDocRef);
+      toast.success('Visita deletada com sucesso!');
+    } catch (error) {
+      console.error('Erro ao deletar visita:', error);
+      toast.error('Não foi possível deletar a visita.');
+    } finally {
+      setIsDeleting(null);
+    }
+  };
+
+  const getVisitToEdit = (visitId: string) => {
+    return visits.find(visit => visit.id === visitId);
   };
 
   if (isLoading) {
@@ -148,44 +190,112 @@ export default function ClienteDetailPage() {
                   {visits.length > 0 ? (
                     visits.map((visit) => (
                       <div key={visit.id} className="p-3 sm:p-4 border rounded-md">
-                        <p className="font-semibold text-sm sm:text-base mb-2">
-                          {visit.timestamp?.toDate().toLocaleDateString('pt-BR', {
-                            year: 'numeric', month: 'long', day: 'numeric',
-                          })}
-                        </p>
-                        <div className="space-y-3">
-                          <div className="flex flex-col sm:flex-row gap-2 sm:gap-6 text-xs sm:text-sm">
-                            <span><strong>pH:</strong> {visit.ph}</span>
-                            <span><strong>Cloro:</strong> {visit.cloro} ppm</span>
-                            <span><strong>Alcalinidade:</strong> {visit.alcalinidade} ppm</span>
+                        <div className="flex justify-between items-start mb-2">
+                          <p className="font-semibold text-sm sm:text-base">
+                            {visit.timestamp?.toDate().toLocaleDateString('pt-BR', {
+                              year: 'numeric', month: 'long', day: 'numeric',
+                            })}
+                          </p>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setEditingVisitId(visit.id)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  disabled={isDeleting === visit.id}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Deletar Visita</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Tem certeza que deseja deletar esta visita? Esta ação não pode ser desfeita.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDeleteVisit(visit.id)}
+                                    className="bg-red-600 hover:bg-red-700"
+                                  >
+                                    Deletar
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           </div>
-                          
-                          {visit.productsUsed?.length > 0 && (
-                            <div className="text-xs sm:text-sm">
-                              <strong>Produtos Utilizados:</strong>
-                              <div className="mt-1 space-y-1">
-                                {visit.productsUsed.map((product, index) => (
-                                  <div key={index}>
-                                    {product.productName} (x{product.quantity})
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                          
-                          {visit.productsRequested?.length > 0 && (
-                            <div className="text-xs sm:text-sm">
-                              <strong>Produtos Solicitados:</strong>
-                              <div className="mt-1 space-y-1">
-                                {visit.productsRequested.map((product, index) => (
-                                  <div key={index}>
-                                    {product.productName} (x{product.quantity})
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
                         </div>
+
+                        {editingVisitId === visit.id ? (
+                          <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <h4 className="font-medium mb-3">Editar Visita</h4>
+                            <VisitForm 
+                              onSubmit={(data) => handleEditVisit(visit.id, data)}
+                              isLoading={isSubmitting}
+                              clientId={clientId}
+                              initialData={visit}
+                            />
+                            <Button
+                              variant="outline"
+                              onClick={() => setEditingVisitId(null)}
+                              className="mt-3"
+                            >
+                              Cancelar
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            <div className="flex flex-col sm:flex-row gap-2 sm:gap-6 text-xs sm:text-sm">
+                              <span><strong>pH:</strong> {visit.ph}</span>
+                              <span><strong>Cloro:</strong> {visit.cloro} ppm</span>
+                              <span><strong>Alcalinidade:</strong> {visit.alcalinidade} ppm</span>
+                            </div>
+                            
+                            {visit.productsUsed?.length > 0 && (
+                              <div className="text-xs sm:text-sm">
+                                <strong>Produtos Utilizados:</strong>
+                                <div className="mt-1 space-y-1">
+                                  {visit.productsUsed.map((product, index) => (
+                                    <div key={index}>
+                                      {product.productName} (x{product.quantity})
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            
+                            {visit.productsRequested?.length > 0 && (
+                              <div className="text-xs sm:text-sm">
+                                <strong>Produtos Solicitados:</strong>
+                                <div className="mt-1 space-y-1">
+                                  {visit.productsRequested.map((product, index) => (
+                                    <div key={index}>
+                                      {product.productName} (x{product.quantity})
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {visit.description && (
+                              <div className="text-xs sm:text-sm">
+                                <strong>Observações:</strong>
+                                <p className="mt-1 text-gray-600">{visit.description}</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     ))
                   ) : (
