@@ -20,6 +20,8 @@ export function DailyRouteWidget() {
   const { clients, authLoading } = useClients();
   const router = useRouter();
   const [visitedToday, setVisitedToday] = useState<Set<string>>(new Set());
+  const [showAllPending, setShowAllPending] = useState(false);
+  const [showAllCompleted, setShowAllCompleted] = useState(false);
 
   const today = getCurrentDayName();
   const dailyRouteClients = clients.filter(client => {
@@ -85,6 +87,10 @@ export function DailyRouteWidget() {
   const pendingClients = dailyRouteClients.filter(client => !visitedToday.has(client.id));
   const completedClients = dailyRouteClients.filter(client => visitedToday.has(client.id));
 
+  // Limitar exibição inicial
+  const displayedPendingClients = showAllPending ? pendingClients : pendingClients.slice(0, 2);
+  const displayedCompletedClients = showAllCompleted ? completedClients : completedClients.slice(0, 2);
+
   return (
     <Card>
       <CardHeader className="pb-3 sm:pb-6">
@@ -103,7 +109,7 @@ export function DailyRouteWidget() {
           <div className="space-y-3">
             <h4 className="text-sm font-medium text-gray-600 dark:text-gray-300">Pendentes</h4>
             <ul className="space-y-3">
-              {pendingClients.map(client => (
+              {displayedPendingClients.map(client => (
                 <li key={client.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm sm:text-base truncate text-gray-900 dark:text-gray-100">{client.name}</p>
@@ -122,6 +128,23 @@ export function DailyRouteWidget() {
                 </li>
               ))}
             </ul>
+            
+            {/* Botão mostrar mais para pendentes */}
+            {pendingClients.length > 2 && (
+              <div className="text-center pt-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowAllPending(!showAllPending)}
+                  className="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                >
+                  {showAllPending 
+                    ? 'Mostrar menos' 
+                    : `Mostrar todos (${pendingClients.length - 2} restantes)`
+                  }
+                </Button>
+              </div>
+            )}
           </div>
         )}
 
@@ -130,7 +153,7 @@ export function DailyRouteWidget() {
           <div className={`space-y-3 ${pendingClients.length > 0 ? 'mt-6' : ''}`}>
             <h4 className="text-sm font-medium text-green-600 dark:text-green-400">Concluídos</h4>
             <ul className="space-y-2">
-              {completedClients.map(client => (
+              {displayedCompletedClients.map(client => (
                 <li key={client.id} className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/30 rounded-lg">
                   <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
@@ -140,6 +163,23 @@ export function DailyRouteWidget() {
                 </li>
               ))}
             </ul>
+            
+            {/* Botão mostrar mais para concluídos */}
+            {completedClients.length > 2 && (
+              <div className="text-center pt-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowAllCompleted(!showAllCompleted)}
+                  className="text-xs text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-200"
+                >
+                  {showAllCompleted 
+                    ? 'Mostrar menos' 
+                    : `Mostrar todos (${completedClients.length - 2} restantes)`
+                  }
+                </Button>
+              </div>
+            )}
           </div>
         )}
 
