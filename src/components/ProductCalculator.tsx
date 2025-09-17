@@ -63,7 +63,7 @@ export function ProductCalculator({ poolVolume }: ProductCalculatorProps) {
     const algicida = volume * 6;
     acoes.push(`Algicida (manutenção/choque): ${algicida.toFixed(0)}ml`);
 
-    const sulfatoAluminio = volume * 15;
+    const sulfatoAluminio = volume * 40;
     acoes.push(`Sulfato de Alumínio: ${sulfatoAluminio.toFixed(0)}g`);
 
     const clarificanteManutencao = volume * 1.5;

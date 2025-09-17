@@ -63,8 +63,8 @@ export function ProductCalculator({ poolVolume: initialVolume, ph: initialPh, cl
     acoes.push(`🌱 Algicida (manutenção/choque): ${algicida.toFixed(0)}ml`);
 
     // 5. SULFATO DE ALUMÍNIO
-    // Fórmula: litragem x 15g
-    const sulfatoAluminio = volume * 15;
+    // Fórmula: litragem x 40g
+    const sulfatoAluminio = volume * 40;
     acoes.push(`🧪 Sulfato de Alumínio: ${sulfatoAluminio.toFixed(0)}g`);
 
     // 6. CLARIFICANTE
