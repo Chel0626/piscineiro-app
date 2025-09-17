@@ -2,7 +2,7 @@
 
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -16,7 +16,8 @@ import { Input } from '@/components/ui/input';
 import { ProductUsage, VisitProductManager } from './VisitProductManager';
 import { useClientDetails } from '@/hooks/useClientDetails';
 import { toast } from 'sonner';
-import { Send } from 'lucide-react';
+import { Send, Camera, Clock, X } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const productUsageSchema = z.object({
   productName: z.string(),
@@ -30,6 +31,9 @@ const formSchema = z.object({
   productsUsed: z.array(productUsageSchema),
   productsRequested: z.array(productUsageSchema),
   description: z.string().optional(),
+  arrivalTime: z.string().optional(),
+  departureTime: z.string().optional(),
+  poolPhoto: z.string().optional(), // URL da foto armazenada
 });
 
 export type VisitFormData = z.infer<typeof formSchema>;
@@ -44,6 +48,15 @@ interface VisitFormProps {
 export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitFormProps) {
   const { client } = useClientDetails(clientId);
   
+  // Função para obter horário atual formatado
+  const getCurrentTime = () => {
+    const now = new Date();
+    return now.toLocaleTimeString('pt-BR', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+  };
+  
   const form = useForm<VisitFormData>({
     defaultValues: {
       ph: initialData?.ph || 0,
@@ -52,8 +65,76 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
       productsUsed: initialData?.productsUsed || [],
       productsRequested: initialData?.productsRequested || [],
       description: initialData?.description || '',
+      arrivalTime: initialData?.arrivalTime || getCurrentTime(),
+      departureTime: initialData?.departureTime || '',
+      poolPhoto: initialData?.poolPhoto || '',
     },
   });
+
+  // Estados para captura de foto
+  const [photoPreview, setPhotoPreview] = useState<string>('');
+  const [isCapturing, setIsCapturing] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Função para iniciar captura de foto
+  const startCamera = async () => {
+    try {
+      setIsCapturing(true);
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          facingMode: 'environment' // Preferir câmera traseira
+        } 
+      });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (error) {
+      console.error('Erro ao acessar câmera:', error);
+      toast.error('Não foi possível acessar a câmera');
+      setIsCapturing(false);
+    }
+  };
+
+  // Função para tirar foto
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const canvas = canvasRef.current;
+      const video = videoRef.current;
+      const context = canvas.getContext('2d');
+      
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      context?.drawImage(video, 0, 0);
+      const photoDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+      
+      setPhotoPreview(photoDataUrl);
+      form.setValue('poolPhoto', photoDataUrl);
+      stopCamera();
+    }
+  };
+
+  // Função para parar câmera
+  const stopCamera = () => {
+    if (videoRef.current?.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+    }
+    setIsCapturing(false);
+  };
+
+  // Função para remover foto
+  const removePhoto = () => {
+    setPhotoPreview('');
+    form.setValue('poolPhoto', '');
+  };
+
+  // Função para definir horário de saída
+  const setDepartureTime = () => {
+    const currentTime = getCurrentTime();
+    form.setValue('departureTime', currentTime);
+  };
 
   const handleProductsUsedChange = (products: ProductUsage[]) => {
     form.setValue('productsUsed', products);
@@ -84,7 +165,14 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
         productsUsed: [],
         productsRequested: [],
         description: '',
+        arrivalTime: getCurrentTime(), // Novo horário de chegada
+        departureTime: '',
+        poolPhoto: '',
       });
+      
+      // Limpar estados de foto
+      setPhotoPreview('');
+      setIsCapturing(false);
     } catch (error) {
       if (error instanceof z.ZodError) {
         error.issues.forEach((err) => {
@@ -113,7 +201,15 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
 
     // Construir mensagem do relatório
     let message = `🏊 Relatório da Manutenção - ${client.name}\n`;
-    message += `📅 Data: ${new Date().toLocaleDateString('pt-BR')}\n\n`;
+    message += `📅 Data: ${new Date().toLocaleDateString('pt-BR')}\n`;
+    
+    // Horários de atendimento
+    if (data.arrivalTime || data.departureTime) {
+      message += `⏰ Horários:\n`;
+      if (data.arrivalTime) message += `• Chegada: ${data.arrivalTime}\n`;
+      if (data.departureTime) message += `• Saída: ${data.departureTime}\n`;
+      message += `\n`;
+    }
     
     // Parâmetros da água
     message += `💧 Parâmetros da Água:\n`;
@@ -215,6 +311,137 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
             )}
           />
         </div>
+
+        {/* Seção de Horários */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="arrivalTime"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  Horário de Chegada
+                </FormLabel>
+                <FormControl>
+                  <Input 
+                    type="time" 
+                    {...field} 
+                    readOnly 
+                    className="bg-gray-50 dark:bg-gray-800"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="departureTime"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  Horário de Saída
+                </FormLabel>
+                <div className="flex gap-2">
+                  <FormControl>
+                    <Input 
+                      type="time" 
+                      {...field}
+                      placeholder="--:--"
+                    />
+                  </FormControl>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={setDepartureTime}
+                  >
+                    Agora
+                  </Button>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Seção de Foto da Piscina */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Camera className="h-5 w-5" />
+              Foto da Piscina
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {!photoPreview && !isCapturing && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={startCamera}
+                className="w-full"
+              >
+                <Camera className="h-4 w-4 mr-2" />
+                Tirar Foto da Piscina
+              </Button>
+            )}
+
+            {isCapturing && (
+              <div className="space-y-4">
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  className="w-full max-w-md rounded-lg border mx-auto"
+                />
+                <div className="flex gap-2 justify-center">
+                  <Button
+                    type="button"
+                    onClick={capturePhoto}
+                  >
+                    Capturar
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={stopCamera}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {photoPreview && (
+              <div className="space-y-4">
+                <div className="relative">
+                  <img
+                    src={photoPreview}
+                    alt="Foto da piscina"
+                    className="w-full max-w-md rounded-lg border mx-auto"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={removePhoto}
+                    className="absolute top-2 right-2"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="text-sm text-center text-gray-600 dark:text-gray-400">
+                  Foto capturada com sucesso!
+                </p>
+              </div>
+            )}
+
+            {/* Canvas oculto para captura */}
+            <canvas ref={canvasRef} style={{ display: 'none' }} />
+          </CardContent>
+        </Card>
 
         <div className="mt-6">
           <VisitProductManager
