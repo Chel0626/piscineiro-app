@@ -136,24 +136,42 @@ export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps)
       });
     }
 
-    let productsReport = '';
-    if (selectedProducts.length > 0) {
-      productsReport = `\n🛒 *Produtos Solicitados (${selectedProducts.length}):*\n`;
-      selectedProducts.forEach(product => {
-        productsReport += `• ${product}\n`;
-      });
-    }
-
     const message = `🏊‍♂️ *Relatório de Visita - ${client.name}*\n\n` +
       `📅 Data: ${new Date().toLocaleDateString('pt-BR')}\n` +
       `📍 Endereço: ${client.address}\n` +
-      `📋 Observações: ${visitData.description || 'Nenhuma observação'}${mechanicalReport}${productsReport}\n\n` +
+      `📋 Observações: ${visitData.description || 'Nenhuma observação'}${mechanicalReport}\n\n` +
       `✅ Visita concluída com sucesso!`;
 
     const phoneNumber = client.phone?.replace(/\D/g, '');
     if (phoneNumber) {
       const whatsappUrl = `https://wa.me/55${phoneNumber}?text=${encodeURIComponent(message)}`;
       window.open(whatsappUrl, '_blank');
+    } else {
+      toast.error('Número de telefone não encontrado');
+    }
+  };
+
+  const handleSendProductsWhatsApp = () => {
+    if (!client || selectedProducts.length === 0) {
+      toast.error('Selecione pelo menos um produto antes de enviar');
+      return;
+    }
+
+    let productsList = '';
+    selectedProducts.forEach(product => {
+      productsList += `• ${product}\n`;
+    });
+
+    const message = `Olá ${client.name}, tudo bem?\n\n` +
+      `Preciso dos seguintes produtos para a próxima visita:\n\n` +
+      `${productsList}\n` +
+      `Devo levar ou você providencia?`;
+
+    const phoneNumber = client.phone?.replace(/\D/g, '');
+    if (phoneNumber) {
+      const whatsappUrl = `https://wa.me/55${phoneNumber}?text=${encodeURIComponent(message)}`;
+      window.open(whatsappUrl, '_blank');
+      toast.success('Mensagem de produtos enviada!');
     } else {
       toast.error('Número de telefone não encontrado');
     }
@@ -447,10 +465,24 @@ export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps)
 
                   {/* Resumo */}
                   {(selectedProducts.length > 0 || availableProducts.length > 0) && (
-                    <div className="mt-4 p-3 bg-purple-50 dark:bg-purple-950/30 rounded-lg">
-                      <p className="text-xs text-purple-700 dark:text-purple-300">
-                        <strong>Selecionados:</strong> {selectedProducts.length} produtos
-                      </p>
+                    <div className="space-y-3">
+                      <div className="p-3 bg-purple-50 dark:bg-purple-950/30 rounded-lg">
+                        <p className="text-xs text-purple-700 dark:text-purple-300">
+                          <strong>Selecionados:</strong> {selectedProducts.length} produtos
+                        </p>
+                      </div>
+                      
+                      {/* Botão WhatsApp para Produtos */}
+                      {selectedProducts.length > 0 && (
+                        <Button 
+                          onClick={handleSendProductsWhatsApp}
+                          className="w-full flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white"
+                          variant="default"
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                          Enviar Lista de Produtos via WhatsApp
+                        </Button>
+                      )}
                     </div>
                   )}
                 </div>
