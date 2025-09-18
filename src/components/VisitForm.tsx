@@ -52,9 +52,9 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
   
   const form = useForm<VisitFormData>({
     defaultValues: {
-      ph: initialData?.ph || 0,
+      ph: initialData?.ph || 7.4,
       cloro: initialData?.cloro || 0,
-      alcalinidade: initialData?.alcalinidade || 0,
+      alcalinidade: initialData?.alcalinidade || 100,
       description: initialData?.description || '',
       departureTime: initialData?.departureTime || getCurrentTime(),
       poolPhoto: initialData?.poolPhoto || '',
@@ -135,9 +135,9 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
       
       onSubmit(cleanedData);
       form.reset({
-        ph: 0,
+        ph: 7.4,
         cloro: 0,
-        alcalinidade: 0,
+        alcalinidade: 100,
         description: '',
         departureTime: '',
         poolPhoto: '',
@@ -209,41 +209,66 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
           <FormField
             control={form.control}
             name="ph"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>pH</FormLabel>
-                <FormControl>
-                  <Input type="number" step="0.1" placeholder="7.2" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            render={({ field }) => {
+              const phValues = [6.8, 7.0, 7.2, 7.4, 7.6, 7.8, 8.0];
+              const currentIndex = phValues.indexOf(Number(field.value)) >= 0 ? phValues.indexOf(Number(field.value)) : 3; // default 7.4
+              return (
+                <FormItem>
+                  <FormLabel>pH</FormLabel>
+                  <FormControl>
+                    <div className="flex items-center gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={() => field.onChange(phValues[Math.max(0, currentIndex - 1)])} disabled={currentIndex === 0}>-</Button>
+                      <span className="min-w-[40px] text-center font-mono text-lg">{phValues[currentIndex]}</span>
+                      <Button type="button" variant="outline" size="sm" onClick={() => field.onChange(phValues[Math.min(phValues.length - 1, currentIndex + 1)])} disabled={currentIndex === phValues.length - 1}>+</Button>
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
           />
           <FormField
             control={form.control}
             name="cloro"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Cloro (ppm)</FormLabel>
-                <FormControl>
-                  <Input type="number" step="0.1" placeholder="1.5" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            render={({ field }) => {
+              const cloroValues = [0, 1, 2, 3, 4];
+              const currentIndex = cloroValues.indexOf(Number(field.value)) >= 0 ? cloroValues.indexOf(Number(field.value)) : 0; // default 0
+              return (
+                <FormItem>
+                  <FormLabel>Cloro (ppm)</FormLabel>
+                  <FormControl>
+                    <div className="flex items-center gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={() => field.onChange(cloroValues[Math.max(0, currentIndex - 1)])} disabled={currentIndex === 0}>-</Button>
+                      <span className="min-w-[40px] text-center font-mono text-lg">{cloroValues[currentIndex]}</span>
+                      <Button type="button" variant="outline" size="sm" onClick={() => field.onChange(cloroValues[Math.min(cloroValues.length - 1, currentIndex + 1)])} disabled={currentIndex === cloroValues.length - 1}>+</Button>
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
           />
           <FormField
             control={form.control}
             name="alcalinidade"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Alcalinidade (ppm)</FormLabel>
-                <FormControl>
-                  <Input type="number" step="1" placeholder="100" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            render={({ field }) => {
+              // Para alcalinidade vou usar intervalos de 10 entre 80-120
+              const alcalinidadeValues = [80, 90, 100, 110, 120];
+              const currentIndex = alcalinidadeValues.indexOf(Number(field.value)) >= 0 ? alcalinidadeValues.indexOf(Number(field.value)) : 2; // default 100
+              return (
+                <FormItem>
+                  <FormLabel>Alcalinidade (ppm)</FormLabel>
+                  <FormControl>
+                    <div className="flex items-center gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={() => field.onChange(alcalinidadeValues[Math.max(0, currentIndex - 1)])} disabled={currentIndex === 0}>-</Button>
+                      <span className="min-w-[50px] text-center font-mono text-lg">{alcalinidadeValues[currentIndex]}</span>
+                      <Button type="button" variant="outline" size="sm" onClick={() => field.onChange(alcalinidadeValues[Math.min(alcalinidadeValues.length - 1, currentIndex + 1)])} disabled={currentIndex === alcalinidadeValues.length - 1}>+</Button>
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
           />
         </div>
 
