@@ -14,7 +14,7 @@ import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { VisitForm, VisitFormData } from '@/components/VisitForm';
-import { ArrowLeft, Edit, Trash2 } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, MessageCircle } from 'lucide-react';
 import { ProductCalculator } from '@/components/ProductCalculator';
 import { ClientProductManager } from '@/components/ClientProductManager'; // Importe o novo componente
 
@@ -78,6 +78,46 @@ export default function ClienteDetailPage() {
     } finally {
       setIsDeleting(null);
     }
+  };
+
+  const handleSendHistoryWhatsApp = (visit: { id: string; timestamp: { toDate: () => Date }; ph?: number; cloro?: number; alcalinidade?: number; arrivalTime?: string; departureTime?: string; observations?: string; photoUrl?: string }) => {
+    if (!client?.phone) {
+      toast.error('Cliente não possui telefone cadastrado.');
+      return;
+    }
+
+    const visitDate = visit.timestamp?.toDate().toLocaleDateString('pt-BR', {
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric',
+    });
+
+    let message = `🏊‍♂️ *Relatório de Visita - ${client.name}*\n\n`;
+    message += `📅 Data: ${visitDate}\n`;
+    message += `📍 Endereço: ${client.address}\n\n`;
+    
+    // Parâmetros da água
+    message += `💧 *Parâmetros da Água:*\n`;
+    message += `• pH: ${visit.ph}\n`;
+    message += `• Cloro: ${visit.cloro} ppm\n`;
+    message += `• Alcalinidade: ${visit.alcalinidade} ppm\n\n`;
+    
+    // Horários se disponíveis
+    if (visit.departureTime) {
+      message += `⏰ *Horário de Saída:* ${visit.departureTime}\n\n`;
+    }
+    
+    // Observações
+    if (visit.observations) {
+      message += `📝 *Observações:*\n${visit.observations}\n\n`;
+    }
+    
+    message += `✅ Serviço realizado com sucesso!`;
+
+    const phoneNumber = client.phone.replace(/\D/g, '');
+    const url = `https://wa.me/55${phoneNumber}?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
+    toast.success('WhatsApp aberto com o relatório da visita!');
   };
 
   if (isLoading) {
@@ -193,6 +233,16 @@ export default function ClienteDetailPage() {
                             })}
                           </p>
                           <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleSendHistoryWhatsApp(visit)}
+                              className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                              disabled={!client?.phone}
+                              title="Enviar relatório para cliente"
+                            >
+                              <MessageCircle className="h-4 w-4" />
+                            </Button>
                             <Button
                               variant="outline"
                               size="sm"
