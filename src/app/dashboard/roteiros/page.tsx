@@ -35,6 +35,7 @@ const daysOfWeek = [
   { key: 'Quinta-feira', label: 'Quinta', short: 'QUI' },
   { key: 'Sexta-feira', label: 'Sexta', short: 'SEX' },
   { key: 'Sábado', label: 'Sábado', short: 'SAB' },
+  { key: 'Domingo', label: 'Domingo', short: 'DOM' },
 ];
 
 // --- Componente para cada item arrastável ---

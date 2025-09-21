@@ -176,7 +176,7 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
                     {selectedFrequency === 'biweekly' ? 'Dias das Visitas (máximo 2)' : 'Dia da Visita'}
                   </FormLabel>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'].map((day) => (
+                    {['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'].map((day) => (
                       <label key={day} className="flex items-center space-x-2 cursor-pointer">
                         <input
                           type="checkbox"

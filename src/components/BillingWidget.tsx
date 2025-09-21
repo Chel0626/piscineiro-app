@@ -1,6 +1,7 @@
 'use client';
 
-import { DollarSign, TrendingUp, Calendar, Eye } from 'lucide-react';
+import { useState } from 'react';
+import { DollarSign, TrendingUp, Calendar, Eye, EyeOff } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
@@ -8,13 +9,21 @@ import { Separator } from './ui/separator';
 import { useBilling } from '@/hooks/useBilling';
 
 export function BillingWidget() {
+  const [showValues, setShowValues] = useState(false);
   const billingData = useBilling();
 
   const formatCurrency = (value: number) => {
+    if (!showValues) return '•••••';
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
     }).format(value);
+  };
+
+  const toggleShowValues = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowValues(!showValues);
   };
 
   const formatDate = (dateString: string) => {
@@ -32,7 +41,18 @@ export function BillingWidget() {
                 <DollarSign className="h-4 w-4 text-green-400 flex-shrink-0" />
                 <span className="text-sm font-medium truncate">Faturamento</span>
               </div>
-              <Eye className="h-4 w-4 opacity-70 flex-shrink-0" />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleShowValues}
+                className="h-6 w-6 p-0 hover:bg-gray-500 flex-shrink-0"
+              >
+                {showValues ? (
+                  <EyeOff className="h-4 w-4 opacity-70" />
+                ) : (
+                  <Eye className="h-4 w-4 opacity-70" />
+                )}
+              </Button>
             </div>
             <div className="text-base font-bold text-green-400 truncate">
               {formatCurrency(billingData.totalMensal)}
