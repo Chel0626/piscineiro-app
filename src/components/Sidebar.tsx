@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, Route, X, Package } from 'lucide-react';
+import { Home, Users, Route, X, Package, UserPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { signOut } from 'firebase/auth';
@@ -12,8 +12,10 @@ import { ProductCalculatorDialog } from './ProductCalculatorDialog';
 import { FillReminderButton } from './FillReminderButton';
 import { BillingWidget } from './BillingWidget';
 import { PiscineiroProfileWidget } from './PiscineiroProfileWidget';
+import { ClienteAvulsoModal } from './ClienteAvulsoModal';
 import { Separator } from './ui/separator';
 import { ThemeToggle } from './ui/theme-toggle';
+import { useState } from 'react';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
@@ -29,6 +31,7 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const [isClienteAvulsoModalOpen, setIsClienteAvulsoModalOpen] = useState(false);
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -97,6 +100,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             <AiHelperDialog />
             <ProductCalculatorDialog />
             <FillReminderButton />
+            <Button 
+              onClick={() => setIsClienteAvulsoModalOpen(true)}
+              variant="outline" 
+              className="w-full flex items-center justify-start px-4 py-2 text-gray-300 dark:text-gray-400 hover:bg-gray-700 dark:hover:bg-gray-800 hover:text-white transition-colors border-gray-600 dark:border-gray-700"
+            >
+              <UserPlus className="h-5 w-5 mr-3" />
+              Cliente Avulso
+            </Button>
           </div>
         </nav>
 
@@ -111,6 +122,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </div>
         </div>
       </aside>
+      
+      {/* Modal Cliente Avulso */}
+      <ClienteAvulsoModal 
+        isOpen={isClienteAvulsoModalOpen} 
+        onClose={() => setIsClienteAvulsoModalOpen(false)} 
+      />
     </>
   );
 }
