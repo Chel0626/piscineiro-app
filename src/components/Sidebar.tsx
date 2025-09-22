@@ -1,8 +1,7 @@
 'use client';
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Home, Users, Route, X, Package, CheckSquare } from 'lucide-react';
+import { useState } from 'react';
+import { X, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { signOut } from 'firebase/auth';
@@ -11,16 +10,10 @@ import { AiHelperDialog } from './AiHelperDialog';
 import { ProductCalculatorDialog } from './ProductCalculatorDialog';
 import { FillReminderButton } from './FillReminderButton';
 import { BillingWidget } from './BillingWidget';
+import { PiscineiroProfileWidget } from './PiscineiroProfileWidget';
+import { ClienteAvulsoModal } from './ClienteAvulsoModal';
 import { Separator } from './ui/separator';
 import { ThemeToggle } from './ui/theme-toggle';
-
-const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: Home },
-  { href: '/dashboard/clientes', label: 'Clientes', icon: Users },
-  { href: '/dashboard/roteiros', label: 'Roteiros', icon: Route },
-  { href: '/dashboard/produtos-do-dia', label: 'Produtos do Dia', icon: Package },
-  { href: '/dashboard/solicitacoes', label: 'Solicitações', icon: CheckSquare },
-];
 
 interface SidebarProps {
   isOpen: boolean;
@@ -28,7 +21,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
-  const pathname = usePathname();
+  const [isClienteAvulsoModalOpen, setIsClienteAvulsoModalOpen] = useState(false);
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -75,31 +68,38 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </Button>
         </div>
         
-        <nav className="flex-1 px-4 py-2 overflow-y-auto">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={handleLinkClick}
-              className={cn(
-                'flex items-center px-4 py-2 mt-2 text-gray-300 dark:text-gray-400 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-800 hover:text-white transition-colors',
-                { 'bg-gray-700 dark:bg-gray-800 text-white': pathname === item.href, }
-              )}
-            >
-              <item.icon className="h-5 w-5" />
-              <span className="ml-3">{item.label}</span>
-            </Link>
-          ))}
+        {/* Seção de Ferramentas */}
+        <div className="flex-1 px-4 py-2 overflow-y-auto">
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
+              Ferramentas
+            </h3>
+            <div className="space-y-2">
+              <AiHelperDialog />
+              <ProductCalculatorDialog />
+              <FillReminderButton />
+              <Button 
+                onClick={() => setIsClienteAvulsoModalOpen(true)}
+                className="w-full justify-start bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <Users className="h-4 w-4 mr-2" />
+                Cliente Avulso
+              </Button>
+            </div>
+          </div>
 
           <Separator className="my-4 bg-gray-700 dark:bg-gray-600" />
           
-          <div className="space-y-2">
-            <AiHelperDialog />
-            <ProductCalculatorDialog />
-            <FillReminderButton />
+          {/* Seção do Perfil */}
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
+              Perfil
+            </h3>
+            <PiscineiroProfileWidget />
           </div>
-        </nav>
+        </div>
 
+        {/* Seção de Configurações */}
         <div className="p-4 space-y-3 border-t border-gray-700 dark:border-gray-600">
           <BillingWidget />
           <div className="flex items-center justify-between">
@@ -110,6 +110,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </div>
         </div>
       </aside>
+      
+      <ClienteAvulsoModal 
+        isOpen={isClienteAvulsoModalOpen} 
+        onClose={() => setIsClienteAvulsoModalOpen(false)} 
+      />
     </>
   );
 }

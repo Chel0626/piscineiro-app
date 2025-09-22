@@ -132,31 +132,31 @@ export default function ProdutosDoDiaPage() {
 
       {/* Produtos Aprovados das Solicitações */}
       {approvedProducts.length > 0 && (
-        <Card className="border-green-200 bg-green-50">
+        <Card className="border-green-200 bg-green-50 dark:bg-green-950/30">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-green-800">
+            <CardTitle className="flex items-center gap-2 text-green-800 dark:text-green-200">
               <CheckCircle className="h-5 w-5" />
               Produtos Aprovados para Levar ({approvedProducts.length} itens)
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {approvedProducts.map((request, index) => (
-                <div key={request.id} className="bg-white p-4 rounded-lg border border-green-200">
+              {approvedProducts.map((request) => (
+                <div key={request.id} className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-green-200 dark:border-green-700">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 text-gray-500" />
                       <span className="font-medium">{request.clientName}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Phone className="h-3 h-3 text-gray-400" />
+                      <Phone className="h-3 w-3 text-gray-400" />
                       <span className="text-sm text-gray-500">{request.clientPhone}</span>
                     </div>
                   </div>
                   <div className="ml-6">
                     <div className="flex flex-wrap gap-2">
                       {request.products.map((product, prodIndex) => (
-                        <Badge key={prodIndex} variant="outline" className="bg-green-100 text-green-800 border-green-300">
+                        <Badge key={prodIndex} variant="outline" className="bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-600">
                           {product}
                         </Badge>
                       ))}
