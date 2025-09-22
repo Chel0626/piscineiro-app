@@ -95,13 +95,13 @@ export function PiscineiroProfileWidget() {
                   {getInitials(profile.nome, profile.sobrenome)}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex-1 text-left">
-                <p className="font-medium text-white">
+              <div className="flex-1 text-left min-w-0">
+                <p className="font-medium text-white truncate">
                   {profile.nome} {profile.sobrenome}
                 </p>
-                <p className="text-sm text-gray-300 flex items-center gap-1">
-                  <MapPin className="w-3 h-3" />
-                  {profile.cidade}, {profile.estado}
+                <p className="text-sm text-gray-300 flex items-center gap-1 truncate">
+                  <MapPin className="w-3 h-3 flex-shrink-0" />
+                  <span className="truncate">{profile.cidade}, {profile.estado}</span>
                 </p>
               </div>
               {isOpen ? (
@@ -208,7 +208,7 @@ export function PiscineiroProfileWidget() {
 
             {/* Botão de editar */}
             <div className="pt-2 border-t border-gray-600 dark:border-gray-700">
-              <Link href="/setup-piscineiro">
+              <Link href="/dashboard/perfil">
                 <Button 
                   variant="outline" 
                   size="sm" 
