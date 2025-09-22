@@ -1,5 +1,7 @@
-const CACHE_NAME = 'piscineiro-app-v1';
-const STATIC_CACHE_NAME = 'piscineiro-static-v1';
+const CACHE_NAME = 'piscineiro-app-v2'; // Incrementei a versão
+const STATIC_CACHE_NAME = 'piscineiro-static-v2';
+const CACHE_VERSION_KEY = 'sw-cache-version';
+const CURRENT_VERSION = Date.now(); // Timestamp como versão
 
 // Recursos estáticos que devem ser sempre cachados
 const STATIC_ASSETS = [
@@ -30,20 +32,33 @@ const CACHE_URLS = [
 
 // Instalar o Service Worker
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installing Service Worker...');
+  console.log('[SW] Installing Service Worker... Version:', CURRENT_VERSION);
   
   event.waitUntil(
     Promise.all([
+      // Limpa todos os caches antigos primeiro
+      caches.keys().then(cacheNames => {
+        return Promise.all(
+          cacheNames.map(cacheName => {
+            console.log('[SW] Deleting old cache during install:', cacheName);
+            return caches.delete(cacheName);
+          })
+        );
+      }),
+      // Cacheia os recursos novamente
       caches.open(STATIC_CACHE_NAME).then((cache) => {
         console.log('[SW] Caching static assets');
         return cache.addAll(STATIC_ASSETS.map(url => new Request(url, { cache: 'reload' })));
       }),
       caches.open(CACHE_NAME).then((cache) => {
         console.log('[SW] Caching app pages');
+        // Salva a versão atual do cache
+        cache.put(CACHE_VERSION_KEY, new Response(CURRENT_VERSION.toString()));
         return cache.addAll(CACHE_URLS);
       })
     ]).then(() => {
       console.log('[SW] Installation complete');
+      // Força a ativação imediata do novo SW
       return self.skipWaiting();
     }).catch((error) => {
       console.error('[SW] Installation failed:', error);
@@ -67,6 +82,7 @@ self.addEventListener('activate', (event) => {
       );
     }).then(() => {
       console.log('[SW] Activation complete');
+      // Força o controle imediato de todas as abas
       return self.clients.claim();
     })
   );
@@ -130,7 +146,7 @@ self.addEventListener('fetch', (event) => {
        request.mode === 'navigate')) {
     
     event.respondWith(
-      fetch(request).then((response) => {
+      fetch(request, { cache: 'no-cache' }).then((response) => {
         if (response.status === 200) {
           const responseClone = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
