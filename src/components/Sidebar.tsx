@@ -8,7 +8,6 @@ import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { AiHelperDialog } from './AiHelperDialog';
 import { ProductCalculatorDialog } from './ProductCalculatorDialog';
-import { FillReminderButton } from './FillReminderButton';
 import { BillingWidget } from './BillingWidget';
 import { PiscineiroProfileWidget } from './PiscineiroProfileWidget';
 import { ClienteAvulsoModal } from './ClienteAvulsoModal';
@@ -87,7 +86,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             <div className="space-y-2">
               <AiHelperDialog />
               <ProductCalculatorDialog />
-              <FillReminderButton />
               <Button 
                 onClick={() => setIsClienteAvulsoModalOpen(true)}
                 className="w-full justify-start bg-blue-600 hover:bg-blue-700 text-white"
