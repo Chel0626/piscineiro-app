@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { collection, addDoc, serverTimestamp, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useParams } from 'next/navigation';
@@ -10,26 +10,13 @@ import { toast } from 'sonner';
 import { useClientDetails } from '@/hooks/useClientDetails';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { VisitForm, VisitFormData } from '@/components/VisitForm';
-import { ArrowLeft, Edit, Trash2, MessageCircle, ShoppingCart, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, MessageCircle } from 'lucide-react';
 import { ProductCalculator } from '@/components/ProductCalculator';
 import { ClientProductManager } from '@/components/ClientProductManager'; // Importe o novo componente
-
-// Lista completa de produtos disponíveis
-const allProducts = [
-  'Pastilha de Cloro',
-  'Clarificante Líquido',
-  'Clarificante Gel',
-  'Algicída',
-  'Elevador de Alcalinidade',
-  'Redutor de pH',
-  'Limpa Bordas',
-  'Peróxido',
-  'Tratamento Semanal',
-  'Sulfato de Alumínio',
-];
 
 export default function ClienteDetailPage() {
   const params = useParams();
@@ -40,16 +27,6 @@ export default function ClienteDetailPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingVisitId, setEditingVisitId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
-  
-  // Estados para o solicitar produtos
-  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
-  const [availableProducts, setAvailableProducts] = useState<string[]>([]);
-
-  // Inicializar produtos disponíveis (mostrar 5 produtos aleatórios)
-  useEffect(() => {
-    const shuffled = [...allProducts].sort(() => 0.5 - Math.random());
-    setAvailableProducts(shuffled.slice(0, 5));
-  }, []);
 
   const handleVisitSubmit = async (data: VisitFormData) => {
     if (!clientId) return;
@@ -143,64 +120,6 @@ export default function ClienteDetailPage() {
     toast.success('WhatsApp aberto com o relatório da visita!');
   };
 
-  // Funções para gerenciar produtos
-  const selectProduct = (product: string) => {
-    // Adicionar produto à lista de selecionados
-    setSelectedProducts(prev => [...prev, product]);
-    
-    // Remover produto dos disponíveis
-    setAvailableProducts(prev => prev.filter(p => p !== product));
-    
-    // Adicionar novo produto aleatório se ainda houver disponíveis
-    const remainingProducts = allProducts.filter(p => 
-      !selectedProducts.includes(p) && 
-      !availableProducts.filter(ap => ap !== product).includes(p)
-    );
-    
-    if (remainingProducts.length > 0) {
-      const randomProduct = remainingProducts[Math.floor(Math.random() * remainingProducts.length)];
-      setAvailableProducts(prev => [...prev.filter(p => p !== product), randomProduct]);
-    } else {
-      setAvailableProducts(prev => prev.filter(p => p !== product));
-    }
-  };
-
-  const removeProduct = (product: string) => {
-    // Remover produto dos selecionados
-    setSelectedProducts(prev => prev.filter(p => p !== product));
-    
-    // Se há menos de 5 produtos disponíveis, adicionar este de volta
-    if (availableProducts.length < 5) {
-      setAvailableProducts(prev => [...prev, product]);
-    }
-  };
-
-  const handleSendProductsWhatsApp = () => {
-    if (!client?.phone || selectedProducts.length === 0) {
-      toast.error('Selecione pelo menos um produto antes de enviar');
-      return;
-    }
-
-    let productsList = '';
-    selectedProducts.forEach(product => {
-      productsList += `• ${product}\n`;
-    });
-
-    const message = `Olá ${client.name}, tudo bem?\n\n` +
-      `Preciso dos seguintes produtos para a próxima visita:\n\n` +
-      `${productsList}\n` +
-      `Devo levar ou você providencia?`;
-
-    const phoneNumber = client.phone.replace(/\D/g, '');
-    if (phoneNumber) {
-      const whatsappUrl = `https://wa.me/55${phoneNumber}?text=${encodeURIComponent(message)}`;
-      window.open(whatsappUrl, '_blank');
-      toast.success('Mensagem de produtos enviada!');
-    } else {
-      toast.error('Número de telefone inválido');
-    }
-  };
-
   if (isLoading) {
     return <div className="text-center p-6 text-sm sm:text-base">Carregando dados do cliente...</div>;
   }
@@ -286,148 +205,23 @@ export default function ClienteDetailPage() {
         </TabsContent>
 
         <TabsContent value="history">
-          <div className="space-y-4 sm:space-y-6">
+          <div className="space-y-4 sm:space-y-8">
+            <ProductCalculator poolVolume={client.poolVolume} />
             
-            {/* Calculadora de Produtos */}
-            <details className="border border-gray-200 rounded-lg bg-gray-50 overflow-hidden [&[open]>summary]:bg-blue-50 [&[open]>summary>span:last-child]:rotate-180">
-              <summary className="cursor-pointer p-4 font-medium text-blue-700 hover:bg-gray-100 transition-colors flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  🧮 Calculadora de Produtos
-                </span>
-                <span className="text-gray-400 transition-transform duration-200">▼</span>
-              </summary>
-              <div className="p-4 border-t border-gray-200 bg-white">
-                <ProductCalculator poolVolume={client.poolVolume} />
-              </div>
-            </details>
-            
-            {/* Registrar Nova Visita */}
-            <details className="border border-gray-200 rounded-lg bg-gray-50 overflow-hidden [&[open]>summary]:bg-green-50 [&[open]>summary>span:last-child]:rotate-180">
-              <summary className="cursor-pointer p-4 font-medium text-green-700 hover:bg-gray-100 transition-colors flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  📝 Registrar Nova Visita
-                </span>
-                <span className="text-gray-400 transition-transform duration-200">▼</span>
-              </summary>
-              <div className="p-4 border-t border-gray-200 bg-white">
+            <Card>
+              <CardHeader className="pb-3 sm:pb-6">
+                <CardTitle className="text-base sm:text-lg">Registrar Nova Visita</CardTitle>
+              </CardHeader>
+              <CardContent>
                 <VisitForm 
                   onSubmit={handleVisitSubmit} 
                   isLoading={isSubmitting}
                   clientId={clientId} 
                 />
-              </div>
-            </details>
-
-            {/* Solicitar Produtos */}
-            <details className="border border-gray-200 rounded-lg bg-gray-50 overflow-hidden [&[open]>summary]:bg-orange-50 [&[open]>summary>span:last-child]:rotate-180">
-              <summary className="cursor-pointer p-4 font-medium text-orange-700 hover:bg-gray-100 transition-colors flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  🛒 Solicitar Produtos
-                </span>
-                <span className="text-gray-400 transition-transform duration-200">▼</span>
-              </summary>
-              <div className="p-4 border-t border-gray-200 bg-white space-y-4">
                 
-                {/* Produtos Disponíveis */}
-                {availableProducts.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-medium mb-3 text-orange-700">
-                      Produtos Disponíveis:
-                    </h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {availableProducts.map((product) => (
-                        <Button
-                          key={product}
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => selectProduct(product)}
-                          className="text-left justify-start h-auto py-3 px-3 border-orange-200 hover:border-orange-400 hover:bg-orange-50 whitespace-normal text-wrap min-h-[44px]"
-                        >
-                          <ShoppingCart className="h-3 w-3 mr-2 text-orange-600 flex-shrink-0" />
-                          <span className="text-xs sm:text-sm">{product}</span>
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                <Separator className="my-4 sm:my-8" />
 
-                {/* Produtos Selecionados */}
-                {selectedProducts.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-medium mb-3 text-green-700">
-                      Produtos Selecionados ({selectedProducts.length}):
-                    </h4>
-                    <div className="space-y-2">
-                      {selectedProducts.map((product) => (
-                        <div
-                          key={product}
-                          className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200 min-h-[48px]"
-                        >
-                          <div className="flex items-center gap-2 flex-1">
-                            <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
-                            <span className="text-sm font-medium text-green-800 break-words">
-                              {product}
-                            </span>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeProduct(product)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50 flex-shrink-0 ml-2"
-                          >
-                            ✕
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Estado vazio */}
-                {availableProducts.length === 0 && selectedProducts.length === 0 && (
-                  <div className="text-center py-6 text-gray-500">
-                    <ShoppingCart className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                    <p className="text-sm">Todos os produtos foram selecionados!</p>
-                  </div>
-                )}
-
-                {/* Resumo e Botão WhatsApp */}
-                {(selectedProducts.length > 0 || availableProducts.length > 0) && (
-                  <div className="space-y-3">
-                    <div className="p-3 bg-orange-50 rounded-lg">
-                      <p className="text-xs text-orange-700">
-                        <strong>Selecionados:</strong> {selectedProducts.length} produtos
-                      </p>
-                    </div>
-                    
-                    {/* Botão WhatsApp para Produtos */}
-                    {selectedProducts.length > 0 && (
-                      <Button 
-                        type="button"
-                        onClick={handleSendProductsWhatsApp}
-                        className="w-full flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white"
-                        variant="default"
-                      >
-                        <MessageCircle className="h-4 w-4" />
-                        Enviar Lista de Produtos via WhatsApp
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </details>
-
-            {/* Histórico de Visitas */}
-            <details className="border border-gray-200 rounded-lg bg-gray-50 overflow-hidden [&[open]>summary]:bg-purple-50 [&[open]>summary>span:last-child]:rotate-180" open>
-              <summary className="cursor-pointer p-4 font-medium text-purple-700 hover:bg-gray-100 transition-colors flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  📚 Histórico de Visitas ({visits.length})
-                </span>
-                <span className="text-gray-400 transition-transform duration-200">▼</span>
-              </summary>
-              <div className="p-4 border-t border-gray-200 bg-white">
+                <h3 className="text-base sm:text-xl font-semibold mb-3 sm:mb-4">Visitas Anteriores</h3>
                 <div className="space-y-3 sm:space-y-4">
                   {visits.length > 0 ? (
                     visits.map((visit) => (
@@ -530,8 +324,8 @@ export default function ClienteDetailPage() {
                     </p>
                   )}
                 </div>
-              </div>
-            </details>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
 

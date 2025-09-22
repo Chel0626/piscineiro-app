@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, Route, X, Package, UserPlus } from 'lucide-react';
+import { Home, Users, Route, X, Package } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { signOut } from 'firebase/auth';
@@ -10,11 +10,10 @@ import { auth } from '@/lib/firebase';
 import { AiHelperDialog } from './AiHelperDialog';
 import { ProductCalculatorDialog } from './ProductCalculatorDialog';
 import { FillReminderButton } from './FillReminderButton';
-import { ClienteAvulsoModal } from './ClienteAvulsoModal';
 import { BillingWidget } from './BillingWidget';
+import { PiscineiroProfileWidget } from './PiscineiroProfileWidget';
 import { Separator } from './ui/separator';
 import { ThemeToggle } from './ui/theme-toggle';
-import { useState } from 'react';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
@@ -30,7 +29,6 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const [isClienteAvulsoOpen, setIsClienteAvulsoOpen] = useState(false);
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -99,19 +97,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             <AiHelperDialog />
             <ProductCalculatorDialog />
             <FillReminderButton />
-            
-            <Button
-              onClick={() => setIsClienteAvulsoOpen(true)}
-              variant="ghost"
-              className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-700 dark:hover:bg-gray-800"
-            >
-              <UserPlus className="h-4 w-4 mr-2" />
-              Cliente Avulso
-            </Button>
           </div>
         </nav>
 
         <div className="p-4 space-y-3 border-t border-gray-700 dark:border-gray-600">
+          <PiscineiroProfileWidget />
           <BillingWidget />
           <div className="flex items-center justify-between">
             <ThemeToggle />
@@ -121,12 +111,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </div>
         </div>
       </aside>
-
-      {/* Modal Cliente Avulso */}
-      <ClienteAvulsoModal 
-        isOpen={isClienteAvulsoOpen} 
-        onClose={() => setIsClienteAvulsoOpen(false)} 
-      />
     </>
   );
 }

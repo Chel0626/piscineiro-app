@@ -1,18 +1,45 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Sidebar } from './Sidebar';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Menu } from 'lucide-react';
 import { FillReminderProvider } from '@/context/FillReminderContext';
+import { useAuth } from '@/context/AuthContext';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, authLoading } = useAuth();
   // Estado para controlar se a sidebar está aberta ou fechada em telas pequenas
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   const isProtectedRoute = pathname.startsWith('/dashboard');
+  const isSetupRoute = pathname === '/setup-piscineiro';
+
+  // Verificar se o usuário tem perfil completo
+  useEffect(() => {
+    const checkProfile = async () => {
+      if (!user || authLoading || !isProtectedRoute || isSetupRoute) return;
+      
+      try {
+        const profileRef = doc(db, 'piscineiroProfiles', user.uid);
+        const profileSnap = await getDoc(profileRef);
+        
+        if (!profileSnap.exists()) {
+          // Se não tem perfil, redireciona para setup
+          router.push('/setup-piscineiro');
+        }
+      } catch (error) {
+        console.error('Erro ao verificar perfil:', error);
+      }
+    };
+
+    checkProfile();
+  }, [user, authLoading, isProtectedRoute, isSetupRoute, router]);
 
   if (isProtectedRoute) {
     return (
