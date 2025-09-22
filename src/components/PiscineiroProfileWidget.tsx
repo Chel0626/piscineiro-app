@@ -40,7 +40,7 @@ export function PiscineiroProfileWidget() {
     loadProfile();
   }, [user]);
 
-  if (isLoading || !profile) {
+  if (isLoading) {
     return (
       <Card className="bg-gray-700 dark:bg-gray-800 border-gray-600 dark:border-gray-700">
         <CardContent className="p-4">
@@ -50,6 +50,38 @@ export function PiscineiroProfileWidget() {
               <div className="h-4 bg-gray-600 rounded animate-pulse mb-1" />
               <div className="h-3 bg-gray-600 rounded animate-pulse w-2/3" />
             </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!user) {
+    return (
+      <Card className="bg-gray-700 dark:bg-gray-800 border-gray-600 dark:border-gray-700">
+        <CardContent className="p-4">
+          <div className="text-center text-gray-400">
+            <p className="text-sm">Usuário não autenticado</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <Card className="bg-gray-700 dark:bg-gray-800 border-gray-600 dark:border-gray-700">
+        <CardContent className="p-4">
+          <div className="text-center text-gray-400">
+            <p className="text-sm mb-2">Perfil não encontrado</p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => window.location.href = '/setup-piscineiro'}
+              className="text-xs border-gray-600 text-gray-300 hover:bg-gray-600"
+            >
+              Configurar Perfil
+            </Button>
           </div>
         </CardContent>
       </Card>
