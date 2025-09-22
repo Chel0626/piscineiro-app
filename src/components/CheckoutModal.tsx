@@ -5,6 +5,7 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
 import { useClientDetails } from '@/hooks/useClientDetails';
+import { useProductRequests } from '@/hooks/useProductRequests';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,6 +35,7 @@ interface CheckoutModalProps {
 
 export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps) {
   const { client, isLoading } = useClientDetails(clientId);
+  const { createProductRequest } = useProductRequests();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [visitData, setVisitData] = useState<VisitFormData | null>(null);
@@ -151,29 +153,52 @@ export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps)
     }
   };
 
-  const handleSendProductsWhatsApp = () => {
+  const handleSendProductsWhatsApp = async () => {
     if (!client || selectedProducts.length === 0) {
       toast.error('Selecione pelo menos um produto antes de enviar');
       return;
     }
 
-    let productsList = '';
-    selectedProducts.forEach(product => {
-      productsList += `• ${product}\n`;
-    });
+    setIsSubmitting(true);
 
-    const message = `Olá ${client.name}, tudo bem?\n\n` +
-      `Preciso dos seguintes produtos para a próxima visita:\n\n` +
-      `${productsList}\n` +
-      `Devo levar ou você providencia?`;
+    try {
+      // Salvar solicitação no histórico
+      await createProductRequest({
+        clientId,
+        clientName: client.name,
+        clientPhone: client.phone || '',
+        products: selectedProducts
+      });
 
-    const phoneNumber = client.phone?.replace(/\D/g, '');
-    if (phoneNumber) {
-      const whatsappUrl = `https://wa.me/55${phoneNumber}?text=${encodeURIComponent(message)}`;
-      window.open(whatsappUrl, '_blank');
-      toast.success('Mensagem de produtos enviada!');
-    } else {
-      toast.error('Número de telefone não encontrado');
+      // Criar mensagem para WhatsApp
+      let productsList = '';
+      selectedProducts.forEach(product => {
+        productsList += `• ${product}\n`;
+      });
+
+      const message = `Olá ${client.name}, tudo bem?\n\n` +
+        `Preciso dos seguintes produtos para a próxima visita:\n\n` +
+        `${productsList}\n` +
+        `Devo levar ou você providencia?`;
+
+      // Enviar por WhatsApp
+      const phoneNumber = client.phone?.replace(/\D/g, '');
+      if (phoneNumber) {
+        const whatsappUrl = `https://wa.me/55${phoneNumber}?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank');
+        toast.success('Solicitação de produtos enviada e salva no histórico!');
+      } else {
+        toast.success('Solicitação salva no histórico! (Telefone não encontrado para WhatsApp)');
+      }
+
+      // Limpar produtos selecionados após envio
+      setSelectedProducts([]);
+      
+    } catch (error) {
+      console.error('Erro ao salvar solicitação:', error);
+      toast.error('Erro ao salvar solicitação de produtos');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -476,11 +501,12 @@ export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps)
                       {selectedProducts.length > 0 && (
                         <Button 
                           onClick={handleSendProductsWhatsApp}
-                          className="w-full flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white"
+                          disabled={isSubmitting}
+                          className="w-full flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50"
                           variant="default"
                         >
                           <MessageCircle className="h-4 w-4" />
-                          Enviar Lista de Produtos via WhatsApp
+                          {isSubmitting ? 'Enviando...' : 'Enviar Lista de Produtos via WhatsApp'}
                         </Button>
                       )}
                     </div>

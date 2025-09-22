@@ -5,11 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNotifications, DailyNotification } from '@/hooks/useNotifications';
-import { CheckCircle, Package, Calendar, Bell, BellOff } from 'lucide-react';
+import { useProductRequests } from '@/hooks/useProductRequests';
+import { CheckCircle, Package, Calendar, Bell, BellOff, User, Phone } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function ProdutosDoDiaPage() {
   const { getTodayProductRequests, notificationsEnabled, toggleNotifications, notificationTime, setNotificationTime } = useNotifications();
+  const { approvedProducts } = useProductRequests();
   const [dailyNotification, setDailyNotification] = useState<DailyNotification | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [checkedProducts, setCheckedProducts] = useState<Set<string>>(new Set());
@@ -127,6 +129,45 @@ export default function ProdutosDoDiaPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Produtos Aprovados das Solicitações */}
+      {approvedProducts.length > 0 && (
+        <Card className="border-green-200 bg-green-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-green-800">
+              <CheckCircle className="h-5 w-5" />
+              Produtos Aprovados para Levar ({approvedProducts.length} itens)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {approvedProducts.map((request, index) => (
+                <div key={request.id} className="bg-white p-4 rounded-lg border border-green-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-gray-500" />
+                      <span className="font-medium">{request.clientName}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-3 h-3 text-gray-400" />
+                      <span className="text-sm text-gray-500">{request.clientPhone}</span>
+                    </div>
+                  </div>
+                  <div className="ml-6">
+                    <div className="flex flex-wrap gap-2">
+                      {request.products.map((product, prodIndex) => (
+                        <Badge key={prodIndex} variant="outline" className="bg-green-100 text-green-800 border-green-300">
+                          {product}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Lista de Produtos por Cliente */}
       {!dailyNotification || dailyNotification.clients.length === 0 ? (
