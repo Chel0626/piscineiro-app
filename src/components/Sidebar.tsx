@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState } from 'react';
 import { Home, Users, Route, X, Package } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
@@ -12,6 +13,7 @@ import { ProductCalculatorDialog } from './ProductCalculatorDialog';
 import { FillReminderButton } from './FillReminderButton';
 import { BillingWidget } from './BillingWidget';
 import { PiscineiroProfileWidget } from './PiscineiroProfileWidget';
+import { ClienteAvulsoModal } from './ClienteAvulsoModal';
 import { Separator } from './ui/separator';
 import { ThemeToggle } from './ui/theme-toggle';
 
@@ -29,6 +31,7 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const [isClienteAvulsoModalOpen, setIsClienteAvulsoModalOpen] = useState(false);
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -97,6 +100,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             <AiHelperDialog />
             <ProductCalculatorDialog />
             <FillReminderButton />
+            <Button 
+              onClick={() => setIsClienteAvulsoModalOpen(true)}
+              className="w-full justify-start bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <Users className="h-4 w-4 mr-2" />
+              Cliente Avulso
+            </Button>
           </div>
         </nav>
 
@@ -111,6 +121,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </div>
         </div>
       </aside>
+      
+      <ClienteAvulsoModal 
+        isOpen={isClienteAvulsoModalOpen} 
+        onClose={() => setIsClienteAvulsoModalOpen(false)} 
+      />
     </>
   );
 }

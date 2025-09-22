@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { AppLayout } from '@/components/AppLayout';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { OfflineIndicator } from '@/components/OfflineIndicator';
+import { AuthContextProvider } from '@/context/AuthContext';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -97,10 +98,11 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {/* Não precisamos mais do AuthProvider aqui, o AppLayout e o middleware cuidam de tudo */}
-          <AppLayout>{children}</AppLayout>
-          <OfflineIndicator />
-          <Toaster richColors />
+          <AuthContextProvider>
+            <AppLayout>{children}</AppLayout>
+            <OfflineIndicator />
+            <Toaster richColors />
+          </AuthContextProvider>
         </ThemeProvider>
       </body>
     </html>
