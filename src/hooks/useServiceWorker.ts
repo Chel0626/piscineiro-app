@@ -19,35 +19,24 @@ export function useServiceWorker() {
           console.log('Service Worker registrado com sucesso:', registration);
           setSwRegistration(registration);
 
-          // Verificar se há uma nova versão a cada 5 segundos
-          setInterval(() => {
-            registration.update();
-          }, 5000);
+          // Verificar atualizações apenas quando necessário (não em loop)
+          // Remove o setInterval que estava causando instabilidade
 
-          // Verificar se há uma nova versão
+          // Verificar se há uma nova versão apenas uma vez por sessão
           registration.addEventListener('updatefound', () => {
             const newWorker = registration.installing;
             if (newWorker) {
               newWorker.addEventListener('statechange', () => {
                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  // Nova versão disponível - força atualização automática
-                  console.log('Nova versão disponível! Atualizando automaticamente...');
-                  newWorker.postMessage({ type: 'SKIP_WAITING' });
-                  
-                  // Recarrega a página após 1 segundo
-                  setTimeout(() => {
-                    window.location.reload();
-                  }, 1000);
+                  // Nova versão disponível - mas não força atualização automática
+                  console.log('Nova versão disponível!');
+                  // Usuário pode atualizar manualmente ou na próxima visita
                 }
               });
             }
           });
 
-          // Detecta quando o SW assume controle (após atualização)
-          navigator.serviceWorker.addEventListener('controllerchange', () => {
-            console.log('Service Worker atualizado! Recarregando página...');
-            window.location.reload();
-          });
+          // Remove o controllerchange que estava causando reloads automáticos
 
         } catch (error) {
           console.error('Erro ao registrar Service Worker:', error);
