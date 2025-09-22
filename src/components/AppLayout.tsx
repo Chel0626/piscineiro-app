@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { Sidebar } from './Sidebar';
+import { BottomTabBar } from './BottomTabBar';
 import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Menu } from 'lucide-react';
@@ -49,7 +50,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
           
           {/* Conteúdo principal */}
-          <main className="flex-1 p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-gray-900 transition-all duration-300 ease-in-out md:ml-64">
+          <main className="flex-1 p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-gray-900 transition-all duration-300 ease-in-out md:ml-64 pb-20 md:pb-8">
             {/* Botão "Hambúrguer" que só aparece em telas pequenas */}
             <div className="md:hidden mb-4 flex items-center">
               <Button variant="outline" size="icon" onClick={() => setIsSidebarOpen(true)}>
@@ -63,6 +64,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             
             {children}
           </main>
+          
+          {/* Bottom Tab Bar - apenas mobile */}
+          <BottomTabBar />
         </div>
       </FillReminderProvider>
     );
