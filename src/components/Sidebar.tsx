@@ -68,8 +68,18 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </Button>
         </div>
         
-        {/* Seção de Ferramentas */}
+        {/* Seção do Perfil - PRIMEIRO */}
         <div className="flex-1 px-4 py-2 overflow-y-auto">
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
+              Perfil
+            </h3>
+            <PiscineiroProfileWidget />
+          </div>
+
+          <Separator className="my-4 bg-gray-700 dark:bg-gray-600" />
+          
+          {/* Seção de Ferramentas - SEGUNDO */}
           <div className="mb-4">
             <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
               Ferramentas
@@ -86,16 +96,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 Cliente Avulso
               </Button>
             </div>
-          </div>
-
-          <Separator className="my-4 bg-gray-700 dark:bg-gray-600" />
-          
-          {/* Seção do Perfil */}
-          <div className="mb-4">
-            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
-              Perfil
-            </h3>
-            <PiscineiroProfileWidget />
           </div>
         </div>
 
