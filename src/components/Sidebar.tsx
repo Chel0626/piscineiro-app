@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { Home, Users, Route, X, Package } from 'lucide-react';
+import { X, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { signOut } from 'firebase/auth';
@@ -17,12 +17,7 @@ import { ClienteAvulsoModal } from './ClienteAvulsoModal';
 import { Separator } from './ui/separator';
 import { ThemeToggle } from './ui/theme-toggle';
 
-const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: Home },
-  { href: '/dashboard/clientes', label: 'Clientes', icon: Users },
-  { href: '/dashboard/roteiros', label: 'Roteiros', icon: Route },
-  { href: '/dashboard/produtos-do-dia', label: 'Produtos do Dia', icon: Package },
-];
+// Navigation items moved to BottomNavigation component
 
 interface SidebarProps {
   isOpen: boolean;
@@ -71,7 +66,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="flex items-center justify-between p-6">
           <div className="flex items-center gap-3">
             <img src="/logo-icon.svg" alt="PiscineiroApp" className="w-8 h-8" />
-            <h2 className="text-xl font-semibold text-white">PiscineiroApp</h2>
+            <h2 className="text-xl font-semibold text-white">PiscineiroApp - NEW LAYOUT</h2>
           </div>
           <Button variant="ghost" size="icon" className="md:hidden text-white hover:bg-gray-700" onClick={onClose}>
             <X className="h-6 w-6" />
@@ -79,24 +74,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
         
         <nav className="flex-1 px-4 py-2 overflow-y-auto">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={handleLinkClick}
-              className={cn(
-                'flex items-center px-4 py-2 mt-2 text-gray-300 dark:text-gray-400 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-800 hover:text-white transition-colors',
-                { 'bg-gray-700 dark:bg-gray-800 text-white': pathname === item.href, }
-              )}
-            >
-              <item.icon className="h-5 w-5" />
-              <span className="ml-3">{item.label}</span>
-            </Link>
-          ))}
-
-          <Separator className="my-4 bg-gray-700 dark:bg-gray-600" />
-          
-          <div className="space-y-2">
+          {/* Navigation moved to bottom bar - now this space is for tools and profile */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider">Ferramentas</h3>
             <AiHelperDialog />
             <ProductCalculatorDialog />
             <FillReminderButton />
@@ -108,10 +88,17 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               Cliente Avulso
             </Button>
           </div>
+
+          <Separator className="my-6 bg-gray-700 dark:bg-gray-600" />
+          
+          {/* Profile Section */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider">Perfil</h3>
+            <PiscineiroProfileWidget />
+          </div>
         </nav>
 
         <div className="p-4 space-y-3 border-t border-gray-700 dark:border-gray-600">
-          <PiscineiroProfileWidget />
           <BillingWidget />
           <div className="flex items-center justify-between">
             <ThemeToggle />

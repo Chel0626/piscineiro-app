@@ -40,7 +40,7 @@ export function PiscineiroProfileWidget() {
     loadProfile();
   }, [user]);
 
-  if (isLoading || !profile) {
+  if (isLoading) {
     return (
       <Card className="bg-gray-700 dark:bg-gray-800 border-gray-600 dark:border-gray-700">
         <CardContent className="p-4">
@@ -50,6 +50,42 @@ export function PiscineiroProfileWidget() {
               <div className="h-4 bg-gray-600 rounded animate-pulse mb-1" />
               <div className="h-3 bg-gray-600 rounded animate-pulse w-2/3" />
             </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Mock profile for development when no user or profile exists
+  const mockProfile = {
+    nome: 'João',
+    sobrenome: 'Silva',
+    cidade: 'São Paulo',
+    estado: 'SP',
+    experiencia: 'intermediario',
+    empresa: 'Piscinas & Cia',
+    biografia: 'Piscineiro com mais de 5 anos de experiência em manutenção e limpeza de piscinas.',
+    especialidades: ['Limpeza', 'Manutenção', 'Produtos Químicos'],
+    disponivel: true,
+    aceitaEmergencia: true,
+    site: 'https://example.com',
+    instagram: '@joaopiscineiro'
+  };
+
+  // Use mock profile if no real profile exists (for development)
+  const displayProfile = profile || (process.env.NODE_ENV === 'development' ? mockProfile : null);
+
+  if (!displayProfile) {
+    return (
+      <Card className="bg-gray-700 dark:bg-gray-800 border-gray-600 dark:border-gray-700">
+        <CardContent className="p-4">
+          <div className="text-center text-gray-400 text-sm">
+            <p>Perfil não configurado</p>
+            <Link href="/setup-piscineiro">
+              <Button variant="outline" size="sm" className="mt-2 border-gray-600 text-gray-300 hover:bg-gray-600">
+                Configurar Perfil
+              </Button>
+            </Link>
           </div>
         </CardContent>
       </Card>
@@ -90,18 +126,18 @@ export function PiscineiroProfileWidget() {
           >
             <div className="flex items-center gap-3 w-full">
               <Avatar className="w-10 h-10">
-                <AvatarImage src={profile.avatarUrl} alt={`${profile.nome} ${profile.sobrenome}`} />
+                <AvatarImage src={displayProfile.avatarUrl} alt={`${displayProfile.nome} ${displayProfile.sobrenome}`} />
                 <AvatarFallback className="bg-blue-600 text-white">
-                  {getInitials(profile.nome, profile.sobrenome)}
+                  {getInitials(displayProfile.nome, displayProfile.sobrenome)}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 text-left">
                 <p className="font-medium text-white">
-                  {profile.nome} {profile.sobrenome}
+                  {displayProfile.nome} {displayProfile.sobrenome}
                 </p>
                 <p className="text-sm text-gray-300 flex items-center gap-1">
                   <MapPin className="w-3 h-3" />
-                  {profile.cidade}, {profile.estado}
+                  {displayProfile.cidade}, {displayProfile.estado}
                 </p>
               </div>
               {isOpen ? (
@@ -118,35 +154,35 @@ export function PiscineiroProfileWidget() {
             {/* Experiência */}
             <div className="flex items-center gap-2">
               <Briefcase className="w-4 h-4 text-gray-400" />
-              <Badge className={getExperienceColor(profile.experiencia)} variant="secondary">
-                {getExperienceLabel(profile.experiencia)}
+              <Badge className={getExperienceColor(displayProfile.experiencia)} variant="secondary">
+                {getExperienceLabel(displayProfile.experiencia)}
               </Badge>
             </div>
 
             {/* Empresa */}
-            {profile.empresa && (
+            {displayProfile.empresa && (
               <div className="flex items-center gap-2">
                 <Star className="w-4 h-4 text-gray-400" />
-                <span className="text-sm text-gray-300">{profile.empresa}</span>
+                <span className="text-sm text-gray-300">{displayProfile.empresa}</span>
               </div>
             )}
 
             {/* Biografia */}
-            {profile.biografia && (
+            {displayProfile.biografia && (
               <div className="text-sm text-gray-300 leading-relaxed">
-                {profile.biografia.length > 100 
-                  ? `${profile.biografia.substring(0, 100)}...`
-                  : profile.biografia
+                {displayProfile.biografia.length > 100 
+                  ? `${displayProfile.biografia.substring(0, 100)}...`
+                  : displayProfile.biografia
                 }
               </div>
             )}
 
             {/* Especialidades */}
-            {profile.especialidades && profile.especialidades.length > 0 && (
+            {displayProfile.especialidades && displayProfile.especialidades.length > 0 && (
               <div>
                 <p className="text-xs text-gray-400 mb-2">Especialidades:</p>
                 <div className="flex flex-wrap gap-1">
-                  {profile.especialidades.slice(0, 3).map((especialidade) => (
+                  {displayProfile.especialidades.slice(0, 3).map((especialidade) => (
                     <Badge 
                       key={especialidade} 
                       variant="outline" 
@@ -155,12 +191,12 @@ export function PiscineiroProfileWidget() {
                       {especialidade}
                     </Badge>
                   ))}
-                  {profile.especialidades.length > 3 && (
+                  {displayProfile.especialidades.length > 3 && (
                     <Badge 
                       variant="outline" 
                       className="text-xs border-gray-600 text-gray-300"
                     >
-                      +{profile.especialidades.length - 3}
+                      +{displayProfile.especialidades.length - 3}
                     </Badge>
                   )}
                 </div>
@@ -169,11 +205,11 @@ export function PiscineiroProfileWidget() {
 
             {/* Status */}
             <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${profile.disponivel ? 'bg-green-500' : 'bg-gray-500'}`} />
+              <div className={`w-2 h-2 rounded-full ${displayProfile.disponivel ? 'bg-green-500' : 'bg-gray-500'}`} />
               <span className="text-sm text-gray-300">
-                {profile.disponivel ? 'Disponível' : 'Indisponível'}
+                {displayProfile.disponivel ? 'Disponível' : 'Indisponível'}
               </span>
-              {profile.aceitaEmergencia && (
+              {displayProfile.aceitaEmergencia && (
                 <Badge variant="outline" className="text-xs border-red-600 text-red-400">
                   Emergência
                 </Badge>
@@ -182,9 +218,9 @@ export function PiscineiroProfileWidget() {
 
             {/* Links */}
             <div className="flex flex-col gap-2">
-              {profile.site && (
+              {displayProfile.site && (
                 <a 
-                  href={profile.site} 
+                  href={displayProfile.site} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition-colors"
@@ -193,9 +229,9 @@ export function PiscineiroProfileWidget() {
                   Site
                 </a>
               )}
-              {profile.instagram && (
+              {displayProfile.instagram && (
                 <a 
-                  href={`https://instagram.com/${profile.instagram.replace('@', '')}`} 
+                  href={`https://instagram.com/${displayProfile.instagram.replace('@', '')}`} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition-colors"
