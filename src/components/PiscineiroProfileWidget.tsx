@@ -69,7 +69,8 @@ export function PiscineiroProfileWidget() {
     disponivel: true,
     aceitaEmergencia: true,
     site: 'https://example.com',
-    instagram: '@joaopiscineiro'
+    instagram: '@joaopiscineiro',
+    avatarUrl: '' // Mock profile doesn't have avatar
   };
 
   // Use mock profile if no real profile exists (for development)
