@@ -1,4 +1,4 @@
-'use client';
+'use clieimport { ChevronDown, ChevronRight, FlaskConical, Play, ClipboardCheck } from "lucide-react";t';
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, ChevronDown, ChevronRight, FlaskConical, Play, Target, ClipboardCheck } from 'lucide-react';
 
 // Importamos o schema e o tipo do nosso arquivo.
 import { aiHelperSchema, AiHelperFormData } from '@/lib/schemas/aiHelperSchema';
@@ -32,9 +32,69 @@ interface AiHelperProps {
 export function AiHelper({ poolVolume }: AiHelperProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [aiResponse, setAiResponse] = useState<string | null>(null);
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    diagnostico: false,
+    etapa1: false,
+    etapa2: false,
+    etapa3: false,
+  });
+
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+
+  // Função para extrair seções do markdown
+  const extractSections = (response: string) => {
+    const sections = {
+      diagnostico: '',
+      etapa1: '',
+      etapa2: '',
+      etapa3: '',
+    };
+
+    // Dividir por seções baseado nos cabeçalhos
+    const lines = response.split('\n');
+    let currentSection = '';
+    let currentContent: string[] = [];
+
+    for (const line of lines) {
+      if (line.includes('Etapa 1') || line.includes('Diagnóstico')) {
+        if (currentSection) {
+          sections[currentSection as keyof typeof sections] = currentContent.join('\n').trim();
+        }
+        currentSection = 'etapa1';
+        currentContent = [];
+      } else if (line.includes('Etapa 2') || line.includes('Método de Recuperação')) {
+        if (currentSection) {
+          sections[currentSection as keyof typeof sections] = currentContent.join('\n').trim();
+        }
+        currentSection = 'etapa2';
+        currentContent = [];
+      } else if (line.includes('Etapa 3') || line.includes('Finalização')) {
+        if (currentSection) {
+          sections[currentSection as keyof typeof sections] = currentContent.join('\n').trim();
+        }
+        currentSection = 'etapa3';
+        currentContent = [];
+      } else if (currentSection) {
+        currentContent.push(line);
+      }
+    }
+
+    // Adicionar a última seção
+    if (currentSection && currentContent.length > 0) {
+      sections[currentSection as keyof typeof sections] = currentContent.join('\n').trim();
+    }
+
+    return sections;
+  };
 
   const form = useForm<AiHelperFormData>({
     defaultValues: {
+      volume: poolVolume || undefined,
       ph: undefined,
       cloro: undefined,
       alcalinidade: undefined,
@@ -71,7 +131,7 @@ export function AiHelper({ poolVolume }: AiHelperProps) {
         body: JSON.stringify({
           imageBase64,
           mimeType,
-          poolVolume,
+          poolVolume: validationResult.data.volume,
           ph: validationResult.data.ph,
           cloro: validationResult.data.cloro,
           alcalinidade: validationResult.data.alcalinidade,
@@ -136,6 +196,22 @@ export function AiHelper({ poolVolume }: AiHelperProps) {
                 )}
               />
             </div>
+            
+            {/* Campo de Volume */}
+            <div className="grid grid-cols-1">
+              <FormField
+                control={form.control}
+                name="volume"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Volume da Piscina (mil litros)</FormLabel>
+                    <FormControl><Input type="number" step="0.5" placeholder="25" {...field} value={field.value ?? ''} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <FormField
                 control={form.control}
@@ -185,22 +261,73 @@ export function AiHelper({ poolVolume }: AiHelperProps) {
         )}
         
         {aiResponse && (
-          <div className="mt-6">
-            <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-blue-800 dark:text-blue-200">
-                  <CheckCircle className="h-5 w-5" />
-                  Recomendações do Especialista
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="prose prose-sm dark:prose-invert max-w-none">
-                  <pre className="whitespace-pre-wrap font-sans text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 p-4 rounded-lg border">
-                    {aiResponse}
-                  </pre>
-                </div>
-              </CardContent>
-            </Card>
+          <div className="mt-6 space-y-4">
+            {(() => {
+              const sections = extractSections(aiResponse);
+              const sectionConfigs = [
+                {
+                  key: 'etapa1',
+                  title: 'Diagnóstico',
+                  icon: FlaskConical,
+                  content: sections.etapa1,
+                  color: 'blue'
+                },
+                {
+                  key: 'etapa2',
+                  title: 'Método de Recuperação',
+                  icon: Play,
+                  content: sections.etapa2,
+                  color: 'purple'
+                },
+                {
+                  key: 'etapa3',
+                  title: 'Finalização',
+                  icon: ClipboardCheck,
+                  content: sections.etapa3,
+                  color: 'green'
+                }
+              ];
+
+              return sectionConfigs.map((section) => {
+                if (!section.content) return null;
+                
+                const isExpanded = expandedSections[section.key];
+                const IconComponent = section.icon;
+                
+                return (
+                  <Card 
+                    key={section.key}
+                    className={`border-${section.color}-200 dark:border-${section.color}-800 transition-all duration-200 hover:shadow-md`}
+                  >
+                    <CardHeader 
+                      className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                      onClick={() => toggleSection(section.key)}
+                    >
+                      <CardTitle className={`flex items-center justify-between text-${section.color}-800 dark:text-${section.color}-200`}>
+                        <div className="flex items-center gap-2">
+                          <IconComponent className="h-5 w-5" />
+                          {section.title}
+                        </div>
+                        {isExpanded ? (
+                          <ChevronDown className="h-5 w-5" />
+                        ) : (
+                          <ChevronRight className="h-5 w-5" />
+                        )}
+                      </CardTitle>
+                    </CardHeader>
+                    {isExpanded && (
+                      <CardContent>
+                        <div className={`bg-${section.color}-50 dark:bg-${section.color}-950/30 p-4 rounded-lg`}>
+                          <pre className="whitespace-pre-wrap font-sans text-sm text-gray-700 dark:text-gray-300">
+                            {section.content}
+                          </pre>
+                        </div>
+                      </CardContent>
+                    )}
+                  </Card>
+                );
+              });
+            })()}
           </div>
         )}
       </CardContent>

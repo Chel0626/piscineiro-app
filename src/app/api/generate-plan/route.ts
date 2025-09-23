@@ -36,9 +36,9 @@ export async function POST(request: NextRequest) {
     });
 
     const prompt = `
-      Você é um especialista em tratamento de piscinas com 20 anos de experiência
-      e segue as normas técnicas da ANAPP. Sua tarefa é criar um plano de ação
-      profissional seguindo EXATAMENTE a estrutura especificada.
+      Você é um piscineiro certificado com 20 anos de experiência em tratamento de água
+      e manutenção de piscinas, seguindo normas da ANAP. Você conhece profundamente 
+      produtos das principais marcas como Genco, HTH, Hidroazul e ANAP.
 
       DADOS DA PISCINA:
       ${poolVolume ? `- Volume: ${poolVolume} mil litros` : '- Volume: Não informado'}
@@ -53,35 +53,49 @@ export async function POST(request: NextRequest) {
       ## **Plano de Ação**
 
       ### **Etapa 1: Diagnóstico**
-      - Analise os parâmetros que estão muito fora e precisam ser corrigidos
-      - Se cabível, faça o cruzamento dos dados e analise o porquê da piscina ficar naquele estado
-      - Não precisa de um diagnóstico fora de série, seja objetivo
+      - Analise os parâmetros usando terminologia técnica (registros de fundo, skimmers, casa de bombas)
+      - Identifique correlações entre pH, cloro e alcalinidade
+      - ${poolVolume ? `Calcule dosagens baseadas no volume de ${poolVolume} mil litros` : 'Indique a importância de conhecer o volume para dosagens precisas'}
+      - Determine possíveis causas da desregulação dos parâmetros
 
       ### **Etapa 2: Método de Recuperação**
       **A IA deve avaliar e escolher UM dos caminhos abaixo:**
 
       #### **Opção A - Decantação:**
-      - **Pergunta importante:** Sulfato de alumínio ou floculante?
-      - **Recomendação específica:** [Escolher e justificar]
-      - **Cálculo de dosagem:** [Quantidade exata do produto escolhido]
-      - **Observação:** Sulfato = filtro no recircular / Clarificante = filtrar normal
+      - **Produto recomendado:** Sulfato de alumínio (ex: Genco Clarificante) ou floculante (ex: HTH Clear Gel)?
+      - **Cálculo de dosagem:** ${poolVolume ? `Para ${poolVolume} mil litros: [quantidade específica]` : '[X] gramas por mil litros × volume da piscina'}
+      - **Procedimento técnico:** 
+        * Sulfato = filtro na posição RECIRCULAR por 4-6 horas
+        * Floculante = desligar filtração por 8-12 horas para sedimentação
+      - **Segurança:** Use EPI adequado durante aplicação
 
       #### **Opção B - Recuperação com Filtração:**
-      - **Método 1 - Peróxido:** Resolver os parâmetros e deixar filtrar o máximo possível (pelo menos 12h)
-      - **Método 2 - Clear Gel:** Dosagem oxidante de cloro ou peróxido + correção de alcalinidade + filtragem por 12h seguidas
+      - **Método 1 - Oxidação:** ${poolVolume ? `Peróxido de hidrogênio ${Math.round(Number(poolVolume) * 1000 * 0.001)}L ou hipoclorito` : 'Peróxido 1mL/1000L ou choque clorado'}
+      - **Método 2 - Clarificante:** HTH Clear Gel ou Genco Clarificante + filtração contínua 12h
+      - **Correção alcalinidade:** Use Genco Alcalinizante ou HTH Alcalin Plus se alcalinidade < 80ppm
+      - **Monitoramento:** Testes a cada 4 horas durante o processo
 
       ### **Etapa 3: Finalização**
       **Se escolheu Decantação (Opção A):**
-      - Aspiração completa do sedimento
-      - Conferir parâmetros após aspiração
-      - Corrigir se necessário
+      - Aspiração no DRENO com bomba desligada para evitar retorno à piscina
+      - Lavagem completa do filtro (backwash + enxágue)
+      - Reteste de parâmetros após 2 horas de circulação
+      - Ajustes finais se necessário
 
       **Se escolheu Recuperação com Filtração (Opção B):**
-      - Lavar a areia do filtro
-      - Conferir parâmetros após lavagem
-      - Corrigir se necessário
+      - Lavagem do elemento filtrante (areia/cartucho) obrigatória
+      - Verificação do sistema de circulação (skimmers limpos, cesto da bomba)
+      - Reteste completo dos parâmetros
+      - Cronograma de manutenção: testes 2x/semana, limpeza semanal
 
-      **IMPORTANTE:** Siga rigorosamente esta estrutura. Seja direto e objetivo.
+      **MANUTENÇÃO PREVENTIVA:**
+      - Testes regulares com kit completo (pH, cloro, alcalinidade)
+      - Limpeza semanal de skimmers e registro de fundo
+      - Retrolavagem quinzenal do filtro
+      - Escovação das paredes semanalmente
+
+      **IMPORTANTE:** Use sempre equipamentos de proteção, siga instruções dos fabricantes
+      e mantenha produtos químicos longe de crianças e animais.
     `;
 
     // Criar o conteúdo baseado no que temos disponível
