@@ -74,28 +74,28 @@ export default function ClientesPage() {
     };
 
     return (
-        <div className="p-2 sm:p-4">
+        <div className="w-full max-w-full p-2 sm:p-4 overflow-hidden">
             {/* Header responsivo */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-4 sm:mb-6">
-                <h1 className="text-lg sm:text-2xl md:text-3xl font-bold">Gerenciamento de Clientes</h1>
+                <h1 className="text-lg sm:text-2xl md:text-3xl font-bold truncate">Gerenciamento de Clientes</h1>
                 <Button 
                     onClick={openFormToCreate} 
                     disabled={authLoading}
-                    className="w-full sm:w-auto text-sm"
+                    className="w-full sm:w-auto text-sm flex-shrink-0"
                 >
                     {authLoading ? 'Aguarde...' : 'Adicionar Cliente'}
                 </Button>
             </div>
 
             {/* Campo de busca */}
-            <div className="mb-4 sm:mb-6">
-                <div className="relative">
+            <div className="mb-4 sm:mb-6 w-full">
+                <div className="relative w-full">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                     <Input
                         placeholder="Buscar cliente por nome, endereço ou bairro..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
+                        className="pl-10 w-full"
                     />
                 </div>
                 {searchTerm && (
@@ -107,41 +107,41 @@ export default function ClientesPage() {
 
             {/* Seção de Clientes Fixos */}
             <Collapsible open={isClientesFixosExpanded} onOpenChange={setIsClientesFixosExpanded}>
-                <Card className="mb-4">
+                <Card className="mb-4 w-full">
                     <CollapsibleTrigger asChild>
                         <CardHeader className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                            <div className="flex items-center justify-between">
-                                <CardTitle className="flex items-center gap-2">
-                                    <User className="h-5 w-5 text-blue-500" />
-                                    Clientes Fixos ({filteredClients.length})
+                            <div className="flex items-center justify-between w-full">
+                                <CardTitle className="flex items-center gap-2 truncate">
+                                    <User className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                                    <span className="truncate">Clientes Fixos ({filteredClients.length})</span>
                                 </CardTitle>
                                 {isClientesFixosExpanded ? (
-                                    <ChevronUp className="h-4 w-4" />
+                                    <ChevronUp className="h-4 w-4 flex-shrink-0" />
                                 ) : (
-                                    <ChevronDown className="h-4 w-4" />
+                                    <ChevronDown className="h-4 w-4 flex-shrink-0" />
                                 )}
                             </div>
                         </CardHeader>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
-                        <CardContent className="pt-0">
+                        <CardContent className="pt-0 w-full overflow-hidden">
                             {/* Layout para Desktop - Tabela */}
-                            <div className="hidden sm:block border rounded-lg overflow-x-auto">
-                                <Table>
+                            <div className="hidden sm:block border rounded-lg overflow-x-auto w-full">
+                                <Table className="w-full">
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead className="text-sm">Nome</TableHead>
-                                            <TableHead className="text-sm">Endereço</TableHead>
-                                            <TableHead className="text-sm">Dia da Visita</TableHead>
-                                            <TableHead className="text-right text-sm">Ações</TableHead>
+                                            <TableHead className="text-sm min-w-[120px]">Nome</TableHead>
+                                            <TableHead className="text-sm min-w-[200px]">Endereço</TableHead>
+                                            <TableHead className="text-sm min-w-[120px]">Dia da Visita</TableHead>
+                                            <TableHead className="text-right text-sm min-w-[80px]">Ações</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {filteredClients.map((client) => (
                                             <TableRow key={client.id} onClick={() => handleRowClick(client.id)} className="cursor-pointer hover:bg-gray-100">
-                                                <TableCell className="font-medium text-sm">{client.name}</TableCell>
-                                                <TableCell className="text-sm">{`${client.address}, ${client.neighborhood}`}</TableCell>
-                                                <TableCell className="text-sm">
+                                                <TableCell className="font-medium text-sm max-w-[150px] truncate">{client.name}</TableCell>
+                                                <TableCell className="text-sm max-w-[250px] truncate">{`${client.address}, ${client.neighborhood}`}</TableCell>
+                                                <TableCell className="text-sm max-w-[120px] truncate">
                                                   {client.visitDays ? client.visitDays.join(', ') : 
                                                    (client as typeof client & { visitDay?: string }).visitDay || 'Não definido'}
                                                 </TableCell>
@@ -216,24 +216,24 @@ export default function ClientesPage() {
 
             {/* Seção de Clientes Avulsos */}
             <Collapsible open={isClientesAvulsosExpanded} onOpenChange={setIsClientesAvulsosExpanded}>
-                <Card className="mb-4">
+                <Card className="mb-4 w-full">
                     <CollapsibleTrigger asChild>
                         <CardHeader className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                            <div className="flex items-center justify-between">
-                                <CardTitle className="flex items-center gap-2">
-                                    <Clock className="h-5 w-5 text-orange-500" />
-                                    Clientes Avulsos ({filteredClientesAvulsos.length})
+                            <div className="flex items-center justify-between w-full">
+                                <CardTitle className="flex items-center gap-2 truncate">
+                                    <Clock className="h-5 w-5 text-orange-500 flex-shrink-0" />
+                                    <span className="truncate">Clientes Avulsos ({filteredClientesAvulsos.length})</span>
                                 </CardTitle>
                                 {isClientesAvulsosExpanded ? (
-                                    <ChevronUp className="h-4 w-4" />
+                                    <ChevronUp className="h-4 w-4 flex-shrink-0" />
                                 ) : (
-                                    <ChevronDown className="h-4 w-4" />
+                                    <ChevronDown className="h-4 w-4 flex-shrink-0" />
                                 )}
                             </div>
                         </CardHeader>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
-                        <CardContent className="pt-0">
+                        <CardContent className="pt-0 w-full overflow-hidden">
                             {isLoadingAvulsos ? (
                                 <div className="text-center py-4">
                                     <p className="text-gray-500">Carregando clientes avulsos...</p>
@@ -243,12 +243,12 @@ export default function ClientesPage() {
                                     <p className="text-gray-500">Nenhum cliente avulso encontrado.</p>
                                 </div>
                             ) : (
-                                <div className="space-y-3">
+                                <div className="space-y-3 w-full">
                                     {filteredClientesAvulsos.map((cliente) => (
-                                        <Card key={cliente.id} className="hover:shadow-md transition-shadow">
-                                            <CardContent className="p-3 sm:p-4">
-                                                <div className="flex items-start justify-between gap-3">
-                                                    <div className="flex-1 min-w-0 space-y-2">
+                                        <Card key={cliente.id} className="hover:shadow-md transition-shadow w-full">
+                                            <CardContent className="p-3 sm:p-4 w-full">
+                                                <div className="flex items-start justify-between gap-3 w-full">
+                                                    <div className="flex-1 min-w-0 space-y-2 overflow-hidden">
                                                         <div className="flex items-center gap-2">
                                                             <Clock className="h-4 w-4 text-orange-500 flex-shrink-0" />
                                                             <p className="font-semibold text-sm truncate">{cliente.nome}</p>
@@ -256,7 +256,7 @@ export default function ClientesPage() {
                                                         {cliente.endereco && (
                                                             <div className="flex items-start gap-2">
                                                                 <MapPin className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
-                                                                <p className="text-xs text-gray-600 leading-relaxed">{cliente.endereco}</p>
+                                                                <p className="text-xs text-gray-600 leading-relaxed break-words">{cliente.endereco}</p>
                                                             </div>
                                                         )}
                                                         <div className="flex items-center gap-2">
