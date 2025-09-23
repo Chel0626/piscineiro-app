@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Users } from 'lucide-react';
+import { X, Users, Trash2, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { signOut } from 'firebase/auth';
@@ -13,6 +13,7 @@ import { PiscineiroProfileWidget } from './PiscineiroProfileWidget';
 import { ClienteAvulsoModal } from './ClienteAvulsoModal';
 import { Separator } from './ui/separator';
 import { ThemeToggle } from './ui/theme-toggle';
+import { useCacheManager } from '@/hooks/useCacheManager';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [isClienteAvulsoModalOpen, setIsClienteAvulsoModalOpen] = useState(false);
+  const { clearAllCache, forceReload, isClearing } = useCacheManager();
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -100,6 +102,30 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         {/* Seção de Configurações - com padding extra para evitar sobreposição do bottom tab */}
         <div className="p-4 space-y-3 border-t border-gray-700 dark:border-gray-600 pb-20 md:pb-4">
           <BillingWidget />
+          
+          {/* Botões de Cache */}
+          <div className="space-y-2">
+            <Button 
+              onClick={forceReload}
+              variant="outline" 
+              size="sm"
+              className="w-full border-gray-600 text-gray-300 hover:bg-gray-600 hover:text-white"
+            >
+              <RotateCcw className="h-3 w-3 mr-2" />
+              Recarregar App
+            </Button>
+            <Button 
+              onClick={clearAllCache}
+              disabled={isClearing}
+              variant="outline" 
+              size="sm"
+              className="w-full border-red-600 text-red-400 hover:bg-red-600 hover:text-white"
+            >
+              <Trash2 className="h-3 w-3 mr-2" />
+              {isClearing ? 'Limpando...' : 'Limpar Cache'}
+            </Button>
+          </div>
+          
           <div className="flex items-center justify-between">
             <ThemeToggle />
             <Button onClick={handleLogout} variant="destructive" className="flex-1 ml-3">
