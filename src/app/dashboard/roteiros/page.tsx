@@ -62,18 +62,18 @@ function SortableClientItem({ client, onClientClick }: { client: Client; onClien
       ref={setNodeRef}
       style={style}
       {...attributes}
-      className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-gray-50 dark:bg-gray-800 rounded-lg"
+      className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-gray-50 dark:bg-gray-800 rounded-lg w-full max-w-full overflow-hidden"
     >
       <button {...listeners} className="cursor-grab touch-none p-1 flex-shrink-0">
         <GripVertical className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 dark:text-gray-500" />
       </button>
       <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 dark:text-gray-400 flex-shrink-0" />
       <div 
-        className="flex-1 min-w-0 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded p-2 -m-2 transition-colors"
+        className="flex-1 min-w-0 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded p-2 -m-2 transition-colors max-w-full overflow-hidden"
         onClick={() => onClientClick(client)}
       >
-        <p className="font-semibold truncate text-gray-900 dark:text-gray-100 text-sm sm:text-base">{client.name}</p>
-        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 truncate">
+        <p className="font-semibold truncate text-gray-900 dark:text-gray-100 text-sm sm:text-base w-full">{client.name}</p>
+        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 truncate w-full">
           {`${client.address}, ${client.neighborhood}`}
         </p>
       </div>
@@ -171,19 +171,20 @@ export default function RoteirosPage() {
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
     >
-      <div className="px-2 sm:px-4 md:px-0 w-full max-w-full overflow-x-hidden">
+      <div className="w-full max-w-full overflow-hidden">
+        <div className="container mx-auto px-4 max-w-full overflow-hidden">
         <div className="mb-4 sm:mb-6">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Roteiros da Semana</h1>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate">Roteiros da Semana</h1>
           <p className="text-muted-foreground text-xs sm:text-sm md:text-base">
             Selecione um dia e arraste os clientes para reordenar sua rota de visitas.
           </p>
         </div>
 
         {/* Botões dos dias da semana */}
-        <div className="mb-4 sm:mb-6 px-0 sm:px-0 w-full max-w-full">
-          <div className="flex flex-col gap-2">
+        <div className="mb-4 sm:mb-6 w-full max-w-full overflow-hidden">
+          <div className="flex flex-col gap-2 w-full max-w-full">
             {/* Primeira linha: Segunda a Quarta */}
-            <div className="grid grid-cols-3 gap-2 w-full">
+            <div className="grid grid-cols-3 gap-2 w-full max-w-full">
               {daysOfWeek.slice(0, 3).map((day) => {
                 const clientsCount = localGroupedClients[day.key]?.length || 0;
                 const isSelected = selectedDay === day.key;
@@ -192,10 +193,10 @@ export default function RoteirosPage() {
                     key={day.key}
                     variant={isSelected ? "default" : "outline"}
                     onClick={() => setSelectedDay(day.key)}
-                    className="flex flex-col h-14 sm:h-16 px-2 sm:px-3 py-2 relative w-full text-center"
+                    className="flex flex-col h-14 sm:h-16 px-2 sm:px-3 py-2 relative w-full text-center min-w-0"
                   >
-                    <span className="font-medium text-xs sm:text-sm">{day.short}</span>
-                    <span className="text-xs opacity-75 hidden sm:block">{day.label}</span>
+                    <span className="font-medium text-xs sm:text-sm truncate w-full">{day.short}</span>
+                    <span className="text-xs opacity-75 hidden sm:block truncate w-full">{day.label}</span>
                     {clientsCount > 0 && (
                       <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                         {clientsCount}
@@ -206,7 +207,7 @@ export default function RoteirosPage() {
               })}
             </div>
             {/* Segunda linha: Quinta a Domingo */}
-            <div className="grid grid-cols-4 gap-2 w-full">
+            <div className="grid grid-cols-4 gap-2 w-full max-w-full">
               {daysOfWeek.slice(3).map((day) => {
                 const clientsCount = localGroupedClients[day.key]?.length || 0;
                 const isSelected = selectedDay === day.key;
@@ -215,10 +216,10 @@ export default function RoteirosPage() {
                     key={day.key}
                     variant={isSelected ? "default" : "outline"}
                     onClick={() => setSelectedDay(day.key)}
-                    className="flex flex-col h-14 sm:h-16 px-2 sm:px-3 py-2 relative w-full text-center"
+                    className="flex flex-col h-14 sm:h-16 px-2 sm:px-3 py-2 relative w-full text-center min-w-0"
                   >
-                    <span className="font-medium text-xs sm:text-sm">{day.short}</span>
-                    <span className="text-xs opacity-75 hidden sm:block">{day.label}</span>
+                    <span className="font-medium text-xs sm:text-sm truncate w-full">{day.short}</span>
+                    <span className="text-xs opacity-75 hidden sm:block truncate w-full">{day.label}</span>
                     {clientsCount > 0 && (
                       <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                         {clientsCount}
@@ -232,23 +233,23 @@ export default function RoteirosPage() {
         </div>
 
         {/* Card do dia selecionado */}
-        <Card className="mx-0 sm:mx-0 w-full max-w-full overflow-x-hidden">
+        <Card className="w-full max-w-full overflow-hidden">
           <CardHeader className="px-3 sm:px-4 md:px-6 py-3 sm:py-4">
             <CardTitle className="flex items-center gap-2 text-base sm:text-lg md:text-xl">
-              <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
+              <Calendar className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
               <span className="truncate">{selectedDayInfo?.label}</span>
             </CardTitle>
             <CardDescription className="text-xs sm:text-sm">
               {selectedDayClients.length} cliente(s) agendado(s)
             </CardDescription>
           </CardHeader>
-          <CardContent className="px-3 sm:px-4 md:px-6 pb-4 w-full max-w-full overflow-x-hidden">
+          <CardContent className="px-3 sm:px-4 md:px-6 pb-4 w-full max-w-full overflow-hidden">
             {selectedDayClients.length > 0 ? (
               <SortableContext
                 items={selectedDayClients.map(c => c.id)}
                 strategy={verticalListSortingStrategy}
               >
-                <ul className="space-y-2 sm:space-y-3 w-full max-w-full overflow-x-hidden">
+                <ul className="space-y-2 sm:space-y-3 w-full max-w-full overflow-hidden">
                   {selectedDayClients.map((client) => (
                     <SortableClientItem key={client.id} client={client} onClientClick={handleClientClick} />
                   ))}
@@ -285,6 +286,7 @@ export default function RoteirosPage() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
     </DndContext>
   );
