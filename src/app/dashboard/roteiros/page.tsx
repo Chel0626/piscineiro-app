@@ -180,28 +180,54 @@ export default function RoteirosPage() {
         </div>
 
         {/* Botões dos dias da semana */}
-        <div className="mb-4 sm:mb-6 px-0 sm:px-0 w-full max-w-full overflow-x-auto">
-          <div className="grid grid-cols-7 gap-1 sm:gap-2 w-full">
-            {daysOfWeek.map((day) => {
-              const clientsCount = localGroupedClients[day.key]?.length || 0;
-              const isSelected = selectedDay === day.key;
-              return (
-                <Button
-                  key={day.key}
-                  variant={isSelected ? "default" : "outline"}
-                  onClick={() => setSelectedDay(day.key)}
-                  className="flex flex-col h-14 sm:h-16 px-1 sm:px-2 py-1 sm:py-2 relative w-full text-center text-xs sm:text-sm min-w-0"
-                >
-                  <span className="font-medium text-[10px] sm:text-xs md:text-sm truncate">{day.short}</span>
-                  <span className="text-[9px] sm:text-xs opacity-75 hidden md:block truncate">{day.label}</span>
-                  {clientsCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-[10px] sm:text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center">
-                      {clientsCount}
-                    </span>
-                  )}
-                </Button>
-              );
-            })}
+        <div className="mb-4 sm:mb-6 px-0 sm:px-0 w-full max-w-full">
+          <div className="flex flex-col gap-2">
+            {/* Primeira linha: Segunda a Quarta */}
+            <div className="grid grid-cols-3 gap-2 w-full">
+              {daysOfWeek.slice(0, 3).map((day) => {
+                const clientsCount = localGroupedClients[day.key]?.length || 0;
+                const isSelected = selectedDay === day.key;
+                return (
+                  <Button
+                    key={day.key}
+                    variant={isSelected ? "default" : "outline"}
+                    onClick={() => setSelectedDay(day.key)}
+                    className="flex flex-col h-14 sm:h-16 px-2 sm:px-3 py-2 relative w-full text-center"
+                  >
+                    <span className="font-medium text-xs sm:text-sm">{day.short}</span>
+                    <span className="text-xs opacity-75 hidden sm:block">{day.label}</span>
+                    {clientsCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                        {clientsCount}
+                      </span>
+                    )}
+                  </Button>
+                );
+              })}
+            </div>
+            {/* Segunda linha: Quinta a Domingo */}
+            <div className="grid grid-cols-4 gap-2 w-full">
+              {daysOfWeek.slice(3).map((day) => {
+                const clientsCount = localGroupedClients[day.key]?.length || 0;
+                const isSelected = selectedDay === day.key;
+                return (
+                  <Button
+                    key={day.key}
+                    variant={isSelected ? "default" : "outline"}
+                    onClick={() => setSelectedDay(day.key)}
+                    className="flex flex-col h-14 sm:h-16 px-2 sm:px-3 py-2 relative w-full text-center"
+                  >
+                    <span className="font-medium text-xs sm:text-sm">{day.short}</span>
+                    <span className="text-xs opacity-75 hidden sm:block">{day.label}</span>
+                    {clientsCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                        {clientsCount}
+                      </span>
+                    )}
+                  </Button>
+                );
+              })}
+            </div>
           </div>
         </div>
 

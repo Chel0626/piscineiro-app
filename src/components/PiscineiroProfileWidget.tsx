@@ -45,10 +45,11 @@ export function PiscineiroProfileWidget() {
         const profileSnap = await getDoc(profileRef);
         
         if (profileSnap.exists()) {
-          console.log('PiscineiroProfileWidget: Perfil encontrado');
-          setProfile(profileSnap.data() as PiscineiroProfile);
+          const profileData = profileSnap.data() as PiscineiroProfile;
+          console.log('PiscineiroProfileWidget: Perfil encontrado:', profileData);
+          setProfile(profileData);
         } else {
-          console.log('PiscineiroProfileWidget: Perfil não encontrado');
+          console.log('PiscineiroProfileWidget: Perfil não encontrado para UID:', user.uid);
           setProfile(null);
         }
       } catch (error) {

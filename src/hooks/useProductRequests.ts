@@ -53,8 +53,8 @@ export function useProductRequests() {
       });
       setRequests(requestsData);
     }, (error) => {
-      console.error('Erro ao carregar solicitações:', error);
-      toast.error('Erro ao carregar solicitações de produtos');
+      console.warn('Aviso ao carregar solicitações:', error);
+      // Removendo toast de erro para evitar spam
     });
 
     return unsubscribe;
