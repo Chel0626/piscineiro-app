@@ -1,52 +1,48 @@
-const CACHE_NAME = 'piscineiro-app-v3'; // Versão estável
-const STATIC_CACHE_NAME = 'piscineiro-static-v3';
-const CURRENT_VERSION = '3.0.0'; // Versão semântica mais estável
+const CACHE_NAME = 'piscineiro-app-v4';
+const STATIC_CACHE_NAME = 'piscineiro-static-v4';
+const CURRENT_VERSION = '4.0.0';
 
-// Recursos estáticos que devem ser sempre cachados
-const STATIC_ASSETS = [
+// Recursos essenciais que devem ser cachados
+const ESSENTIAL_ASSETS = [
   '/',
-  '/dashboard',
-  '/login',
-  '/signup',
   '/manifest.json',
   '/favicon.ico',
-  '/logo-icon.svg',
-  '/logo.svg',
-  '/logo.png',
-  '/icon-192x192.png',
-  '/icon-512x512.png',
-  '/_next/static/css/app/layout.css',
-  '/_next/static/css/app/globals.css'
+  '/logo-icon.svg'
 ];
 
-// URLs que devem ser servidas do cache quando offline
-const CACHE_URLS = [
+// URLs das páginas principais
+const PAGE_URLS = [
   '/dashboard',
-  '/dashboard/clientes',
-  '/dashboard/roteiros',
-  '/dashboard/produtos-do-dia',
   '/login',
   '/signup'
 ];
 
 // Instalar o Service Worker
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installing Service Worker v3.0.0...');
+  console.log(`[SW] Installing Service Worker v${CURRENT_VERSION}...`);
   
   event.waitUntil(
     Promise.all([
-      // Cacheia os recursos estáticos
       caches.open(STATIC_CACHE_NAME).then((cache) => {
-        console.log('[SW] Caching static assets');
-        return cache.addAll(STATIC_ASSETS.map(url => new Request(url, { cache: 'reload' })));
+        console.log('[SW] Caching essential assets');
+        return cache.addAll(ESSENTIAL_ASSETS).catch(error => {
+          console.error('[SW] Failed to cache essential assets:', error);
+        });
       }),
       caches.open(CACHE_NAME).then((cache) => {
-        console.log('[SW] Caching app pages');
-        return cache.addAll(CACHE_URLS);
+        console.log('[SW] Caching pages');
+        return Promise.all(
+          PAGE_URLS.map(url => 
+            cache.add(url).catch(error => {
+              console.warn(`[SW] Failed to cache ${url}:`, error);
+            })
+          )
+        );
       })
     ]).then(() => {
       console.log('[SW] Installation complete');
-      // Não força skipWaiting imediatamente - deixa mais estável
+      // Force ativação para corrigir problemas de versão
+      self.skipWaiting();
     }).catch((error) => {
       console.error('[SW] Installation failed:', error);
     })
@@ -55,14 +51,14 @@ self.addEventListener('install', (event) => {
 
 // Ativar o Service Worker
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activating Service Worker v3.0.0...');
+  console.log(`[SW] Activating Service Worker v${CURRENT_VERSION}...`);
   
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          // Remove apenas caches realmente antigos, não v3
-          if (!cacheName.includes('v3')) {
+          // Remove todas as versões antigas (v1, v2, v3)
+          if (!cacheName.includes('v4')) {
             console.log('[SW] Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
@@ -71,6 +67,8 @@ self.addEventListener('activate', (event) => {
     }).then(() => {
       console.log('[SW] Activation complete');
       return self.clients.claim();
+    }).catch((error) => {
+      console.error('[SW] Activation failed:', error);
     })
   );
 });
@@ -80,27 +78,28 @@ self.addEventListener('fetch', (event) => {
   const request = event.request;
   const url = new URL(request.url);
 
-  // Ignorar requisições não HTTP
+  // Ignorar requisições não HTTP/HTTPS
   if (!request.url.startsWith('http')) {
     return;
   }
 
-  // Ignorar requisições para APIs externas e Firebase
+  // Ignorar APIs externas, Firebase e APIs internas
   if (url.hostname.includes('firebase') || 
       url.hostname.includes('googleapis') ||
       url.hostname.includes('firestore') ||
-      url.pathname.startsWith('/api/')) {
+      url.pathname.startsWith('/api/') ||
+      url.pathname.startsWith('/_next/webpack-hmr')) {
     return;
   }
 
-  // Strategy: Cache First para recursos estáticos
-  if (STATIC_ASSETS.some(asset => request.url.includes(asset)) ||
-      request.url.includes('_next/static/') ||
+  // Para recursos estáticos: Cache First
+  if (request.url.includes('_next/static/') ||
       request.url.includes('.css') ||
       request.url.includes('.js') ||
       request.url.includes('.png') ||
       request.url.includes('.svg') ||
-      request.url.includes('.ico')) {
+      request.url.includes('.ico') ||
+      ESSENTIAL_ASSETS.some(asset => request.url.endsWith(asset))) {
     
     event.respondWith(
       caches.match(request).then((response) => {
@@ -116,24 +115,19 @@ self.addEventListener('fetch', (event) => {
             });
           }
           return response;
-        });
-      }).catch(() => {
-        // Se falhar, retorna uma resposta padrão para imagens
-        if (request.url.includes('.png') || request.url.includes('.svg') || request.url.includes('.ico')) {
+        }).catch(() => {
+          // Fallback silencioso para recursos estáticos
           return new Response('', { status: 200, statusText: 'OK' });
-        }
+        });
       })
     );
     return;
   }
 
-  // Strategy: Network First para páginas da aplicação
-  if (request.method === 'GET' && 
-      (CACHE_URLS.some(url => request.url.includes(url)) || 
-       request.mode === 'navigate')) {
-    
+  // Para navegação de páginas: Network First com fallback
+  if (request.method === 'GET' && request.mode === 'navigate') {
     event.respondWith(
-      fetch(request, { cache: 'no-cache' }).then((response) => {
+      fetch(request).then((response) => {
         if (response.status === 200) {
           const responseClone = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
@@ -147,13 +141,13 @@ self.addEventListener('fetch', (event) => {
             return response;
           }
           
-          // Se não encontrar no cache, tenta retornar a página principal
+          // Fallback para página principal
           return caches.match('/').then((fallbackResponse) => {
             if (fallbackResponse) {
               return fallbackResponse;
             }
             
-            // Página offline básica como último recurso
+            // Página offline mínima
             return new Response(`
               <!DOCTYPE html>
               <html>
@@ -163,40 +157,40 @@ self.addEventListener('fetch', (event) => {
                   <title>PiscineiroApp - Offline</title>
                   <style>
                     body { 
-                      font-family: Arial, sans-serif; 
+                      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
                       text-align: center; 
-                      padding: 50px; 
-                      background: #f5f5f5; 
+                      padding: 50px 20px; 
+                      background: #f8fafc; 
+                      margin: 0;
                     }
                     .container { 
-                      max-width: 500px; 
+                      max-width: 400px; 
                       margin: 0 auto; 
                       background: white; 
-                      padding: 30px; 
-                      border-radius: 10px; 
-                      box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
-                    }
-                    .icon { 
-                      font-size: 48px; 
-                      margin-bottom: 20px; 
+                      padding: 40px 30px; 
+                      border-radius: 12px; 
+                      box-shadow: 0 4px 20px rgba(0,0,0,0.1); 
                     }
                     h1 { 
                       color: #0284c7; 
-                      margin-bottom: 10px; 
+                      margin: 20px 0 10px 0; 
+                      font-size: 24px;
                     }
                     p { 
-                      color: #666; 
-                      line-height: 1.5; 
+                      color: #64748b; 
+                      line-height: 1.6; 
+                      margin: 15px 0;
                     }
                     button {
                       background: #0284c7;
                       color: white;
                       border: none;
                       padding: 12px 24px;
-                      border-radius: 6px;
+                      border-radius: 8px;
                       cursor: pointer;
                       font-size: 16px;
                       margin-top: 20px;
+                      transition: background 0.2s;
                     }
                     button:hover {
                       background: #0369a1;
@@ -205,16 +199,16 @@ self.addEventListener('fetch', (event) => {
                 </head>
                 <body>
                   <div class="container">
-                    <div class="icon">🏊‍♂️</div>
+                    <div style="font-size: 48px; margin-bottom: 20px;">🏊‍♂️</div>
                     <h1>PiscineiroApp</h1>
-                    <p>Você está offline. Algumas funcionalidades podem estar limitadas.</p>
-                    <p>Verifique sua conexão com a internet e tente novamente.</p>
-                    <button onclick="window.location.reload()">Tentar Novamente</button>
+                    <p>Você está offline no momento.</p>
+                    <p>Verifique sua conexão e tente novamente.</p>
+                    <button onclick="window.location.reload()">Reconectar</button>
                   </div>
                 </body>
               </html>
             `, {
-              headers: { 'Content-Type': 'text/html' }
+              headers: { 'Content-Type': 'text/html; charset=utf-8' }
             });
           });
         });
@@ -223,7 +217,7 @@ self.addEventListener('fetch', (event) => {
   }
 });
 
-// Manipular mensagens do cliente
+// Lidar com mensagens do cliente
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();

@@ -11,35 +11,39 @@ export function useServiceWorker() {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       const registerSW = async () => {
         try {
+          // Limpar registros antigos primeiro
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          for (const registration of registrations) {
+            console.log('Desregistrando SW antigo:', registration);
+            await registration.unregister();
+          }
+
+          // Aguardar um pouco antes de registrar novamente
+          await new Promise(resolve => setTimeout(resolve, 100));
+
           const registration = await navigator.serviceWorker.register('/sw.js', {
             scope: '/',
-            updateViaCache: 'none' // Nunca usar cache para o SW
+            updateViaCache: 'none'
           });
           
           console.log('Service Worker registrado com sucesso:', registration);
           setSwRegistration(registration);
 
-          // Verificar atualizações apenas quando necessário (não em loop)
-          // Remove o setInterval que estava causando instabilidade
-
-          // Verificar se há uma nova versão apenas uma vez por sessão
+          // Verificar atualizações apenas uma vez
           registration.addEventListener('updatefound', () => {
             const newWorker = registration.installing;
             if (newWorker) {
               newWorker.addEventListener('statechange', () => {
                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  // Nova versão disponível - mas não força atualização automática
-                  console.log('Nova versão disponível!');
-                  // Usuário pode atualizar manualmente ou na próxima visita
+                  console.log('Nova versão do SW disponível');
                 }
               });
             }
           });
 
-          // Remove o controllerchange que estava causando reloads automáticos
-
         } catch (error) {
           console.error('Erro ao registrar Service Worker:', error);
+          // Em caso de erro, não bloqueia a aplicação
         }
       };
 
@@ -47,8 +51,15 @@ export function useServiceWorker() {
     }
 
     // Monitorar status de conexão
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
+    const handleOnline = () => {
+      console.log('Conexão restaurada');
+      setIsOnline(true);
+    };
+    
+    const handleOffline = () => {
+      console.log('Conexão perdida');
+      setIsOnline(false);
+    };
 
     setIsOnline(navigator.onLine);
     window.addEventListener('online', handleOnline);
