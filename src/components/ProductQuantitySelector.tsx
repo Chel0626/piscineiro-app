@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -35,13 +35,18 @@ export function ProductQuantitySelector({ onProductsChange, className = '' }: Pr
   const [selectedProducts, setSelectedProducts] = useState<Record<string, number>>({});
 
   // Calcular produtos selecionados como array
-  const selectedProductsArray = Object.entries(selectedProducts)
-    .filter(([, quantity]) => quantity > 0)
-    .map(([name, quantity]) => ({ name, quantity }));
+  const selectedProductsArray = useMemo(() => 
+    Object.entries(selectedProducts)
+      .filter(([, quantity]) => quantity > 0)
+      .map(([name, quantity]) => ({ name, quantity })),
+    [selectedProducts]
+  );
 
   // Notificar mudanças para o componente pai
   useEffect(() => {
-    onProductsChange(selectedProductsArray);
+    if (typeof onProductsChange === 'function') {
+      onProductsChange(selectedProductsArray);
+    }
   }, [selectedProductsArray, onProductsChange]);
 
   const updateQuantity = (productName: string, newQuantity: number) => {
@@ -67,20 +72,38 @@ export function ProductQuantitySelector({ onProductsChange, className = '' }: Pr
   };
 
   const getTotalItems = () => {
-    return selectedProductsArray.reduce((sum, product) => sum + product.quantity, 0);
+    try {
+      return selectedProductsArray.reduce((sum, product) => {
+        if (product && typeof product.quantity === 'number') {
+          return sum + product.quantity;
+        }
+        return sum;
+      }, 0);
+    } catch (error) {
+      console.error('Erro ao calcular total de itens:', error);
+      return 0;
+    }
   };
 
   const getSelectedProductsText = () => {
-    if (selectedProductsArray.length === 0) {
-      return 'Nenhum produto selecionado';
-    }
-    
-    if (selectedProductsArray.length === 1) {
-      const product = selectedProductsArray[0];
-      return `${product.name} (${product.quantity})`;
-    }
+    try {
+      if (!selectedProductsArray || selectedProductsArray.length === 0) {
+        return 'Nenhum produto selecionado';
+      }
+      
+      if (selectedProductsArray.length === 1) {
+        const product = selectedProductsArray[0];
+        if (product && product.name && product.quantity) {
+          return `${product.name} (${product.quantity})`;
+        }
+      }
 
-    return `${selectedProductsArray.length} produtos selecionados (${getTotalItems()} itens)`;
+      const totalItems = getTotalItems();
+      return `${selectedProductsArray.length} produtos selecionados (${totalItems} itens)`;
+    } catch (error) {
+      console.error('Erro ao gerar texto dos produtos selecionados:', error);
+      return 'Erro ao carregar produtos';
+    }
   };
 
   return (

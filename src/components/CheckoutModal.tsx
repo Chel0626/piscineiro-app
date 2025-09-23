@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
@@ -37,9 +37,9 @@ export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps)
   const [selectedProductsWithQuantity, setSelectedProductsWithQuantity] = useState<ProductWithQuantity[]>([]);
 
   // Handler para mudanças nos produtos selecionados
-  const handleProductsChange = (products: ProductWithQuantity[]) => {
+  const handleProductsChange = useCallback((products: ProductWithQuantity[]) => {
     setSelectedProductsWithQuantity(products);
-  };
+  }, []);
 
   const toggleSection = (section: string) => {
     setOpenSections(prev => ({
@@ -128,9 +128,15 @@ export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps)
       });
 
       // Criar lista formatada com quantidades
-      const productList = selectedProductsWithQuantity.map(p => 
-        `• ${p.name} - Quantidade: ${p.quantity}`
-      ).join('\n');
+      const productList = selectedProductsWithQuantity
+        .filter(p => p && p.name && p.quantity > 0)
+        .map(p => `• ${p.name} - Quantidade: ${p.quantity}`)
+        .join('\n');
+
+      if (!productList.trim()) {
+        toast.error('Nenhum produto válido selecionado');
+        return;
+      }
 
       const message = 
         `Preciso dos seguintes produtos para a próxima visita:\n\n` +
@@ -381,11 +387,11 @@ export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps)
                   />
 
                   {/* Botão WhatsApp para Produtos */}
-                  {selectedProductsWithQuantity.length > 0 && (
+                  {selectedProductsWithQuantity && selectedProductsWithQuantity.length > 0 && (
                     <div className="space-y-3">
                       <div className="p-3 bg-purple-50 dark:bg-purple-950/30 rounded-lg">
                         <p className="text-xs text-purple-700 dark:text-purple-300">
-                          <strong>Selecionados:</strong> {selectedProductsWithQuantity.length} produtos, {selectedProductsWithQuantity.reduce((sum, p) => sum + p.quantity, 0)} itens no total
+                          <strong>Selecionados:</strong> {selectedProductsWithQuantity.length} produtos, {selectedProductsWithQuantity.reduce((sum, p) => sum + (p?.quantity || 0), 0)} itens no total
                         </p>
                       </div>
                       
