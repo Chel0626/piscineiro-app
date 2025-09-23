@@ -62,7 +62,7 @@ function SortableClientItem({ client, onClientClick }: { client: Client; onClien
       ref={setNodeRef}
       style={style}
       {...attributes}
-      className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+      className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-gray-50 dark:bg-gray-800 rounded-lg"
     >
       <button {...listeners} className="cursor-grab touch-none p-1 flex-shrink-0">
         <GripVertical className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 dark:text-gray-500" />
@@ -81,10 +81,10 @@ function SortableClientItem({ client, onClientClick }: { client: Client; onClien
         variant="outline"
         size="sm"
         onClick={() => onClientClick(client)}
-        className="h-8 w-8 p-0 flex-shrink-0"
+        className="h-8 w-8 sm:h-9 sm:w-9 p-0 flex-shrink-0"
         title="Registrar visita"
       >
-        <Plus className="h-4 w-4" />
+        <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
       </Button>
     </li>
   );
@@ -171,17 +171,17 @@ export default function RoteirosPage() {
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
     >
-      <div className="px-2 sm:px-0">
+      <div className="px-2 sm:px-4 md:px-0">
         <div className="mb-4 sm:mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold">Roteiros da Semana</h1>
-          <p className="text-muted-foreground text-sm sm:text-base">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Roteiros da Semana</h1>
+          <p className="text-muted-foreground text-xs sm:text-sm md:text-base">
             Selecione um dia e arraste os clientes para reordenar sua rota de visitas.
           </p>
         </div>
 
         {/* Botões dos dias da semana */}
-        <div className="mb-4 sm:mb-6 px-2 sm:px-0">
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+        <div className="mb-4 sm:mb-6 px-0 sm:px-0">
+          <div className="grid grid-cols-7 gap-1 sm:gap-2">
             {daysOfWeek.map((day) => {
               const clientsCount = localGroupedClients[day.key]?.length || 0;
               const isSelected = selectedDay === day.key;
@@ -191,12 +191,12 @@ export default function RoteirosPage() {
                   key={day.key}
                   variant={isSelected ? "default" : "outline"}
                   onClick={() => setSelectedDay(day.key)}
-                  className="flex flex-col h-16 px-2 py-2 relative w-full text-center"
+                  className="flex flex-col h-14 sm:h-16 px-1 sm:px-2 py-1 sm:py-2 relative w-full text-center text-xs sm:text-sm"
                 >
-                  <span className="font-medium text-xs sm:text-sm">{day.short}</span>
-                  <span className="text-xs opacity-75 hidden sm:block">{day.label}</span>
+                  <span className="font-medium text-[10px] sm:text-xs md:text-sm">{day.short}</span>
+                  <span className="text-[9px] sm:text-xs opacity-75 hidden md:block">{day.label}</span>
                   {clientsCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-[10px] sm:text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center">
                       {clientsCount}
                     </span>
                   )}
@@ -207,17 +207,17 @@ export default function RoteirosPage() {
         </div>
 
         {/* Card do dia selecionado */}
-        <Card className="mx-2 sm:mx-0">
-          <CardHeader className="px-4 sm:px-6">
-            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+        <Card className="mx-0 sm:mx-0">
+          <CardHeader className="px-3 sm:px-4 md:px-6 py-3 sm:py-4">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg md:text-xl">
               <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
               {selectedDayInfo?.label}
             </CardTitle>
-            <CardDescription className="text-sm">
+            <CardDescription className="text-xs sm:text-sm">
               {selectedDayClients.length} cliente(s) agendado(s)
             </CardDescription>
           </CardHeader>
-          <CardContent className="px-4 sm:px-6">
+          <CardContent className="px-3 sm:px-4 md:px-6 pb-4">
             {selectedDayClients.length > 0 ? (
               <SortableContext
                 items={selectedDayClients.map(c => c.id)}
@@ -231,8 +231,8 @@ export default function RoteirosPage() {
               </SortableContext>
             ) : (
               <div className="text-center py-6 sm:py-8">
-                <Calendar className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-gray-400 mb-4" />
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <Calendar className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 mx-auto text-gray-400 mb-4" />
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                   Nenhum cliente agendado para {selectedDayInfo?.label}.
                 </p>
               </div>
@@ -242,20 +242,22 @@ export default function RoteirosPage() {
 
         {/* Modal para registrar visita */}
         <Dialog open={!!selectedClient} onOpenChange={() => setSelectedClient(null)}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto mx-2 sm:mx-4 md:mx-auto w-[calc(100vw-1rem)] sm:w-auto">
             <DialogHeader>
-              <DialogTitle>Registrar Visita</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-lg sm:text-xl">Registrar Visita</DialogTitle>
+              <DialogDescription className="text-sm">
                 Registrar nova visita para {selectedClient?.name}
               </DialogDescription>
             </DialogHeader>
-            {selectedClient && (
-              <VisitForm 
-                onSubmit={handleVisitSubmit} 
-                isLoading={isSubmitting}
-                clientId={selectedClient.id} 
-              />
-            )}
+            <div className="max-h-[70vh] overflow-y-auto px-1">
+              {selectedClient && (
+                <VisitForm 
+                  onSubmit={handleVisitSubmit} 
+                  isLoading={isSubmitting}
+                  clientId={selectedClient.id} 
+                />
+              )}
+            </div>
           </DialogContent>
         </Dialog>
       </div>

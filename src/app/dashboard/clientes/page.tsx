@@ -3,24 +3,19 @@
 import { useRouter } from 'next/navigation';
 import { useState, useMemo } from 'react';
 import { useClients } from '@/hooks/useClients';
-import { useClientesAvulsos } from '@/hooks/useClientesAvulsos';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ClientForm } from '@/components/ClientForm';
-import { MoreHorizontal, User, MapPin, Calendar, Search, ChevronDown, ChevronRight, UserCheck, Clock } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { MoreHorizontal, User, MapPin, Calendar, Search } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 
 export default function ClientesPage() {
     const router = useRouter();
     const [searchTerm, setSearchTerm] = useState('');
-    const [isClientesFisicosOpen, setIsClientesFisicosOpen] = useState(true);
-    const [isClientesAvulsosOpen, setIsClientesAvulsosOpen] = useState(false);
     
     // Toda a lógica agora vem do nosso hook customizado.
     const {
@@ -40,9 +35,6 @@ export default function ClientesPage() {
         authLoading,
     } = useClients();
 
-    // Hook para clientes avulsos
-    const { clientesAvulsos, isLoading: isLoadingAvulsos } = useClientesAvulsos();
-
     // Filtrar clientes baseado na busca
     const filteredClients = useMemo(() => {
         if (!searchTerm.trim()) return clients;
@@ -54,18 +46,6 @@ export default function ClientesPage() {
             client.neighborhood.toLowerCase().includes(searchLower)
         );
     }, [clients, searchTerm]);
-
-    // Filtrar clientes avulsos baseado na busca
-    const filteredClientesAvulsos = useMemo(() => {
-        if (!searchTerm.trim()) return clientesAvulsos;
-        
-        const searchLower = searchTerm.toLowerCase();
-        return clientesAvulsos.filter(cliente => 
-            cliente.nome.toLowerCase().includes(searchLower) ||
-            cliente.endereco.toLowerCase().includes(searchLower) ||
-            cliente.tipoServico.toLowerCase().includes(searchLower)
-        );
-    }, [clientesAvulsos, searchTerm]);
     
     const handleRowClick = (clientId: string) => {
         router.push(`/dashboard/clientes/${clientId}`);
@@ -102,31 +82,10 @@ export default function ClientesPage() {
                 </div>
                 {searchTerm && (
                     <p className="text-sm text-gray-500 mt-2">
-                        {filteredClients.length + filteredClientesAvulsos.length} resultado(s) encontrado(s)
+                        {filteredClients.length} cliente(s) encontrado(s) de {clients.length} total
                     </p>
                 )}
             </div>
-
-            {/* Seção de Clientes Físicos (Fixos) */}
-            <Card className="mb-6">
-                <Collapsible open={isClientesFisicosOpen} onOpenChange={setIsClientesFisicosOpen}>
-                    <CollapsibleTrigger asChild>
-                        <CardHeader className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                            <CardTitle className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <UserCheck className="h-5 w-5 text-blue-600" />
-                                    <span>Clientes Fixos</span>
-                                    <Badge variant="secondary">{filteredClients.length}</Badge>
-                                </div>
-                                {isClientesFisicosOpen ? 
-                                    <ChevronDown className="h-4 w-4" /> : 
-                                    <ChevronRight className="h-4 w-4" />
-                                }
-                            </CardTitle>
-                        </CardHeader>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                        <CardContent>
 
             {/* Layout para Desktop - Tabela */}
             <div className="hidden sm:block border rounded-lg overflow-x-auto">
@@ -172,16 +131,16 @@ export default function ClientesPage() {
             <div className="sm:hidden space-y-3">
                 {filteredClients.map((client) => (
                     <Card key={client.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleCardClick(client.id)}>
-                        <CardContent className="p-4">
-                            <div className="flex items-start justify-between">
+                        <CardContent className="p-3 sm:p-4">
+                            <div className="flex items-start justify-between gap-3">
                                 <div className="flex-1 min-w-0 space-y-2">
                                     <div className="flex items-center gap-2">
                                         <User className="h-4 w-4 text-blue-500 flex-shrink-0" />
                                         <p className="font-semibold text-sm truncate">{client.name}</p>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <MapPin className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                                        <p className="text-xs text-gray-600 truncate">{`${client.address}, ${client.neighborhood}`}</p>
+                                    <div className="flex items-start gap-2">
+                                        <MapPin className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                                        <p className="text-xs text-gray-600 leading-relaxed">{`${client.address}, ${client.neighborhood}`}</p>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <Calendar className="h-4 w-4 text-green-500 flex-shrink-0" />
@@ -212,72 +171,6 @@ export default function ClientesPage() {
                     </Card>
                 ))}
             </div>
-                        </CardContent>
-                    </CollapsibleContent>
-                </Collapsible>
-            </Card>
-
-            {/* Seção de Clientes Avulsos */}
-            <Card className="mb-6">
-                <Collapsible open={isClientesAvulsosOpen} onOpenChange={setIsClientesAvulsosOpen}>
-                    <CollapsibleTrigger asChild>
-                        <CardHeader className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                            <CardTitle className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <Clock className="h-5 w-5 text-orange-600" />
-                                    <span>Clientes Avulsos</span>
-                                    <Badge variant="secondary">{filteredClientesAvulsos.length}</Badge>
-                                </div>
-                                {isClientesAvulsosOpen ? 
-                                    <ChevronDown className="h-4 w-4" /> : 
-                                    <ChevronRight className="h-4 w-4" />
-                                }
-                            </CardTitle>
-                        </CardHeader>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                        <CardContent>
-                            {isLoadingAvulsos ? (
-                                <p className="text-center text-gray-500 py-4">Carregando clientes avulsos...</p>
-                            ) : filteredClientesAvulsos.length === 0 ? (
-                                <p className="text-center text-gray-500 py-4">
-                                    {searchTerm ? 'Nenhum cliente avulso encontrado' : 'Nenhum cliente avulso cadastrado'}
-                                </p>
-                            ) : (
-                                <div className="space-y-3">
-                                    {filteredClientesAvulsos.map((cliente) => (
-                                        <Card key={cliente.id} className="hover:shadow-sm transition-shadow">
-                                            <CardContent className="p-4">
-                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                                    <div>
-                                                        <p className="font-semibold text-sm">{cliente.nome}</p>
-                                                        <p className="text-xs text-gray-600">{cliente.endereco}</p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm font-medium text-blue-600">{cliente.tipoServico}</p>
-                                                        <p className="text-xs text-gray-600">{cliente.telefone}</p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm font-semibold text-green-600">R$ {cliente.valor.toFixed(2)}</p>
-                                                        <p className="text-xs text-gray-600">
-                                                            {cliente.timestamp?.toDate?.()?.toLocaleDateString('pt-BR') || 'Data não disponível'}
-                                                        </p>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <Badge variant="outline" className="text-xs">
-                                                            Concluído
-                                                        </Badge>
-                                                    </div>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    ))}
-                                </div>
-                            )}
-                        </CardContent>
-                    </CollapsibleContent>
-                </Collapsible>
-            </Card>
 
             {/* Dialog do formulário - responsivo */}
             <Dialog open={isFormOpen} onOpenChange={(isOpen) => !isOpen && closeForm()}>
