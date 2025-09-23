@@ -184,7 +184,7 @@ export default function RoteirosPage() {
         <div className="mb-4 sm:mb-6 w-full max-w-full overflow-x-hidden">
           <div className="flex flex-col gap-2 w-full max-w-full min-w-0">
             {/* Primeira linha: Segunda a Quarta */}
-            <div className="grid grid-cols-3 gap-2 w-full max-w-full min-w-0 overflow-x-hidden">
+            <div className="grid grid-cols-3 gap-1 sm:gap-2 w-full max-w-full min-w-0 overflow-x-hidden">
               {daysOfWeek.slice(0, 3).map((day) => {
                 const clientsCount = localGroupedClients[day.key]?.length || 0;
                 const isSelected = selectedDay === day.key;
@@ -193,12 +193,12 @@ export default function RoteirosPage() {
                     key={day.key}
                     variant={isSelected ? "default" : "outline"}
                     onClick={() => setSelectedDay(day.key)}
-                    className="flex flex-col h-14 sm:h-16 px-2 sm:px-3 py-2 relative w-full text-center min-w-0"
+                    className="flex flex-col h-12 sm:h-14 md:h-16 px-1 sm:px-2 md:px-3 py-1 sm:py-2 relative w-full text-center min-w-0 text-xs sm:text-sm"
                   >
-                    <span className="font-medium text-xs sm:text-sm truncate w-full">{day.short}</span>
-                    <span className="text-xs opacity-75 hidden sm:block truncate w-full">{day.label}</span>
+                    <span className="font-medium truncate w-full leading-tight">{day.short}</span>
+                    <span className="text-xs opacity-75 hidden sm:block truncate w-full leading-tight">{day.label}</span>
                     {clientsCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center text-xs">
                         {clientsCount}
                       </span>
                     )}
@@ -207,7 +207,7 @@ export default function RoteirosPage() {
               })}
             </div>
             {/* Segunda linha: Quinta a Domingo */}
-            <div className="grid grid-cols-4 gap-2 w-full max-w-full min-w-0 overflow-x-hidden">
+            <div className="grid grid-cols-4 gap-1 sm:gap-2 w-full max-w-full min-w-0 overflow-x-hidden">
               {daysOfWeek.slice(3).map((day) => {
                 const clientsCount = localGroupedClients[day.key]?.length || 0;
                 const isSelected = selectedDay === day.key;
@@ -216,12 +216,12 @@ export default function RoteirosPage() {
                     key={day.key}
                     variant={isSelected ? "default" : "outline"}
                     onClick={() => setSelectedDay(day.key)}
-                    className="flex flex-col h-14 sm:h-16 px-2 sm:px-3 py-2 relative w-full text-center min-w-0"
+                    className="flex flex-col h-12 sm:h-14 md:h-16 px-1 sm:px-2 md:px-3 py-1 sm:py-2 relative w-full text-center min-w-0 text-xs sm:text-sm"
                   >
-                    <span className="font-medium text-xs sm:text-sm truncate w-full">{day.short}</span>
-                    <span className="text-xs opacity-75 hidden sm:block truncate w-full">{day.label}</span>
+                    <span className="font-medium truncate w-full leading-tight">{day.short}</span>
+                    <span className="text-xs opacity-75 hidden sm:block truncate w-full leading-tight">{day.label}</span>
                     {clientsCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center text-xs">
                         {clientsCount}
                       </span>
                     )}

@@ -78,8 +78,8 @@ export function DayReschedule({ clientId, clientName, originalDay, onSuccess, on
           Mover Dia
         </Button>
       ) : (
-        <Card className="absolute top-0 right-0 z-50 w-72 max-w-[calc(100vw-2rem)] shadow-lg border">
-          <CardContent className="p-4">
+        <Card className="absolute top-0 right-0 z-50 w-72 max-w-[calc(100vw-2rem)] shadow-lg border transform -translate-y-2">
+          <CardContent className="p-3">
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-sm font-medium">Mover para outro dia</h4>
               <Button
@@ -96,7 +96,7 @@ export function DayReschedule({ clientId, clientName, originalDay, onSuccess, on
               Selecione o dia para onde deseja mover <strong>{clientName}</strong>:
             </p>
 
-            <div className="grid grid-cols-1 gap-2 mb-4">
+            <div className="grid grid-cols-1 gap-1.5 mb-3 max-h-48 overflow-y-auto">
               {daysOfWeek.map((day) => (
                 <Button
                   key={day}
@@ -104,7 +104,7 @@ export function DayReschedule({ clientId, clientName, originalDay, onSuccess, on
                   size="sm"
                   onClick={() => handleDaySelect(day)}
                   disabled={day === originalDay}
-                  className={`justify-start text-xs h-8 ${
+                  className={`justify-start text-xs h-7 ${
                     day === originalDay 
                       ? 'opacity-50 cursor-not-allowed' 
                       : ''
@@ -116,12 +116,12 @@ export function DayReschedule({ clientId, clientName, originalDay, onSuccess, on
               ))}
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 mt-3">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleCancel}
-                className="flex-1 text-xs h-8"
+                className="flex-1 text-xs h-7"
               >
                 Cancelar
               </Button>
@@ -129,7 +129,7 @@ export function DayReschedule({ clientId, clientName, originalDay, onSuccess, on
                 size="sm"
                 onClick={handleConfirmReschedule}
                 disabled={!selectedDay || selectedDay === originalDay || isLoading}
-                className="flex-1 text-xs h-8"
+                className="flex-1 text-xs h-7"
               >
                 {isLoading ? (
                   'Movendo...'
