@@ -67,8 +67,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </Button>
         </div>
         
-        {/* Seção do Perfil */}
-        <div className="flex-1 px-4 py-2 overflow-y-auto pb-safe">
+        {/* Seção do Perfil - PRIMEIRO */}
+        <div className="flex-1 px-4 py-2 overflow-y-auto">
           <div className="mb-4">
             <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
               Perfil
@@ -78,7 +78,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
           <Separator className="my-4 bg-gray-700 dark:bg-gray-600" />
           
-          {/* Seção de Ferramentas */}
+          {/* Seção de Ferramentas - SEGUNDO */}
           <div className="mb-4">
             <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
               Ferramentas
@@ -98,7 +98,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
 
         {/* Seção de Configurações */}
-        <div className="p-4 space-y-3 border-t border-gray-700 dark:border-gray-600 pb-24 md:pb-4 mb-safe bg-gray-800 dark:bg-gray-900 relative z-50">
+        <div className="p-4 space-y-3 border-t border-gray-700 dark:border-gray-600">
           <BillingWidget />
           <div className="flex items-center justify-between">
             <ThemeToggle />

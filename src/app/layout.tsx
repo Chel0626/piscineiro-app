@@ -96,8 +96,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-            <AppLayout>{children}</AppLayout>
-            <Toaster richColors />
+          {/* Não precisamos mais do AuthProvider aqui, o AppLayout e o middleware cuidam de tudo */}
+          <AppLayout>{children}</AppLayout>
+          <Toaster richColors />
         </ThemeProvider>
       </body>
     </html>

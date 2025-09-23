@@ -21,26 +21,37 @@ export function PiscineiroProfileWidget() {
 
   useEffect(() => {
     const loadProfile = async () => {
-      if (!user) return;
+      if (!user) {
+        console.log('PiscineiroProfileWidget: Usuário não está disponível');
+        setIsLoading(false);
+        return;
+      }
+      
+      console.log('PiscineiroProfileWidget: Carregando perfil para:', user.uid);
       
       try {
         const profileRef = doc(db, 'piscineiroProfiles', user.uid);
         const profileSnap = await getDoc(profileRef);
         
         if (profileSnap.exists()) {
+          console.log('PiscineiroProfileWidget: Perfil encontrado');
           setProfile(profileSnap.data() as PiscineiroProfile);
+        } else {
+          console.log('PiscineiroProfileWidget: Perfil não encontrado');
         }
       } catch (error) {
-        console.error('Erro ao carregar perfil:', error);
+        console.error('PiscineiroProfileWidget: Erro ao carregar perfil:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadProfile();
+    if (user) {
+      loadProfile();
+    }
   }, [user]);
 
-  if (isLoading || !profile) {
+  if (isLoading) {
     return (
       <Card className="bg-gray-700 dark:bg-gray-800 border-gray-600 dark:border-gray-700">
         <CardContent className="p-4">
@@ -50,6 +61,23 @@ export function PiscineiroProfileWidget() {
               <div className="h-4 bg-gray-600 rounded animate-pulse mb-1" />
               <div className="h-3 bg-gray-600 rounded animate-pulse w-2/3" />
             </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <Card className="bg-gray-700 dark:bg-gray-800 border-gray-600 dark:border-gray-700">
+        <CardContent className="p-4">
+          <div className="text-center text-gray-400">
+            <p className="text-sm">Perfil não encontrado</p>
+            <Link href="/dashboard/perfil">
+              <Button variant="outline" size="sm" className="mt-2 border-gray-600 text-gray-300 hover:bg-gray-600">
+                Criar Perfil
+              </Button>
+            </Link>
           </div>
         </CardContent>
       </Card>

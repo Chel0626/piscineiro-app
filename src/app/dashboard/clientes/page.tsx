@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState, useMemo } from 'react';
 import { useClients } from '@/hooks/useClients';
+import { useClientesAvulsos } from '@/hooks/useClientesAvulsos';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -10,12 +11,15 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { ClientForm } from '@/components/ClientForm';
-import { MoreHorizontal, User, MapPin, Calendar, Search } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { MoreHorizontal, User, MapPin, Calendar, Search, ChevronDown, ChevronUp, Clock } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 export default function ClientesPage() {
     const router = useRouter();
     const [searchTerm, setSearchTerm] = useState('');
+    const [isClientesFixosExpanded, setIsClientesFixosExpanded] = useState(true);
+    const [isClientesAvulsosExpanded, setIsClientesAvulsosExpanded] = useState(false);
     
     // Toda a lógica agora vem do nosso hook customizado.
     const {
@@ -35,6 +39,9 @@ export default function ClientesPage() {
         authLoading,
     } = useClients();
 
+    // Hook para clientes avulsos
+    const { clientesAvulsos, isLoading: isLoadingAvulsos } = useClientesAvulsos();
+
     // Filtrar clientes baseado na busca
     const filteredClients = useMemo(() => {
         if (!searchTerm.trim()) return clients;
@@ -46,6 +53,17 @@ export default function ClientesPage() {
             client.neighborhood.toLowerCase().includes(searchLower)
         );
     }, [clients, searchTerm]);
+
+    // Filtrar clientes avulsos baseado na busca
+    const filteredClientesAvulsos = useMemo(() => {
+        if (!searchTerm.trim()) return clientesAvulsos;
+        
+        const searchLower = searchTerm.toLowerCase();
+        return clientesAvulsos.filter(cliente => 
+            cliente.nome.toLowerCase().includes(searchLower) ||
+            (cliente.endereco && cliente.endereco.toLowerCase().includes(searchLower))
+        );
+    }, [clientesAvulsos, searchTerm]);
     
     const handleRowClick = (clientId: string) => {
         router.push(`/dashboard/clientes/${clientId}`);
@@ -82,95 +100,187 @@ export default function ClientesPage() {
                 </div>
                 {searchTerm && (
                     <p className="text-sm text-gray-500 mt-2">
-                        {filteredClients.length} cliente(s) encontrado(s) de {clients.length} total
+                        {filteredClients.length + filteredClientesAvulsos.length} cliente(s) encontrado(s) de {clients.length + clientesAvulsos.length} total
                     </p>
                 )}
             </div>
 
-            {/* Layout para Desktop - Tabela */}
-            <div className="hidden sm:block border rounded-lg overflow-x-auto">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead className="text-sm">Nome</TableHead>
-                            <TableHead className="text-sm">Endereço</TableHead>
-                            <TableHead className="text-sm">Dia da Visita</TableHead>
-                            <TableHead className="text-right text-sm">Ações</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {filteredClients.map((client) => (
-                            <TableRow key={client.id} onClick={() => handleRowClick(client.id)} className="cursor-pointer hover:bg-gray-100">
-                                <TableCell className="font-medium text-sm">{client.name}</TableCell>
-                                <TableCell className="text-sm">{`${client.address}, ${client.neighborhood}`}</TableCell>
-                                <TableCell className="text-sm">
-                                  {client.visitDays ? client.visitDays.join(', ') : 
-                                   (client as typeof client & { visitDay?: string }).visitDay || 'Não definido'}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" className="h-8 w-8 p-0" onClick={(e) => e.stopPropagation()}>
-                                                <span className="sr-only">Abrir menu</span>
-                                                <MoreHorizontal className="h-4 w-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openFormToEdit(client); }}>Editar</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openAlert(client.id); }}>Excluir</DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </div>
+            {/* Seção de Clientes Fixos */}
+            <Collapsible open={isClientesFixosExpanded} onOpenChange={setIsClientesFixosExpanded}>
+                <Card className="mb-4">
+                    <CollapsibleTrigger asChild>
+                        <CardHeader className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="flex items-center gap-2">
+                                    <User className="h-5 w-5 text-blue-500" />
+                                    Clientes Fixos ({filteredClients.length})
+                                </CardTitle>
+                                {isClientesFixosExpanded ? (
+                                    <ChevronUp className="h-4 w-4" />
+                                ) : (
+                                    <ChevronDown className="h-4 w-4" />
+                                )}
+                            </div>
+                        </CardHeader>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                        <CardContent className="pt-0">
+                            {/* Layout para Desktop - Tabela */}
+                            <div className="hidden sm:block border rounded-lg overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead className="text-sm">Nome</TableHead>
+                                            <TableHead className="text-sm">Endereço</TableHead>
+                                            <TableHead className="text-sm">Dia da Visita</TableHead>
+                                            <TableHead className="text-right text-sm">Ações</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {filteredClients.map((client) => (
+                                            <TableRow key={client.id} onClick={() => handleRowClick(client.id)} className="cursor-pointer hover:bg-gray-100">
+                                                <TableCell className="font-medium text-sm">{client.name}</TableCell>
+                                                <TableCell className="text-sm">{`${client.address}, ${client.neighborhood}`}</TableCell>
+                                                <TableCell className="text-sm">
+                                                  {client.visitDays ? client.visitDays.join(', ') : 
+                                                   (client as typeof client & { visitDay?: string }).visitDay || 'Não definido'}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button variant="ghost" className="h-8 w-8 p-0" onClick={(e) => e.stopPropagation()}>
+                                                                <span className="sr-only">Abrir menu</span>
+                                                                <MoreHorizontal className="h-4 w-4" />
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end">
+                                                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openFormToEdit(client); }}>Editar</DropdownMenuItem>
+                                                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openAlert(client.id); }}>Excluir</DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
 
-            {/* Layout para Mobile - Cards */}
-            <div className="sm:hidden space-y-3">
-                {filteredClients.map((client) => (
-                    <Card key={client.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleCardClick(client.id)}>
-                        <CardContent className="p-3 sm:p-4">
-                            <div className="flex items-start justify-between gap-3">
-                                <div className="flex-1 min-w-0 space-y-2">
-                                    <div className="flex items-center gap-2">
-                                        <User className="h-4 w-4 text-blue-500 flex-shrink-0" />
-                                        <p className="font-semibold text-sm truncate">{client.name}</p>
-                                    </div>
-                                    <div className="flex items-start gap-2">
-                                        <MapPin className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
-                                        <p className="text-xs text-gray-600 leading-relaxed">{`${client.address}, ${client.neighborhood}`}</p>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Calendar className="h-4 w-4 text-green-500 flex-shrink-0" />
-                                        <p className="text-xs text-gray-600">
-                                          {client.visitDays ? client.visitDays.join(', ') : 
-                                           (client as typeof client & { visitDay?: string }).visitDay || 'Não definido'}
-                                        </p>
-                                    </div>
-                                </div>
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" className="h-8 w-8 p-0 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                                            <span className="sr-only">Abrir menu</span>
-                                            <MoreHorizontal className="h-4 w-4" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openFormToEdit(client); }}>
-                                            Editar
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openAlert(client.id); }}>
-                                            Excluir
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
+                            {/* Layout para Mobile - Cards */}
+                            <div className="sm:hidden space-y-3">
+                                {filteredClients.map((client) => (
+                                    <Card key={client.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleCardClick(client.id)}>
+                                        <CardContent className="p-3 sm:p-4">
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div className="flex-1 min-w-0 space-y-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <User className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                                                        <p className="font-semibold text-sm truncate">{client.name}</p>
+                                                    </div>
+                                                    <div className="flex items-start gap-2">
+                                                        <MapPin className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                                                        <p className="text-xs text-gray-600 leading-relaxed">{`${client.address}, ${client.neighborhood}`}</p>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Calendar className="h-4 w-4 text-green-500 flex-shrink-0" />
+                                                        <p className="text-xs text-gray-600">
+                                                          {client.visitDays ? client.visitDays.join(', ') : 
+                                                           (client as typeof client & { visitDay?: string }).visitDay || 'Não definido'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" className="h-8 w-8 p-0 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                                                            <span className="sr-only">Abrir menu</span>
+                                                            <MoreHorizontal className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openFormToEdit(client); }}>
+                                                            Editar
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openAlert(client.id); }}>
+                                                            Excluir
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                ))}
                             </div>
                         </CardContent>
-                    </Card>
-                ))}
-            </div>
+                    </CollapsibleContent>
+                </Card>
+            </Collapsible>
+
+            {/* Seção de Clientes Avulsos */}
+            <Collapsible open={isClientesAvulsosExpanded} onOpenChange={setIsClientesAvulsosExpanded}>
+                <Card className="mb-4">
+                    <CollapsibleTrigger asChild>
+                        <CardHeader className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="flex items-center gap-2">
+                                    <Clock className="h-5 w-5 text-orange-500" />
+                                    Clientes Avulsos ({filteredClientesAvulsos.length})
+                                </CardTitle>
+                                {isClientesAvulsosExpanded ? (
+                                    <ChevronUp className="h-4 w-4" />
+                                ) : (
+                                    <ChevronDown className="h-4 w-4" />
+                                )}
+                            </div>
+                        </CardHeader>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                        <CardContent className="pt-0">
+                            {isLoadingAvulsos ? (
+                                <div className="text-center py-4">
+                                    <p className="text-gray-500">Carregando clientes avulsos...</p>
+                                </div>
+                            ) : filteredClientesAvulsos.length === 0 ? (
+                                <div className="text-center py-4">
+                                    <p className="text-gray-500">Nenhum cliente avulso encontrado.</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {filteredClientesAvulsos.map((cliente) => (
+                                        <Card key={cliente.id} className="hover:shadow-md transition-shadow">
+                                            <CardContent className="p-3 sm:p-4">
+                                                <div className="flex items-start justify-between gap-3">
+                                                    <div className="flex-1 min-w-0 space-y-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <Clock className="h-4 w-4 text-orange-500 flex-shrink-0" />
+                                                            <p className="font-semibold text-sm truncate">{cliente.nome}</p>
+                                                        </div>
+                                                        {cliente.endereco && (
+                                                            <div className="flex items-start gap-2">
+                                                                <MapPin className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                                                                <p className="text-xs text-gray-600 leading-relaxed">{cliente.endereco}</p>
+                                                            </div>
+                                                        )}
+                                                        <div className="flex items-center gap-2">
+                                                            <Calendar className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                                                            <p className="text-xs text-gray-600">
+                                                                {new Date(cliente.timestamp?.seconds * 1000).toLocaleDateString('pt-BR')}
+                                                            </p>
+                                                        </div>
+                                                        {cliente.valor && (
+                                                            <p className="text-sm font-medium text-green-600">
+                                                                R$ {cliente.valor.toFixed(2)}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    ))}
+                                </div>
+                            )}
+                        </CardContent>
+                    </CollapsibleContent>
+                </Card>
+            </Collapsible>
 
             {/* Dialog do formulário - responsivo */}
             <Dialog open={isFormOpen} onOpenChange={(isOpen) => !isOpen && closeForm()}>
