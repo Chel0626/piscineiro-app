@@ -2,10 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { useRoutines } from '@/hooks/useRoutines';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, GripVertical, Calendar } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { MapPin, GripVertical, Calendar, Plus } from 'lucide-react';
 import {
   DndContext,
   closestCenter,
@@ -24,6 +27,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ClientFormData } from '@/lib/validators/clientSchema';
+import { VisitForm, VisitFormData } from '@/components/VisitForm';
 
 // Tipagem para os clientes
 type Client = ClientFormData & { id: string; };
@@ -39,7 +43,7 @@ const daysOfWeek = [
 ];
 
 // --- Componente para cada item arrastável ---
-function SortableClientItem({ client }: { client: Client }) {
+function SortableClientItem({ client, onClientClick }: { client: Client; onClientClick: (client: Client) => void }) {
   const {
     attributes,
     listeners,
@@ -64,12 +68,24 @@ function SortableClientItem({ client }: { client: Client }) {
         <GripVertical className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 dark:text-gray-500" />
       </button>
       <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 dark:text-gray-400 flex-shrink-0" />
-      <div className="flex-1 min-w-0">
+      <div 
+        className="flex-1 min-w-0 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded p-2 -m-2 transition-colors"
+        onClick={() => onClientClick(client)}
+      >
         <p className="font-semibold truncate text-gray-900 dark:text-gray-100 text-sm sm:text-base">{client.name}</p>
         <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 truncate">
           {`${client.address}, ${client.neighborhood}`}
         </p>
       </div>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => onClientClick(client)}
+        className="h-8 w-8 p-0 flex-shrink-0"
+        title="Registrar visita"
+      >
+        <Plus className="h-4 w-4" />
+      </Button>
     </li>
   );
 }
@@ -81,11 +97,37 @@ export default function RoteirosPage() {
   const [localGroupedClients, setLocalGroupedClients] = useState(groupedClients);
   // Estado para controlar qual dia está selecionado
   const [selectedDay, setSelectedDay] = useState(daysOfWeek[0].key);
+  // Estado para o modal de registrar visita
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Sincroniza o estado local quando os dados do Firebase são carregados
   useEffect(() => {
     setLocalGroupedClients(groupedClients);
   }, [groupedClients]);
+
+  const handleClientClick = (client: Client) => {
+    setSelectedClient(client);
+  };
+
+  const handleVisitSubmit = async (data: VisitFormData) => {
+    if (!selectedClient) return;
+    setIsSubmitting(true);
+    try {
+      const visitsCollectionRef = collection(db, 'clients', selectedClient.id, 'visits');
+      await addDoc(visitsCollectionRef, {
+        ...data,
+        timestamp: serverTimestamp(),
+      });
+      toast.success('Visita registrada com sucesso!');
+      setSelectedClient(null);
+    } catch (error) {
+      console.error('Erro ao salvar visita:', error);
+      toast.error('Não foi possível registrar a visita.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -183,7 +225,7 @@ export default function RoteirosPage() {
               >
                 <ul className="space-y-2 sm:space-y-3">
                   {selectedDayClients.map((client) => (
-                    <SortableClientItem key={client.id} client={client} />
+                    <SortableClientItem key={client.id} client={client} onClientClick={handleClientClick} />
                   ))}
                 </ul>
               </SortableContext>
@@ -197,6 +239,25 @@ export default function RoteirosPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Modal para registrar visita */}
+        <Dialog open={!!selectedClient} onOpenChange={() => setSelectedClient(null)}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Registrar Visita</DialogTitle>
+              <DialogDescription>
+                Registrar nova visita para {selectedClient?.name}
+              </DialogDescription>
+            </DialogHeader>
+            {selectedClient && (
+              <VisitForm 
+                onSubmit={handleVisitSubmit} 
+                isLoading={isSubmitting}
+                clientId={selectedClient.id} 
+              />
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </DndContext>
   );
