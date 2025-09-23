@@ -22,12 +22,18 @@ const storage = getStorage(app);
 const functions = getFunctions(app);
 
 // CONEXÃO COM O EMULADOR (só roda em ambiente de desenvolvimento)
-if (typeof window !== 'undefined' && window.location.hostname === "localhost") {
-  console.log("Conectando aos emuladores do Firebase...");
-  connectAuthEmulator(auth, "http://127.0.0.1:9099");
-  connectFirestoreEmulator(db, "127.0.0.1", 8080);
-  connectStorageEmulator(storage, "127.0.0.1", 9199);
-  connectFunctionsEmulator(functions, "127.0.0.1", 5001);
+if (typeof window !== 'undefined' && 
+    window.location.hostname === "localhost" && 
+    process.env.NODE_ENV === 'development') {
+  try {
+    console.log("Conectando aos emuladores do Firebase...");
+    connectAuthEmulator(auth, "http://127.0.0.1:9099");
+    connectFirestoreEmulator(db, "127.0.0.1", 8080);
+    connectStorageEmulator(storage, "127.0.0.1", 9199);
+    connectFunctionsEmulator(functions, "127.0.0.1", 5001);
+  } catch (error) {
+    console.warn("Erro ao conectar aos emuladores:", error);
+  }
 }
 
 export { app, auth, db, storage, functions };

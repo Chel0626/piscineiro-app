@@ -14,20 +14,31 @@ import { type PiscineiroProfile } from '@/lib/schemas/piscineiroSchema';
 import Link from 'next/link';
 
 export function PiscineiroProfileWidget() {
-  const { user } = useAuth();
+  const { user, authLoading } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [profile, setProfile] = useState<PiscineiroProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadProfile = async () => {
+      // Se ainda está carregando a autenticação, aguarda
+      if (authLoading) {
+        console.log('PiscineiroProfileWidget: Aguardando autenticação...');
+        return;
+      }
+
+      // Se não há usuário, para o loading
       if (!user) {
-        console.log('PiscineiroProfileWidget: Usuário não está disponível');
+        console.log('PiscineiroProfileWidget: Usuário não está logado');
         setIsLoading(false);
+        setProfile(null);
         return;
       }
       
       console.log('PiscineiroProfileWidget: Carregando perfil para:', user.uid);
+      setIsLoading(true);
+      setError(null);
       
       try {
         const profileRef = doc(db, 'piscineiroProfiles', user.uid);
@@ -38,20 +49,22 @@ export function PiscineiroProfileWidget() {
           setProfile(profileSnap.data() as PiscineiroProfile);
         } else {
           console.log('PiscineiroProfileWidget: Perfil não encontrado');
+          setProfile(null);
         }
       } catch (error) {
         console.error('PiscineiroProfileWidget: Erro ao carregar perfil:', error);
+        setError('Erro ao carregar perfil');
+        setProfile(null);
       } finally {
         setIsLoading(false);
       }
     };
 
-    if (user) {
-      loadProfile();
-    }
-  }, [user]);
+    loadProfile();
+  }, [user, authLoading]); // Depende tanto do user quanto do authLoading
 
-  if (isLoading) {
+  // Se está carregando autenticação, mostra loading
+  if (authLoading) {
     return (
       <Card className="bg-gray-700 dark:bg-gray-800 border-gray-600 dark:border-gray-700">
         <CardContent className="p-4">
@@ -67,6 +80,59 @@ export function PiscineiroProfileWidget() {
     );
   }
 
+  // Se está carregando o perfil
+  if (isLoading) {
+    return (
+      <Card className="bg-gray-700 dark:bg-gray-800 border-gray-600 dark:border-gray-700">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-blue-600 animate-pulse" />
+            <div className="flex-1">
+              <div className="h-4 bg-blue-600 rounded animate-pulse mb-1" />
+              <div className="h-3 bg-blue-600 rounded animate-pulse w-2/3" />
+            </div>
+          </div>
+          <p className="text-xs text-gray-400 mt-2">Carregando perfil...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Se não há usuário logado
+  if (!user) {
+    return (
+      <Card className="bg-gray-700 dark:bg-gray-800 border-gray-600 dark:border-gray-700">
+        <CardContent className="p-4">
+          <div className="text-center text-gray-400">
+            <p className="text-sm">Faça login para ver seu perfil</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Se houve erro
+  if (error) {
+    return (
+      <Card className="bg-gray-700 dark:bg-gray-800 border-gray-600 dark:border-gray-700">
+        <CardContent className="p-4">
+          <div className="text-center text-red-400">
+            <p className="text-sm">{error}</p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="mt-2 border-red-600 text-red-400 hover:bg-red-600 hover:text-white"
+              onClick={() => window.location.reload()}
+            >
+              Tentar Novamente
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Se não há perfil
   if (!profile) {
     return (
       <Card className="bg-gray-700 dark:bg-gray-800 border-gray-600 dark:border-gray-700">
