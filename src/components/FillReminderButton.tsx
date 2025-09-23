@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { FillReminderSimple } from './FillReminderSimple';
@@ -9,21 +9,9 @@ import { Droplets, CheckCircle } from 'lucide-react';
 
 interface FillReminderButtonProps {
   onStateChange?: (state: FillReminderState) => void;
-  variant?: 'default' | 'outline' | 'ghost';
-  size?: 'default' | 'sm' | 'lg' | 'icon';
-  icon?: React.ReactNode;
-  showText?: boolean;
-  className?: string;
 }
 
-export function FillReminderButton({ 
-  onStateChange, 
-  variant = 'ghost',
-  size = 'default',
-  icon,
-  showText = true,
-  className
-}: FillReminderButtonProps) {
+export function FillReminderButton({ onStateChange }: FillReminderButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { state: reminderState } = useFillReminder(); // Usar estado global
 
@@ -48,8 +36,8 @@ export function FillReminderButton({
     if (reminderState.isCompleted) {
       return (
         <>
-          {icon || <CheckCircle className={`h-5 w-5 text-green-600 dark:text-green-400 ${size === 'icon' ? 'h-4 w-4' : ''}`} />}
-          {showText && <span className="ml-3">Abastecimento OK</span>}
+          <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+          <span className="ml-3">Abastecimento OK</span>
         </>
       );
     }
@@ -58,45 +46,35 @@ export function FillReminderButton({
       return (
         <>
           <div className="relative">
-            {icon ? (
-              <div className="text-blue-600 animate-bounce">{icon}</div>
-            ) : (
-              <Droplets className={`h-5 w-5 text-blue-600 animate-bounce ${size === 'icon' ? 'h-4 w-4' : ''}`} />
-            )}
+            <Droplets className="h-5 w-5 text-blue-600 animate-bounce" />
             <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full animate-ping" />
           </div>
-          {showText && <span className="ml-3 font-mono">{formatTime(reminderState.timeRemaining)}</span>}
+          <span className="ml-3 font-mono">{formatTime(reminderState.timeRemaining)}</span>
         </>
       );
     }
     
     return (
       <>
-        {icon || <Droplets className={`h-5 w-5 ${size === 'icon' ? 'h-4 w-4' : ''}`} />}
-        {showText && <span className="ml-3">Abastecimento</span>}
+        <Droplets className="h-5 w-5" />
+        <span className="ml-3">Abastecimento</span>
       </>
     );
-  }, [reminderState.isCompleted, reminderState.isActive, reminderState.timeRemaining, icon, showText, size]);
+  }, [reminderState.isCompleted, reminderState.isActive, reminderState.timeRemaining]);
 
   const buttonClassName = useMemo(() => {
-    let baseClass = showText 
-      ? "w-full justify-start px-4 py-2 mt-2 rounded-lg transition-all duration-300 h-auto relative overflow-hidden"
-      : "transition-all duration-300 relative overflow-hidden";
-    
-    if (className) {
-      baseClass = `${baseClass} ${className}`;
-    }
+    const baseClass = "w-full justify-start px-4 py-2 mt-2 rounded-lg transition-all duration-300 h-auto relative overflow-hidden";
     
     if (reminderState.isCompleted) {
-      return `${baseClass} ${showText ? 'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200 dark:hover:bg-green-800' : 'text-green-600 hover:text-green-700'}`;
+      return `${baseClass} bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200 dark:hover:bg-green-800`;
     }
     
     if (reminderState.isActive) {
-      return `${baseClass} ${showText ? 'bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800 animate-pulse' : 'text-blue-600 hover:text-blue-700 animate-pulse'}`;
+      return `${baseClass} bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800 animate-pulse`;
     }
     
-    return `${baseClass} ${showText ? 'text-gray-300 dark:text-gray-400 hover:bg-gray-700 dark:hover:bg-gray-800 hover:text-white' : 'text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'}`;
-  }, [reminderState.isCompleted, reminderState.isActive, showText, className]);
+    return `${baseClass} text-gray-300 dark:text-gray-400 hover:bg-gray-700 dark:hover:bg-gray-800 hover:text-white`;
+  }, [reminderState.isCompleted, reminderState.isActive]);
 
   const handleDialogOpen = (open: boolean) => {
     console.log('Dialog state changed:', open);
@@ -107,8 +85,7 @@ export function FillReminderButton({
     <Dialog open={isOpen} onOpenChange={handleDialogOpen}>
       <DialogTrigger asChild>
         <Button
-          variant={variant}
-          size={size}
+          variant="ghost"
           className={buttonClassName}
           onClick={() => console.log('Botão de abastecimento clicado')}
         >
