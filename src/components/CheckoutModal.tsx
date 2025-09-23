@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
@@ -11,21 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { VisitForm, VisitFormData } from '@/components/VisitForm';
 import { ProductCalculator } from '@/components/ProductCalculator';
+import { ProductQuantitySelector, ProductWithQuantity } from '@/components/ProductQuantitySelector';
 import { ChevronDown, ChevronRight, ClipboardList, Calculator, ShoppingCart, CheckCircle, MessageCircle, Settings } from 'lucide-react';
-
-// Lista completa de produtos disponíveis
-const allProducts = [
-  'Pastilha de Cloro',
-  'Clarificante Líquido',
-  'Clarificante Gel',
-  'Algicída',
-  'Elevador de Alcalinidade',
-  'Redutor de pH',
-  'Limpa Bordas',
-  'Peróxido',
-  'Tratamento Semanal',
-  'Sulfato de Alumínio',
-];
 
 interface CheckoutModalProps {
   clientId: string;
@@ -47,14 +34,12 @@ export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps)
     timerAutomatic: false,
   });
 
-  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
-  const [availableProducts, setAvailableProducts] = useState<string[]>([]);
+  const [selectedProductsWithQuantity, setSelectedProductsWithQuantity] = useState<ProductWithQuantity[]>([]);
 
-  // Inicializar produtos disponíveis (mostrar 5 produtos aleatórios)
-  useEffect(() => {
-    const shuffled = [...allProducts].sort(() => 0.5 - Math.random());
-    setAvailableProducts(shuffled.slice(0, 5));
-  }, []);
+  // Handler para mudanças nos produtos selecionados
+  const handleProductsChange = (products: ProductWithQuantity[]) => {
+    setSelectedProductsWithQuantity(products);
+  };
 
   const toggleSection = (section: string) => {
     setOpenSections(prev => ({
@@ -68,34 +53,6 @@ export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps)
       ...prev,
       [check]: !prev[check]
     }));
-  };
-
-  const selectProduct = (product: string) => {
-    // Adicionar produto à lista de selecionados
-    setSelectedProducts(prev => [...prev, product]);
-    
-    // Remover produto dos disponíveis
-    setAvailableProducts(prev => {
-      const filtered = prev.filter(p => p !== product);
-      
-      // Se ainda há produtos não selecionados, adicionar um novo
-      const remainingProducts = allProducts.filter(p => 
-        !selectedProducts.includes(p) && 
-        !filtered.includes(p) && 
-        p !== product
-      );
-      
-      if (remainingProducts.length > 0 && filtered.length < 5) {
-        const randomProduct = remainingProducts[Math.floor(Math.random() * remainingProducts.length)];
-        return [...filtered, randomProduct];
-      }
-      
-      return filtered;
-    });
-  };
-
-  const removeProduct = (product: string) => {
-    setSelectedProducts(prev => prev.filter(p => p !== product));
   };
 
   const handleVisitSubmit = async (data: VisitFormData) => {
@@ -153,8 +110,8 @@ export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps)
     }
   };
 
-  const handleSendProductsWhatsApp = async () => {
-    if (!client || selectedProducts.length === 0) {
+    const handleSendProductsWhatsApp = async () => {
+    if (!client || selectedProductsWithQuantity.length === 0) {
       toast.error('Selecione pelo menos um produto antes de enviar');
       return;
     }
@@ -162,40 +119,36 @@ export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps)
     setIsSubmitting(true);
 
     try {
-      // Salvar solicitação no histórico
+      // Salvar no banco de dados
       await createProductRequest({
         clientId,
         clientName: client.name,
         clientPhone: client.phone || '',
-        products: selectedProducts
+        products: selectedProductsWithQuantity.map(p => `${p.name} (${p.quantity})`)
       });
 
-      // Criar mensagem para WhatsApp
-      let productsList = '';
-      selectedProducts.forEach(product => {
-        productsList += `• ${product}\n`;
-      });
+      // Criar lista formatada com quantidades
+      const productList = selectedProductsWithQuantity.map(p => 
+        `• ${p.name} - Quantidade: ${p.quantity}`
+      ).join('\n');
 
-      const message = `Olá ${client.name}, tudo bem?\n\n` +
+      const message = 
         `Preciso dos seguintes produtos para a próxima visita:\n\n` +
-        `${productsList}\n` +
-        `Devo levar ou você providencia?`;
+        `Cliente: ${client.name}\n` +
+        `Data: ${new Date().toLocaleDateString()}\n\n` +
+        `Produtos:\n${productList}`;
 
-      // Enviar por WhatsApp
-      const phoneNumber = client.phone?.replace(/\D/g, '');
-      if (phoneNumber) {
-        const whatsappUrl = `https://wa.me/55${phoneNumber}?text=${encodeURIComponent(message)}`;
-        window.open(whatsappUrl, '_blank');
-        toast.success('Solicitação de produtos enviada e salva no histórico!');
-      } else {
-        toast.success('Solicitação salva no histórico! (Telefone não encontrado para WhatsApp)');
-      }
+      const encodedMessage = encodeURIComponent(message);
+      const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
+      window.open(whatsappUrl, '_blank');
+
+      toast.success('Solicitação de produtos enviada e salva no histórico!');
 
       // Limpar produtos selecionados após envio
-      setSelectedProducts([]);
-      
+      setSelectedProductsWithQuantity([]);
+
     } catch (error) {
-      console.error('Erro ao salvar solicitação:', error);
+      console.error('Erro ao salvar solicitação de produtos:', error);
       toast.error('Erro ao salvar solicitação de produtos');
     } finally {
       setIsSubmitting(false);
@@ -212,9 +165,7 @@ export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps)
       drainClosed: false,
       timerAutomatic: false,
     });
-    setSelectedProducts([]);
-    const shuffled = [...allProducts].sort(() => 0.5 - Math.random());
-    setAvailableProducts(shuffled.slice(0, 5));
+    setSelectedProductsWithQuantity([]);
     onClose();
   };
 
@@ -420,95 +371,33 @@ export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps)
               <CardContent>
                 <div className="space-y-4">
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Clique nos produtos que deseja solicitar:
+                    Selecione os produtos e quantidades que deseja solicitar:
                   </p>
                   
-                  {/* Produtos Disponíveis */}
-                  {availableProducts.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-medium mb-3 text-purple-700 dark:text-purple-300">
-                        Produtos Disponíveis:
-                      </h4>
-                      <div className="grid grid-cols-2 gap-2">
-                        {availableProducts.map((product) => (
-                          <Button
-                            key={product}
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => selectProduct(product)}
-                            className="text-left justify-start h-auto py-2 px-3 border-purple-200 hover:border-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/30"
-                          >
-                            <ShoppingCart className="h-3 w-3 mr-2 text-purple-600" />
-                            {product}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  {/* Novo componente ProductQuantitySelector */}
+                  <ProductQuantitySelector 
+                    onProductsChange={handleProductsChange}
+                    className="w-full"
+                  />
 
-                  {/* Produtos Selecionados */}
-                  {selectedProducts.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-medium mb-3 text-green-700 dark:text-green-300">
-                        Produtos Selecionados ({selectedProducts.length}):
-                      </h4>
-                      <div className="space-y-2">
-                        {selectedProducts.map((product) => (
-                          <div
-                            key={product}
-                            className="flex items-center justify-between p-2 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800"
-                          >
-                            <div className="flex items-center gap-2">
-                              <CheckCircle className="h-4 w-4 text-green-600" />
-                              <span className="text-sm font-medium text-green-800 dark:text-green-200">
-                                {product}
-                              </span>
-                            </div>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeProduct(product)}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
-                            >
-                              ✕
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Estado vazio */}
-                  {availableProducts.length === 0 && selectedProducts.length === 0 && (
-                    <div className="text-center py-6 text-gray-500 dark:text-gray-400">
-                      <ShoppingCart className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                      <p className="text-sm">Todos os produtos foram selecionados!</p>
-                    </div>
-                  )}
-
-                  {/* Resumo */}
-                  {(selectedProducts.length > 0 || availableProducts.length > 0) && (
+                  {/* Botão WhatsApp para Produtos */}
+                  {selectedProductsWithQuantity.length > 0 && (
                     <div className="space-y-3">
                       <div className="p-3 bg-purple-50 dark:bg-purple-950/30 rounded-lg">
                         <p className="text-xs text-purple-700 dark:text-purple-300">
-                          <strong>Selecionados:</strong> {selectedProducts.length} produtos
+                          <strong>Selecionados:</strong> {selectedProductsWithQuantity.length} produtos, {selectedProductsWithQuantity.reduce((sum, p) => sum + p.quantity, 0)} itens no total
                         </p>
                       </div>
                       
-                      {/* Botão WhatsApp para Produtos */}
-                      {selectedProducts.length > 0 && (
-                        <Button 
-                          onClick={handleSendProductsWhatsApp}
-                          disabled={isSubmitting}
-                          className="w-full flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50"
-                          variant="default"
-                        >
-                          <MessageCircle className="h-4 w-4" />
-                          {isSubmitting ? 'Enviando...' : 'Enviar Lista de Produtos via WhatsApp'}
-                        </Button>
-                      )}
+                      <Button 
+                        onClick={handleSendProductsWhatsApp}
+                        disabled={isSubmitting}
+                        className="w-full flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50"
+                        variant="default"
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                        {isSubmitting ? 'Enviando...' : 'Enviar Lista de Produtos via WhatsApp'}
+                      </Button>
                     </div>
                   )}
                 </div>
