@@ -110,18 +110,19 @@ export function BillingWidget() {
                 <DollarSign className="h-4 w-4 text-green-400 flex-shrink-0" />
                 <span className="text-sm font-medium truncate">Faturamento</span>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={toggleShowValues}
-                className="h-6 w-6 p-0 hover:bg-gray-500 flex-shrink-0"
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleShowValues(e);
+                }}
+                className="h-6 w-6 p-0 hover:bg-gray-500 flex-shrink-0 rounded cursor-pointer flex items-center justify-center"
               >
                 {showValues ? (
                   <EyeOff className="h-4 w-4 opacity-70" />
                 ) : (
                   <Eye className="h-4 w-4 opacity-70" />
                 )}
-              </Button>
+              </div>
             </div>
             <div className="text-base font-bold text-green-400 truncate">
               {formatCurrency(billingData.totalMensal)}

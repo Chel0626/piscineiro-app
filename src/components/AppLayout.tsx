@@ -8,11 +8,11 @@ import { Button } from './ui/button';
 import { Menu, ShowerHead } from 'lucide-react';
 import { FillReminderProvider } from '@/context/FillReminderContext';
 import { FillReminderButton } from './FillReminderButton';
-import { useAuth } from '@/context/AuthContext';
+import { AuthContextProvider, useAuth } from '@/context/AuthContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
-export function AppLayout({ children }: { children: React.ReactNode }) {
+function AppLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, authLoading } = useAuth();
@@ -93,4 +93,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   // Se for uma rota pública, renderiza apenas o conteúdo
   return <>{children}</>;
+}
+
+export function AppLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <AuthContextProvider>
+      <AppLayoutInner>{children}</AppLayoutInner>
+    </AuthContextProvider>
+  );
 }
