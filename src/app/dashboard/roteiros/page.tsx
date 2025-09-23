@@ -62,18 +62,18 @@ function SortableClientItem({ client, onClientClick }: { client: Client; onClien
       ref={setNodeRef}
       style={style}
       {...attributes}
-      className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-gray-50 dark:bg-gray-800 rounded-lg w-full max-w-full overflow-hidden"
+      className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-gray-50 dark:bg-gray-800 rounded-lg w-full max-w-full overflow-hidden min-w-0"
     >
       <button {...listeners} className="cursor-grab touch-none p-1 flex-shrink-0">
         <GripVertical className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 dark:text-gray-500" />
       </button>
       <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 dark:text-gray-400 flex-shrink-0" />
       <div 
-        className="flex-1 min-w-0 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded p-2 -m-2 transition-colors max-w-full overflow-hidden"
+        className="flex-1 min-w-0 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded p-2 -m-2 transition-colors overflow-hidden"
         onClick={() => onClientClick(client)}
       >
-        <p className="font-semibold truncate text-gray-900 dark:text-gray-100 text-sm sm:text-base w-full">{client.name}</p>
-        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 truncate w-full">
+        <p className="font-semibold truncate text-gray-900 dark:text-gray-100 text-sm sm:text-base">{client.name}</p>
+        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 truncate">
           {`${client.address}, ${client.neighborhood}`}
         </p>
       </div>
@@ -171,8 +171,8 @@ export default function RoteirosPage() {
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
     >
-      <div className="w-full max-w-full overflow-x-hidden">
-        <div className="container mx-auto px-4 max-w-full overflow-x-hidden">
+      <div className="w-full max-w-full overflow-x-hidden min-w-0">
+        <div className="container mx-auto px-4 max-w-full overflow-x-hidden min-w-0">
         <div className="mb-4 sm:mb-6">
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate">Roteiros da Semana</h1>
           <p className="text-muted-foreground text-xs sm:text-sm md:text-base">
@@ -233,23 +233,23 @@ export default function RoteirosPage() {
         </div>
 
         {/* Card do dia selecionado */}
-        <Card className="w-full max-w-full overflow-hidden">
-          <CardHeader className="px-3 sm:px-4 md:px-6 py-3 sm:py-4">
-            <CardTitle className="flex items-center gap-2 text-base sm:text-lg md:text-xl">
+        <Card className="w-full max-w-full overflow-hidden min-w-0">
+          <CardHeader className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 min-w-0">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg md:text-xl min-w-0">
               <Calendar className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
-              <span className="truncate">{selectedDayInfo?.label}</span>
+              <span className="truncate min-w-0">{selectedDayInfo?.label}</span>
             </CardTitle>
             <CardDescription className="text-xs sm:text-sm">
               {selectedDayClients.length} cliente(s) agendado(s)
             </CardDescription>
           </CardHeader>
-          <CardContent className="px-3 sm:px-4 md:px-6 pb-4 w-full max-w-full overflow-hidden">
+          <CardContent className="px-3 sm:px-4 md:px-6 pb-4 w-full max-w-full overflow-hidden min-w-0">
             {selectedDayClients.length > 0 ? (
               <SortableContext
                 items={selectedDayClients.map(c => c.id)}
                 strategy={verticalListSortingStrategy}
               >
-                <ul className="space-y-2 sm:space-y-3 w-full max-w-full overflow-hidden">
+                <ul className="space-y-2 sm:space-y-3 w-full max-w-full overflow-hidden min-w-0">
                   {selectedDayClients.map((client) => (
                     <SortableClientItem key={client.id} client={client} onClientClick={handleClientClick} />
                   ))}
