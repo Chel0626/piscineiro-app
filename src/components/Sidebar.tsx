@@ -97,8 +97,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </div>
         </div>
 
-        {/* Seção de Configurações */}
-        <div className="p-4 space-y-3 border-t border-gray-700 dark:border-gray-600">
+        {/* Seção de Configurações - com padding extra para evitar sobreposição do bottom tab */}
+        <div className="p-4 space-y-3 border-t border-gray-700 dark:border-gray-600 pb-20 md:pb-4">
           <BillingWidget />
           <div className="flex items-center justify-between">
             <ThemeToggle />

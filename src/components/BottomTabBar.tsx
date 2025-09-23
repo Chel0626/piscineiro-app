@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, Route, Package } from 'lucide-react';
+import { Home, Users, Route } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navigationItems = [
@@ -24,12 +24,6 @@ const navigationItems = [
     icon: Route,
     shortLabel: 'Roteiros'
   },
-  { 
-    href: '/dashboard/produtos-do-dia', 
-    label: 'Produtos do Dia', 
-    icon: Package,
-    shortLabel: 'Produtos'
-  },
 ];
 
 export function BottomTabBar() {
@@ -37,7 +31,7 @@ export function BottomTabBar() {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 md:hidden">
-      <div className="grid grid-cols-4 h-16">
+      <div className="grid grid-cols-3 h-16">
         {navigationItems.map((item) => {
           const isActive = pathname === item.href;
           return (
