@@ -171,8 +171,8 @@ export default function RoteirosPage() {
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
     >
-      <div className="w-full max-w-full overflow-hidden">
-        <div className="container mx-auto px-4 max-w-full overflow-hidden">
+      <div className="w-full max-w-full overflow-x-hidden">
+        <div className="container mx-auto px-4 max-w-full overflow-x-hidden">
         <div className="mb-4 sm:mb-6">
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate">Roteiros da Semana</h1>
           <p className="text-muted-foreground text-xs sm:text-sm md:text-base">
@@ -181,10 +181,10 @@ export default function RoteirosPage() {
         </div>
 
         {/* Botões dos dias da semana */}
-        <div className="mb-4 sm:mb-6 w-full max-w-full overflow-hidden">
-          <div className="flex flex-col gap-2 w-full max-w-full">
+        <div className="mb-4 sm:mb-6 w-full max-w-full overflow-x-hidden">
+          <div className="flex flex-col gap-2 w-full max-w-full min-w-0">
             {/* Primeira linha: Segunda a Quarta */}
-            <div className="grid grid-cols-3 gap-2 w-full max-w-full">
+            <div className="grid grid-cols-3 gap-2 w-full max-w-full min-w-0 overflow-x-hidden">
               {daysOfWeek.slice(0, 3).map((day) => {
                 const clientsCount = localGroupedClients[day.key]?.length || 0;
                 const isSelected = selectedDay === day.key;
@@ -207,7 +207,7 @@ export default function RoteirosPage() {
               })}
             </div>
             {/* Segunda linha: Quinta a Domingo */}
-            <div className="grid grid-cols-4 gap-2 w-full max-w-full">
+            <div className="grid grid-cols-4 gap-2 w-full max-w-full min-w-0 overflow-x-hidden">
               {daysOfWeek.slice(3).map((day) => {
                 const clientsCount = localGroupedClients[day.key]?.length || 0;
                 const isSelected = selectedDay === day.key;
