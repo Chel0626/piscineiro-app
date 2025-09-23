@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Calendar, X, ArrowRight } from 'lucide-react';
 import { useTemporaryReschedule } from '@/hooks/useTemporaryReschedule';
 
@@ -27,6 +28,7 @@ const daysOfWeek = [
 export function DayReschedule({ clientId, clientName, originalDay, onSuccess, onCancel }: DayRescheduleProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedDay, setSelectedDay] = useState<string>('');
+  const [useModal, setUseModal] = useState(false);
   const { rescheduleClient, isLoading, isClientRescheduled } = useTemporaryReschedule();
 
   const isAlreadyRescheduled = isClientRescheduled(clientId);
@@ -54,6 +56,13 @@ export function DayReschedule({ clientId, clientName, originalDay, onSuccess, on
     onCancel?.();
   };
 
+  const handleExpand = () => {
+    // Em telas pequenas (< 640px), usar modal
+    const useModalOnSmallScreen = window.innerWidth < 640;
+    setUseModal(useModalOnSmallScreen);
+    setIsExpanded(true);
+  };
+
   // Se já foi reagendado, mostrar status
   if (isAlreadyRescheduled) {
     return (
@@ -70,7 +79,7 @@ export function DayReschedule({ clientId, clientName, originalDay, onSuccess, on
         <Button
           variant="outline"
           size="sm"
-          onClick={() => setIsExpanded(true)}
+          onClick={handleExpand}
           className="text-xs h-7 px-2"
           disabled={isLoading}
         >
@@ -78,7 +87,8 @@ export function DayReschedule({ clientId, clientName, originalDay, onSuccess, on
           Mover Dia
         </Button>
       ) : (
-        <Card className="absolute top-0 right-0 z-50 w-72 max-w-[calc(100vw-2rem)] shadow-lg border">
+        <Card className="absolute top-0 right-0 z-50 w-72 max-w-[calc(100vw-2rem)] sm:max-w-xs shadow-lg border overflow-hidden">
+          <CardContent className="p-4 max-w-full overflow-hidden">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-sm font-medium">Mover para outro dia</h4>
