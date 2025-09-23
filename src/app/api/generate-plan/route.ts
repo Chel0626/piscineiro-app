@@ -38,21 +38,50 @@ export async function POST(request: NextRequest) {
     const prompt = `
       Você é um especialista em tratamento de piscinas com 20 anos de experiência
       e segue as normas técnicas da ANAPP. Sua tarefa é criar um plano de ação
-      profissional, claro e detalhado.
+      profissional seguindo EXATAMENTE a estrutura especificada.
 
-      ${poolVolume ? `Piscina de ${poolVolume} mil litros` : 'Piscina'}:
-      ${ph != null ? `- pH: ${ph}` : ''}
-      ${cloro != null ? `- Cloro Livre: ${cloro} ppm` : ''}
-      ${alcalinidade != null ? `- Alcalinidade Total: ${alcalinidade} ppm` : ''}
-      
-      ${description ? `Descrição das condições: ${description}` : ''}
-      ${imageBase64 ? 'Analise também a imagem da piscina fornecida.' : ''}
+      DADOS DA PISCINA:
+      ${poolVolume ? `- Volume: ${poolVolume} mil litros` : '- Volume: Não informado'}
+      ${ph != null ? `- pH: ${ph}` : '- pH: Não medido'}
+      ${cloro != null ? `- Cloro Livre: ${cloro} ppm` : '- Cloro Livre: Não medido'}
+      ${alcalinidade != null ? `- Alcalinidade Total: ${alcalinidade} ppm` : '- Alcalinidade Total: Não medida'}
+      ${description ? `\nDescrição visual: ${description}` : ''}
+      ${imageBase64 ? '\n(Análise da imagem também será considerada)' : ''}
 
-      Com base ${imageBase64 ? 'na análise visual e ' : ''}nos parâmetros${description ? ' e descrição' : ''}, forneça:
-      1.  Um diagnóstico claro da situação atual da água.
-      2.  Um plano de ação passo a passo.
-      3.  Cálculos de dosagens exatas dos produtos, se necessário.
-      4.  Apresente a resposta em formato Markdown.
+      RESPONDA SEGUINDO EXATAMENTE ESTA ESTRUTURA:
+
+      ## **Plano de Ação**
+
+      ### **Etapa 1: Diagnóstico**
+      - Analise os parâmetros que estão muito fora e precisam ser corrigidos
+      - Se cabível, faça o cruzamento dos dados e analise o porquê da piscina ficar naquele estado
+      - Não precisa de um diagnóstico fora de série, seja objetivo
+
+      ### **Etapa 2: Método de Recuperação**
+      **A IA deve avaliar e escolher UM dos caminhos abaixo:**
+
+      #### **Opção A - Decantação:**
+      - **Pergunta importante:** Sulfato de alumínio ou floculante?
+      - **Recomendação específica:** [Escolher e justificar]
+      - **Cálculo de dosagem:** [Quantidade exata do produto escolhido]
+      - **Observação:** Sulfato = filtro no recircular / Clarificante = filtrar normal
+
+      #### **Opção B - Recuperação com Filtração:**
+      - **Método 1 - Peróxido:** Resolver os parâmetros e deixar filtrar o máximo possível (pelo menos 12h)
+      - **Método 2 - Clear Gel:** Dosagem oxidante de cloro ou peróxido + correção de alcalinidade + filtragem por 12h seguidas
+
+      ### **Etapa 3: Finalização**
+      **Se escolheu Decantação (Opção A):**
+      - Aspiração completa do sedimento
+      - Conferir parâmetros após aspiração
+      - Corrigir se necessário
+
+      **Se escolheu Recuperação com Filtração (Opção B):**
+      - Lavar a areia do filtro
+      - Conferir parâmetros após lavagem
+      - Corrigir se necessário
+
+      **IMPORTANTE:** Siga rigorosamente esta estrutura. Seja direto e objetivo.
     `;
 
     // Criar o conteúdo baseado no que temos disponível
