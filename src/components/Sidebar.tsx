@@ -8,7 +8,6 @@ import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { AiHelperDialog } from './AiHelperDialog';
 import { ProductCalculatorDialog } from './ProductCalculatorDialog';
-import { FillReminderButton } from './FillReminderButton';
 import { BillingWidget } from './BillingWidget';
 import { PiscineiroProfileWidget } from './PiscineiroProfileWidget';
 import { ClienteAvulsoModal } from './ClienteAvulsoModal';
@@ -68,8 +67,18 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </Button>
         </div>
         
-        {/* Seção de Ferramentas */}
+        {/* Seção do Perfil */}
         <div className="flex-1 px-4 py-2 overflow-y-auto pb-safe">
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
+              Perfil
+            </h3>
+            <PiscineiroProfileWidget />
+          </div>
+
+          <Separator className="my-4 bg-gray-700 dark:bg-gray-600" />
+          
+          {/* Seção de Ferramentas */}
           <div className="mb-4">
             <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
               Ferramentas
@@ -77,7 +86,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             <div className="space-y-2">
               <AiHelperDialog />
               <ProductCalculatorDialog />
-              <FillReminderButton />
               <Button 
                 onClick={() => setIsClienteAvulsoModalOpen(true)}
                 className="w-full justify-start bg-blue-600 hover:bg-blue-700 text-white"
@@ -86,16 +94,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 Cliente Avulso
               </Button>
             </div>
-          </div>
-
-          <Separator className="my-4 bg-gray-700 dark:bg-gray-600" />
-          
-          {/* Seção do Perfil */}
-          <div className="mb-4">
-            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
-              Perfil
-            </h3>
-            <PiscineiroProfileWidget />
           </div>
         </div>
 
