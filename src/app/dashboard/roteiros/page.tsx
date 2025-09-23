@@ -171,7 +171,7 @@ export default function RoteirosPage() {
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
     >
-      <div className="px-2 sm:px-4 md:px-0">
+      <div className="px-2 sm:px-4 md:px-0 w-full max-w-full overflow-x-hidden">
         <div className="mb-4 sm:mb-6">
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Roteiros da Semana</h1>
           <p className="text-muted-foreground text-xs sm:text-sm md:text-base">
@@ -180,21 +180,20 @@ export default function RoteirosPage() {
         </div>
 
         {/* Botões dos dias da semana */}
-        <div className="mb-4 sm:mb-6 px-0 sm:px-0">
-          <div className="grid grid-cols-7 gap-1 sm:gap-2">
+        <div className="mb-4 sm:mb-6 px-0 sm:px-0 w-full max-w-full overflow-x-auto">
+          <div className="grid grid-cols-7 gap-1 sm:gap-2 w-full">
             {daysOfWeek.map((day) => {
               const clientsCount = localGroupedClients[day.key]?.length || 0;
               const isSelected = selectedDay === day.key;
-              
               return (
                 <Button
                   key={day.key}
                   variant={isSelected ? "default" : "outline"}
                   onClick={() => setSelectedDay(day.key)}
-                  className="flex flex-col h-14 sm:h-16 px-1 sm:px-2 py-1 sm:py-2 relative w-full text-center text-xs sm:text-sm"
+                  className="flex flex-col h-14 sm:h-16 px-1 sm:px-2 py-1 sm:py-2 relative w-full text-center text-xs sm:text-sm min-w-0"
                 >
-                  <span className="font-medium text-[10px] sm:text-xs md:text-sm">{day.short}</span>
-                  <span className="text-[9px] sm:text-xs opacity-75 hidden md:block">{day.label}</span>
+                  <span className="font-medium text-[10px] sm:text-xs md:text-sm truncate">{day.short}</span>
+                  <span className="text-[9px] sm:text-xs opacity-75 hidden md:block truncate">{day.label}</span>
                   {clientsCount > 0 && (
                     <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-[10px] sm:text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center">
                       {clientsCount}
@@ -207,23 +206,23 @@ export default function RoteirosPage() {
         </div>
 
         {/* Card do dia selecionado */}
-        <Card className="mx-0 sm:mx-0">
+        <Card className="mx-0 sm:mx-0 w-full max-w-full overflow-x-hidden">
           <CardHeader className="px-3 sm:px-4 md:px-6 py-3 sm:py-4">
             <CardTitle className="flex items-center gap-2 text-base sm:text-lg md:text-xl">
               <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
-              {selectedDayInfo?.label}
+              <span className="truncate">{selectedDayInfo?.label}</span>
             </CardTitle>
             <CardDescription className="text-xs sm:text-sm">
               {selectedDayClients.length} cliente(s) agendado(s)
             </CardDescription>
           </CardHeader>
-          <CardContent className="px-3 sm:px-4 md:px-6 pb-4">
+          <CardContent className="px-3 sm:px-4 md:px-6 pb-4 w-full max-w-full overflow-x-hidden">
             {selectedDayClients.length > 0 ? (
               <SortableContext
                 items={selectedDayClients.map(c => c.id)}
                 strategy={verticalListSortingStrategy}
               >
-                <ul className="space-y-2 sm:space-y-3">
+                <ul className="space-y-2 sm:space-y-3 w-full max-w-full overflow-x-hidden">
                   {selectedDayClients.map((client) => (
                     <SortableClientItem key={client.id} client={client} onClientClick={handleClientClick} />
                   ))}
