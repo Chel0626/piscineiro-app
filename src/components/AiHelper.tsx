@@ -7,10 +7,31 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, ChevronDown, ChevronRight, FlaskConical, Play, Target, ClipboardCheck } from 'lucide-react';
+import { ChevronDown, ChevronRight, FlaskConical, Play, ClipboardCheck } from 'lucide-react';
 
 // Importamos o schema e o tipo do nosso arquivo.
 import { aiHelperSchema, AiHelperFormData } from '@/lib/schemas/aiHelperSchema';
+
+// Tipo para a resposta estruturada da IA
+interface AiResponse {
+  diagnostico: {
+    titulo: string;
+    descricao: string;
+    status_geral: 'CRITICO' | 'ALERTA' | 'OK';
+  };
+  parametros: Array<{
+    parametro: string;
+    valor: number | null;
+    status: 'BAIXO' | 'IDEAL' | 'ALTO';
+    faixa_ideal: string;
+  }>;
+  plano_de_acao: Array<{
+    etapa: number;
+    titulo: string;
+    instrucoes: string;
+    importancia: 'CRITICA' | 'RECOMENDADA';
+  }>;
+}
 
 // Função auxiliar para converter um arquivo para base64
 const fileToBase64 = (file: File): Promise<string> =>
@@ -31,12 +52,11 @@ interface AiHelperProps {
 
 export function AiHelper({ poolVolume }: AiHelperProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [aiResponse, setAiResponse] = useState<string | null>(null);
+  const [aiResponse, setAiResponse] = useState<AiResponse | null>(null);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     diagnostico: false,
-    etapa1: false,
-    etapa2: false,
-    etapa3: false,
+    parametros: false,
+    plano_acao: false,
   });
 
   const toggleSection = (section: string) => {
@@ -46,50 +66,19 @@ export function AiHelper({ poolVolume }: AiHelperProps) {
     }));
   };
 
-  // Função para extrair seções do markdown
-  const extractSections = (response: string) => {
-    const sections = {
-      diagnostico: '',
-      etapa1: '',
-      etapa2: '',
-      etapa3: '',
-    };
-
-    // Dividir por seções baseado nos cabeçalhos
-    const lines = response.split('\n');
-    let currentSection = '';
-    let currentContent: string[] = [];
-
-    for (const line of lines) {
-      if (line.includes('Etapa 1') || line.includes('Diagnóstico')) {
-        if (currentSection) {
-          sections[currentSection as keyof typeof sections] = currentContent.join('\n').trim();
-        }
-        currentSection = 'etapa1';
-        currentContent = [];
-      } else if (line.includes('Etapa 2') || line.includes('Método de Recuperação')) {
-        if (currentSection) {
-          sections[currentSection as keyof typeof sections] = currentContent.join('\n').trim();
-        }
-        currentSection = 'etapa2';
-        currentContent = [];
-      } else if (line.includes('Etapa 3') || line.includes('Finalização')) {
-        if (currentSection) {
-          sections[currentSection as keyof typeof sections] = currentContent.join('\n').trim();
-        }
-        currentSection = 'etapa3';
-        currentContent = [];
-      } else if (currentSection) {
-        currentContent.push(line);
-      }
+  // Função para determinar a cor baseada no status
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'CRITICO': return 'red';
+      case 'ALERTA': return 'yellow';
+      case 'OK': return 'green';
+      case 'BAIXO': return 'red';
+      case 'ALTO': return 'red';
+      case 'IDEAL': return 'green';
+      case 'CRITICA': return 'red';
+      case 'RECOMENDADA': return 'blue';
+      default: return 'gray';
     }
-
-    // Adicionar a última seção
-    if (currentSection && currentContent.length > 0) {
-      sections[currentSection as keyof typeof sections] = currentContent.join('\n').trim();
-    }
-
-    return sections;
   };
 
   const form = useForm<AiHelperFormData>({
@@ -145,8 +134,16 @@ export function AiHelper({ poolVolume }: AiHelperProps) {
       }
 
       const result = await response.json();
-      setAiResponse(result.plan);
-      toast.success("Plano de ação gerado!");
+      
+      // Tentar fazer o parse da resposta JSON estruturada
+      try {
+        const parsedResponse: AiResponse = JSON.parse(result.plan);
+        setAiResponse(parsedResponse);
+        toast.success("Plano de ação gerado!");
+      } catch (parseError) {
+        console.error("Erro ao fazer parse da resposta JSON:", parseError);
+        toast.error("Resposta da IA em formato inválido");
+      }
 
     } catch (error) {
       const err = error as Error;
@@ -262,72 +259,121 @@ export function AiHelper({ poolVolume }: AiHelperProps) {
         
         {aiResponse && (
           <div className="mt-6 space-y-4">
-            {(() => {
-              const sections = extractSections(aiResponse);
-              const sectionConfigs = [
-                {
-                  key: 'etapa1',
-                  title: 'Diagnóstico',
-                  icon: FlaskConical,
-                  content: sections.etapa1,
-                  color: 'blue'
-                },
-                {
-                  key: 'etapa2',
-                  title: 'Método de Recuperação',
-                  icon: Play,
-                  content: sections.etapa2,
-                  color: 'purple'
-                },
-                {
-                  key: 'etapa3',
-                  title: 'Finalização',
-                  icon: ClipboardCheck,
-                  content: sections.etapa3,
-                  color: 'green'
-                }
-              ];
+            {/* Diagnóstico */}
+            <Card className={`border-${getStatusColor(aiResponse.diagnostico.status_geral)}-200 dark:border-${getStatusColor(aiResponse.diagnostico.status_geral)}-800 transition-all duration-200 hover:shadow-md`}>
+              <CardHeader 
+                className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                onClick={() => toggleSection('diagnostico')}
+              >
+                <CardTitle className={`flex items-center justify-between text-${getStatusColor(aiResponse.diagnostico.status_geral)}-800 dark:text-${getStatusColor(aiResponse.diagnostico.status_geral)}-200`}>
+                  <div className="flex items-center gap-2">
+                    <FlaskConical className="h-5 w-5" />
+                    {aiResponse.diagnostico.titulo}
+                    <span className={`px-2 py-1 rounded-full text-xs bg-${getStatusColor(aiResponse.diagnostico.status_geral)}-100 text-${getStatusColor(aiResponse.diagnostico.status_geral)}-800`}>
+                      {aiResponse.diagnostico.status_geral}
+                    </span>
+                  </div>
+                  {expandedSections.diagnostico ? (
+                    <ChevronDown className="h-5 w-5" />
+                  ) : (
+                    <ChevronRight className="h-5 w-5" />
+                  )}
+                </CardTitle>
+              </CardHeader>
+              {expandedSections.diagnostico && (
+                <CardContent>
+                  <div className={`bg-${getStatusColor(aiResponse.diagnostico.status_geral)}-50 dark:bg-${getStatusColor(aiResponse.diagnostico.status_geral)}-950/30 p-4 rounded-lg`}>
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                      {aiResponse.diagnostico.descricao}
+                    </p>
+                  </div>
+                </CardContent>
+              )}
+            </Card>
 
-              return sectionConfigs.map((section) => {
-                if (!section.content) return null;
-                
-                const isExpanded = expandedSections[section.key];
-                const IconComponent = section.icon;
-                
-                return (
-                  <Card 
-                    key={section.key}
-                    className={`border-${section.color}-200 dark:border-${section.color}-800 transition-all duration-200 hover:shadow-md`}
-                  >
-                    <CardHeader 
-                      className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                      onClick={() => toggleSection(section.key)}
-                    >
-                      <CardTitle className={`flex items-center justify-between text-${section.color}-800 dark:text-${section.color}-200`}>
-                        <div className="flex items-center gap-2">
-                          <IconComponent className="h-5 w-5" />
-                          {section.title}
+            {/* Parâmetros */}
+            <Card className="border-blue-200 dark:border-blue-800 transition-all duration-200 hover:shadow-md">
+              <CardHeader 
+                className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                onClick={() => toggleSection('parametros')}
+              >
+                <CardTitle className="flex items-center justify-between text-blue-800 dark:text-blue-200">
+                  <div className="flex items-center gap-2">
+                    <Play className="h-5 w-5" />
+                    Análise dos Parâmetros
+                  </div>
+                  {expandedSections.parametros ? (
+                    <ChevronDown className="h-5 w-5" />
+                  ) : (
+                    <ChevronRight className="h-5 w-5" />
+                  )}
+                </CardTitle>
+              </CardHeader>
+              {expandedSections.parametros && (
+                <CardContent>
+                  <div className="grid gap-3">
+                    {aiResponse.parametros.map((param, index) => (
+                      <div key={index} className={`flex items-center justify-between p-3 rounded-lg bg-${getStatusColor(param.status)}-50 dark:bg-${getStatusColor(param.status)}-950/30`}>
+                        <div className="flex items-center gap-3">
+                          <span className="font-medium text-sm">{param.parametro}</span>
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                            {param.valor !== null ? param.valor : 'Não medido'}
+                          </span>
                         </div>
-                        {isExpanded ? (
-                          <ChevronDown className="h-5 w-5" />
-                        ) : (
-                          <ChevronRight className="h-5 w-5" />
-                        )}
-                      </CardTitle>
-                    </CardHeader>
-                    {isExpanded && (
-                      <CardContent>
-                        <div className={`bg-${section.color}-50 dark:bg-${section.color}-950/30 p-4 rounded-lg`}>
-                          <pre className="whitespace-pre-wrap font-sans text-sm text-gray-700 dark:text-gray-300">
-                            {section.content}
-                          </pre>
+                        <div className="text-right">
+                          <span className={`px-2 py-1 rounded-full text-xs bg-${getStatusColor(param.status)}-100 text-${getStatusColor(param.status)}-800`}>
+                            {param.status}
+                          </span>
+                          <div className="text-xs text-gray-500 mt-1">
+                            Ideal: {param.faixa_ideal}
+                          </div>
                         </div>
-                      </CardContent>
-                    )}
-                  </Card>
-                );
-              });
-            })()}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              )}
+            </Card>
+
+            {/* Plano de Ação */}
+            <Card className="border-green-200 dark:border-green-800 transition-all duration-200 hover:shadow-md">
+              <CardHeader 
+                className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                onClick={() => toggleSection('plano_acao')}
+              >
+                <CardTitle className="flex items-center justify-between text-green-800 dark:text-green-200">
+                  <div className="flex items-center gap-2">
+                    <ClipboardCheck className="h-5 w-5" />
+                    Plano de Ação
+                  </div>
+                  {expandedSections.plano_acao ? (
+                    <ChevronDown className="h-5 w-5" />
+                  ) : (
+                    <ChevronRight className="h-5 w-5" />
+                  )}
+                </CardTitle>
+              </CardHeader>
+              {expandedSections.plano_acao && (
+                <CardContent>
+                  <div className="space-y-4">
+                    {aiResponse.plano_de_acao.map((etapa, index) => (
+                      <div key={index} className={`p-4 rounded-lg border-l-4 border-${getStatusColor(etapa.importancia)}-500 bg-${getStatusColor(etapa.importancia)}-50 dark:bg-${getStatusColor(etapa.importancia)}-950/30`}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="font-semibold text-sm">Etapa {etapa.etapa}:</span>
+                          <span className="font-medium text-sm">{etapa.titulo}</span>
+                          <span className={`px-2 py-1 rounded-full text-xs bg-${getStatusColor(etapa.importancia)}-100 text-${getStatusColor(etapa.importancia)}-800`}>
+                            {etapa.importancia}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-700 dark:text-gray-300">
+                          {etapa.instrucoes}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              )}
+            </Card>
           </div>
         )}
       </CardContent>
