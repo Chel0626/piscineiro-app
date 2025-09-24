@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { BrainCircuit } from 'lucide-react';
 import { AiHelper } from './AiHelper';
 
@@ -21,6 +21,9 @@ export function AiHelperDialog() {
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Assistente IA - Especialista em Piscinas</DialogTitle>
+        </DialogHeader>
         <AiHelper />
       </DialogContent>
     </Dialog>
