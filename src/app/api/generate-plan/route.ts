@@ -64,7 +64,7 @@ FORMATO OBRIGATÓRIO (apenas JSON):
 
 IMPORTANTE: Retorne APENAS o JSON, sem texto adicional.`;
 
-    let parts: any[] = [{ text: prompt }];
+  const parts: Array<{ text: string } | { inlineData: { data: string; mimeType: string } }> = [{ text: prompt }];
 
     if (imageBase64) {
       parts.push({
