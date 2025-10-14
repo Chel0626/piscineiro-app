@@ -23,7 +23,16 @@ export async function POST(request: NextRequest) {
     }
 
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.0-pro",    const prompt = `Você é um especialista em piscinas. Analise os dados e retorne APENAS um JSON válido:
+      model: "gemini-1.0-pro",
+      safetySettings: [
+        { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+        { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+        { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+        { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+      ]
+    });
+
+    const prompt = `Você é um especialista em piscinas. Analise os dados e retorne APENAS um JSON válido:
 
 DADOS:
 - Volume: ${poolVolume || 'N/A'} mil litros
@@ -105,8 +114,9 @@ IMPORTANTE: Retorne APENAS o JSON, sem texto adicional.`;
       });
     }
 
-  } catch (error: any) {
-    console.error('Erro na API generate-plan:', error?.message || error);
-    return NextResponse.json({ error: error?.message || 'Erro interno' }, { status: 500 });
+  } catch (error) {
+    const errMsg = typeof error === 'object' && error !== null && 'message' in error ? (error as { message?: string }).message : String(error);
+    console.error('Erro na API generate-plan:', errMsg);
+    return NextResponse.json({ error: errMsg || 'Erro interno' }, { status: 500 });
   }
 }

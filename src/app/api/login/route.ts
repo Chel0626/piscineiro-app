@@ -21,18 +21,19 @@ export async function POST(request: NextRequest) {
       }
     });
 
-  } catch (error: any) {
-    console.error('Erro no login:', error);
-    
+  } catch (error) {
     let message = 'Erro interno do servidor.';
-    if (error.code === 'auth/user-not-found') {
-      message = 'Usuário não encontrado.';
-    } else if (error.code === 'auth/wrong-password') {
-      message = 'Senha incorreta.';
-    } else if (error.code === 'auth/invalid-email') {
-      message = 'Email inválido.';
+    if (typeof error === 'object' && error !== null && 'code' in error) {
+      const code = (error as { code?: string }).code;
+      if (code === 'auth/user-not-found') {
+        message = 'Usuário não encontrado.';
+      } else if (code === 'auth/wrong-password') {
+        message = 'Senha incorreta.';
+      } else if (code === 'auth/invalid-email') {
+        message = 'Email inválido.';
+      }
     }
-    
+    console.error('Erro no login:', error);
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }
