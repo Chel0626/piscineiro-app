@@ -62,29 +62,41 @@ function SortableClientItem({ client, onClientClick }: { client: Client; onClien
       ref={setNodeRef}
       style={style}
       {...attributes}
-      className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-gray-50 dark:bg-gray-800 rounded-lg w-full max-w-full overflow-hidden min-w-0"
+      className="flex items-center gap-3 p-4 bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-md transition-all duration-200"
     >
-      <button {...listeners} className="cursor-grab touch-none p-1 flex-shrink-0">
-        <GripVertical className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 dark:text-gray-500" />
-      </button>
-      <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 dark:text-gray-400 flex-shrink-0" />
-      <div 
-        className="flex-1 min-w-0 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded p-2 -m-2 transition-colors overflow-hidden"
-        onClick={() => onClientClick(client)}
+      <button 
+        {...listeners} 
+        className="cursor-grab active:cursor-grabbing p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
       >
-        <p className="font-semibold truncate text-gray-900 dark:text-gray-100 text-sm sm:text-base">{client.name}</p>
-        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 truncate">
-          {`${client.address}, ${client.neighborhood}`}
-        </p>
+        <GripVertical className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+      </button>
+      
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        <div className="bg-blue-100 dark:bg-blue-900 p-2 rounded-lg">
+          <MapPin className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+        </div>
+        
+        <div 
+          className="flex-1 min-w-0 cursor-pointer group"
+          onClick={() => onClientClick(client)}
+        >
+          <p className="font-semibold text-gray-900 dark:text-gray-100 text-base group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+            {client.name}
+          </p>
+          <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+            {`${client.address}, ${client.neighborhood}`}
+          </p>
+        </div>
       </div>
+      
       <Button
         variant="outline"
         size="sm"
         onClick={() => onClientClick(client)}
-        className="h-8 w-8 sm:h-9 sm:w-9 p-0 flex-shrink-0"
+        className="h-10 w-10 p-0 border-2 hover:bg-blue-50 dark:hover:bg-blue-950 hover:border-blue-400"
         title="Registrar visita"
       >
-        <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
+        <Plus className="h-5 w-5 text-blue-600 dark:text-blue-400" />
       </Button>
     </li>
   );
@@ -171,111 +183,101 @@ export default function RoteirosPage() {
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
     >
-      <div className="w-full max-w-full overflow-x-hidden min-w-0">
-        <div className="container mx-auto px-4 max-w-full overflow-x-hidden min-w-0">
-        <div className="mb-4 sm:mb-6">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate">Roteiros da Semana</h1>
-          <p className="text-muted-foreground text-xs sm:text-sm md:text-base">
-            Selecione um dia e arraste os clientes para reordenar sua rota de visitas.
-          </p>
-        </div>
-
-        {/* Botões dos dias da semana */}
-        <div className="mb-4 sm:mb-6 w-full max-w-full overflow-x-hidden">
-          <div className="flex flex-col gap-2 w-full max-w-full min-w-0">
-            {/* Primeira linha: Segunda a Quarta */}
-            <div className="grid grid-cols-3 gap-1 sm:gap-2 w-full max-w-full min-w-0 overflow-x-hidden">
-              {daysOfWeek.slice(0, 3).map((day) => {
-                const clientsCount = localGroupedClients[day.key]?.length || 0;
-                const isSelected = selectedDay === day.key;
-                return (
-                  <Button
-                    key={day.key}
-                    variant={isSelected ? "default" : "outline"}
-                    onClick={() => setSelectedDay(day.key)}
-                    className="flex flex-col h-12 sm:h-14 md:h-16 px-1 sm:px-2 md:px-3 py-1 sm:py-2 relative w-full text-center min-w-0 text-xs sm:text-sm"
-                  >
-                    <span className="font-medium truncate w-full leading-tight">{day.short}</span>
-                    <span className="text-xs opacity-75 hidden sm:block truncate w-full leading-tight">{day.label}</span>
-                    {clientsCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center text-xs">
-                        {clientsCount}
-                      </span>
-                    )}
-                  </Button>
-                );
-              })}
-            </div>
-            {/* Segunda linha: Quinta a Domingo */}
-            <div className="grid grid-cols-4 gap-1 sm:gap-2 w-full max-w-full min-w-0 overflow-x-hidden">
-              {daysOfWeek.slice(3).map((day) => {
-                const clientsCount = localGroupedClients[day.key]?.length || 0;
-                const isSelected = selectedDay === day.key;
-                return (
-                  <Button
-                    key={day.key}
-                    variant={isSelected ? "default" : "outline"}
-                    onClick={() => setSelectedDay(day.key)}
-                    className="flex flex-col h-12 sm:h-14 md:h-16 px-1 sm:px-2 md:px-3 py-1 sm:py-2 relative w-full text-center min-w-0 text-xs sm:text-sm"
-                  >
-                    <span className="font-medium truncate w-full leading-tight">{day.short}</span>
-                    <span className="text-xs opacity-75 hidden sm:block truncate w-full leading-tight">{day.label}</span>
-                    {clientsCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center text-xs">
-                        {clientsCount}
-                      </span>
-                    )}
-                  </Button>
-                );
-              })}
-            </div>
+      <div className="w-full h-full p-4 sm:p-6 lg:p-8">
+        <div className="max-w-7xl mx-auto space-y-6">
+          {/* Cabeçalho */}
+          <div className="space-y-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+              Roteiros da Semana
+            </h1>
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+              Selecione um dia e arraste os clientes para reordenar sua rota de visitas.
+            </p>
           </div>
-        </div>
 
-        {/* Card do dia selecionado */}
-        <Card className="w-full max-w-full overflow-hidden min-w-0">
-          <CardHeader className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 min-w-0">
-            <CardTitle className="flex items-center gap-2 text-base sm:text-lg md:text-xl min-w-0">
-              <Calendar className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
-              <span className="truncate min-w-0">{selectedDayInfo?.label}</span>
-            </CardTitle>
-            <CardDescription className="text-xs sm:text-sm">
-              {selectedDayClients.length} cliente(s) agendado(s)
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="px-3 sm:px-4 md:px-6 pb-4 w-full max-w-full overflow-hidden min-w-0">
-            {selectedDayClients.length > 0 ? (
-              <SortableContext
-                items={selectedDayClients.map(c => c.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                <ul className="space-y-2 sm:space-y-3 w-full max-w-full overflow-hidden min-w-0">
-                  {selectedDayClients.map((client) => (
-                    <SortableClientItem key={client.id} client={client} onClientClick={handleClientClick} />
-                  ))}
-                </ul>
-              </SortableContext>
-            ) : (
-              <div className="text-center py-6 sm:py-8">
-                <Calendar className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 mx-auto text-gray-400 mb-4" />
-                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                  Nenhum cliente agendado para {selectedDayInfo?.label}.
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          {/* Botões dos dias da semana - Grid unificado */}
+          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-2 sm:gap-3">
+            {daysOfWeek.map((day) => {
+              const clientsCount = localGroupedClients[day.key]?.length || 0;
+              const isSelected = selectedDay === day.key;
+              return (
+                <Button
+                  key={day.key}
+                  variant={isSelected ? "default" : "outline"}
+                  onClick={() => setSelectedDay(day.key)}
+                  className={`
+                    relative flex flex-col items-center justify-center
+                    h-20 sm:h-24 p-3 sm:p-4
+                    transition-all duration-200
+                    ${isSelected 
+                      ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg scale-105' 
+                      : 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border-2'
+                    }
+                  `}
+                >
+                  <span className="font-bold text-sm sm:text-base mb-1">
+                    {day.short}
+                  </span>
+                  <span className="text-xs opacity-80 hidden sm:block">
+                    {day.label}
+                  </span>
+                  {clientsCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center shadow-md">
+                      {clientsCount}
+                    </span>
+                  )}
+                </Button>
+              );
+            })}
+          </div>
+
+          {/* Card do dia selecionado */}
+          <Card className="shadow-lg border-2">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 border-b">
+              <CardTitle className="flex items-center gap-3 text-xl sm:text-2xl">
+                <Calendar className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                <span>{selectedDayInfo?.label}</span>
+              </CardTitle>
+              <CardDescription className="text-sm sm:text-base mt-1">
+                {selectedDayClients.length} cliente(s) agendado(s) para hoje
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-4 sm:p-6">
+              {selectedDayClients.length > 0 ? (
+                <SortableContext
+                  items={selectedDayClients.map(c => c.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <ul className="space-y-3">
+                    {selectedDayClients.map((client) => (
+                      <SortableClientItem key={client.id} client={client} onClientClick={handleClientClick} />
+                    ))}
+                  </ul>
+                </SortableContext>
+              ) : (
+                <div className="text-center py-12">
+                  <Calendar className="h-16 w-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+                  <p className="text-base text-gray-500 dark:text-gray-400">
+                    Nenhum cliente agendado para {selectedDayInfo?.label}.
+                  </p>
+                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
+                    Os clientes aparecerão aqui quando forem cadastrados para este dia.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
         {/* Modal para registrar visita */}
         <Dialog open={!!selectedClient} onOpenChange={() => setSelectedClient(null)}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto mx-2 sm:mx-4 md:mx-auto w-[calc(100vw-1rem)] sm:w-auto">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="text-lg sm:text-xl">Registrar Visita</DialogTitle>
-              <DialogDescription className="text-sm">
-                Registrar nova visita para {selectedClient?.name}
+              <DialogTitle className="text-xl sm:text-2xl">Registrar Visita</DialogTitle>
+              <DialogDescription className="text-sm sm:text-base">
+                Registrar nova visita para <span className="font-semibold">{selectedClient?.name}</span>
               </DialogDescription>
             </DialogHeader>
-            <div className="max-h-[70vh] overflow-y-auto px-1">
+            <div className="max-h-[70vh] overflow-y-auto">
               {selectedClient && (
                 <VisitForm 
                   onSubmit={handleVisitSubmit} 
