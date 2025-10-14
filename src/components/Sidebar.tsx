@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { AiHelperDialog } from './AiHelperDialog';
+// import { AiHelperDialog } from './AiHelperDialog'; // TODO: Reativar no futuro
 import { ProductCalculatorDialog } from './ProductCalculatorDialog';
 import { BillingWidget } from './BillingWidget';
 import { PiscineiroProfileWidget } from './PiscineiroProfileWidget';
@@ -84,7 +84,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               Ferramentas
             </h3>
             <div className="space-y-2">
-              <AiHelperDialog />
+              {/* TODO: Reativar IA Helper no futuro */}
+              {/* <AiHelperDialog /> */}
               <ProductCalculatorDialog />
               <Button 
                 onClick={() => setIsClienteAvulsoModalOpen(true)}
