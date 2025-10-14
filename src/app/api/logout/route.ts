@@ -1,23 +1,13 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
+import { signOut } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
-    const response = NextResponse.json({ success: true }, { status: 200 });
-
-    // Remove o cookie
-    response.cookies.set({
-      name: 'firebase-auth-token',
-      value: '',
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: -1,
-      path: '/',
-    });
-
-    return response;
+    await signOut(auth);
+    return NextResponse.json({ success: true });
   } catch (error) {
-    // Apenas logamos o erro no servidor, sem a variável 'error' não usada
-    console.error('Erro na API de logout:', error);
-    return NextResponse.json({ message: 'Erro interno do servidor.' }, { status: 500 });
+    console.error('Erro no logout:', error);
+    return NextResponse.json({ error: 'Erro ao fazer logout.' }, { status: 500 });
   }
 }

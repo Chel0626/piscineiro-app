@@ -72,6 +72,16 @@ export function WeatherWidget() {
     );
   }
 
+  // Verificar se os dados estão completos
+  if (!weather.current || typeof weather.current.weather_code === 'undefined') {
+    return (
+      <Card className="bg-yellow-100 dark:bg-yellow-900 border-yellow-400 dark:border-yellow-600 text-yellow-700 dark:text-yellow-300">
+        <CardHeader><CardTitle className="text-sm sm:text-base">Previsão do Tempo</CardTitle></CardHeader>
+        <CardContent><p className="text-sm">Dados do tempo incompletos. Tente novamente em alguns minutos.</p></CardContent>
+      </Card>
+    );
+  }
+
   const currentHour = new Date().getHours();
   const { description } = getWeatherInfo(weather.current.weather_code, currentHour);
 

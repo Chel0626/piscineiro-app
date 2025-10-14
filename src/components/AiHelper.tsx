@@ -1,4 +1,4 @@
-'use clieimport { ChevronDown, ChevronRight, FlaskConical, Play, ClipboardCheck } from "lucide-react";t';
+'use client';
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';

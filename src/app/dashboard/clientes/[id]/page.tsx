@@ -99,7 +99,7 @@ export default function ClienteDetailPage() {
 
       <Tabs defaultValue="history" className="w-full">
         {/* TabsList melhorada com espaçamento adequado */}
-        <TabsList className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-1 h-auto w-full bg-gray-100 dark:bg-gray-800 p-2 mb-6">
+        <TabsList className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-1 h-auto w-full bg-gray-100 dark:bg-gray-800 p-2 mb-6">
           <TabsTrigger 
             value="data" 
             className="text-sm sm:text-base px-4 py-3 data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-700 rounded-md font-medium transition-all"
@@ -111,6 +111,12 @@ export default function ClienteDetailPage() {
             className="text-sm sm:text-base px-4 py-3 data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-700 rounded-md font-medium transition-all"
           >
             📝 Histórico
+          </TabsTrigger>
+          <TabsTrigger 
+            value="calculator" 
+            className="text-sm sm:text-base px-4 py-3 data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-700 rounded-md font-medium transition-all"
+          >
+            🧮 Calculadora
           </TabsTrigger>
           <TabsTrigger 
             value="products" 
@@ -164,16 +170,13 @@ export default function ClienteDetailPage() {
         </TabsContent>
 
         <TabsContent value="history">
-          <div className="space-y-4 sm:space-y-8">
-            <ProductCalculator poolVolume={client.poolVolume} />
-            
-            <Card>
-              <CardHeader className="pb-3 sm:pb-6">
-                <CardTitle className="text-base sm:text-lg">Visitas Anteriores</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <h3 className="text-base sm:text-xl font-semibold mb-3 sm:mb-4 sr-only">Visitas Anteriores</h3>
-                <div className="space-y-3 sm:space-y-4">
+          <Card>
+            <CardHeader className="pb-3 sm:pb-6">
+              <CardTitle className="text-base sm:text-lg">Visitas Anteriores</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <h3 className="text-base sm:text-xl font-semibold mb-3 sm:mb-4 sr-only">Visitas Anteriores</h3>
+              <div className="space-y-3 sm:space-y-4">
                   {visits.length > 0 ? (
                     visits.map((visit) => (
                       <div key={visit.id} className="p-3 sm:p-4 border rounded-md">
@@ -250,7 +253,10 @@ export default function ClienteDetailPage() {
                 </div>
               </CardContent>
             </Card>
-          </div>
+        </TabsContent>
+
+        <TabsContent value="calculator">
+          <ProductCalculator poolVolume={client.poolVolume} />
         </TabsContent>
 
         <TabsContent value="products">

@@ -21,7 +21,9 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 const functions = getFunctions(app);
 
-// CONEXÃO COM O EMULADOR (só roda em ambiente de desenvolvimento)
+// CONEXÃO COM O EMULADOR (desabilitada para produção)
+// Comentado para evitar problemas em produção
+/*
 if (typeof window !== 'undefined' && 
     window.location.hostname === "localhost" && 
     process.env.NODE_ENV === 'development') {
@@ -35,5 +37,6 @@ if (typeof window !== 'undefined' &&
     console.warn("Erro ao conectar aos emuladores:", error);
   }
 }
+*/
 
 export { app, auth, db, storage, functions };

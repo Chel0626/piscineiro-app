@@ -139,7 +139,7 @@ export function ProductCalculator({ poolVolume }: ProductCalculatorProps) {
                   <FormItem>
                     <FormLabel>Alcalinidade (ppm)</FormLabel>
                     <FormControl>
-                      <Input type="number" step="1" placeholder="12" {...field} />
+                      <Input type="number" step="1" placeholder="100" {...field} />
                     </FormControl>
                   </FormItem>
                 )}

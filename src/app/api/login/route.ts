@@ -1,29 +1,38 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 export async function POST(request: NextRequest) {
   try {
-    const { token } = await request.json();
+    const { email, password } = await request.json();
 
-    if (!token) {
-      return NextResponse.json({ message: 'Token não fornecido.' }, { status: 400 });
+    if (!email || !password) {
+      return NextResponse.json({ error: 'Email e senha são obrigatórios.' }, { status: 400 });
     }
 
-    const response = NextResponse.json({ success: true }, { status: 200 });
-
-    // Define o cookie de forma segura
-    response.cookies.set({
-      name: 'firebase-auth-token',
-      value: token,
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 60 * 24 * 7, // 1 semana
-      path: '/',
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    
+    return NextResponse.json({ 
+      success: true, 
+      user: {
+        uid: user.uid,
+        email: user.email
+      }
     });
 
-    return response;
-  } catch (error) {
-    // Apenas logamos o erro no servidor, sem a variável 'error' não usada
-    console.error('Erro na API de login:', error);
-    return NextResponse.json({ message: 'Erro interno do servidor.' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Erro no login:', error);
+    
+    let message = 'Erro interno do servidor.';
+    if (error.code === 'auth/user-not-found') {
+      message = 'Usuário não encontrado.';
+    } else if (error.code === 'auth/wrong-password') {
+      message = 'Senha incorreta.';
+    } else if (error.code === 'auth/invalid-email') {
+      message = 'Email inválido.';
+    }
+    
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }
