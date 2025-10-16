@@ -27,7 +27,8 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ClientFormData } from '@/lib/validators/clientSchema';
-import { VisitForm, VisitFormData } from '@/components/VisitForm';
+import { VisitForm } from '@/components/VisitForm';
+import { VisitFormData } from '@/lib/schemas/visitSchema';
 
 // Tipagem para os clientes
 type Client = ClientFormData & { id: string; };
