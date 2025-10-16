@@ -69,7 +69,7 @@ function SortableClientItem({ client, onClientClick }: { client: Client; onClien
       </button>
       <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 dark:text-gray-400 flex-shrink-0" />
       <div 
-        className="flex-1 min-w-0 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded p-2 -m-2 transition-colors overflow-hidden"
+        className="flex-1 min-w-0 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded p-2 transition-colors overflow-hidden"
         onClick={() => onClientClick(client)}
       >
         <p className="font-semibold truncate text-gray-900 dark:text-gray-100 text-sm sm:text-base">{client.name}</p>
@@ -263,7 +263,7 @@ export default function RoteirosPage() {
 
         {/* Modal para registrar visita */}
         <Dialog open={!!selectedClient} onOpenChange={() => setSelectedClient(null)}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto mx-2 sm:mx-4 md:mx-auto w-[calc(100vw-1rem)] sm:w-auto">
+    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto mx-2 sm:mx-4 md:mx-auto w-full sm:w-auto max-w-full">
             <DialogHeader>
               <DialogTitle className="text-lg sm:text-xl">Registrar Visita</DialogTitle>
               <DialogDescription className="text-sm">
