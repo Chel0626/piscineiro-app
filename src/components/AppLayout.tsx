@@ -46,12 +46,12 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
   if (isProtectedRoute) {
     return (
       <FillReminderProvider>
-        <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 overflow-x-hidden">
           {/* Passamos o estado e a função de controle para a Sidebar */}
           <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
           
           {/* Conteúdo principal */}
-          <main className="flex-1 p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-gray-900 transition-all duration-300 ease-in-out md:ml-64 pb-20 md:pb-8">
+          <main className="flex-1 p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-gray-900 transition-all duration-300 ease-in-out md:ml-64 pb-20 md:pb-8 overflow-x-hidden w-full">
             {/* Header com botão hambúrguer e abastecimento */}
             <div className="md:hidden mb-4 flex items-center justify-between">
               <div className="flex items-center">

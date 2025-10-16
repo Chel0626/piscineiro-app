@@ -62,14 +62,14 @@ function SortableClientItem({ client, onClientClick }: { client: Client; onClien
       ref={setNodeRef}
       style={style}
       {...attributes}
-      className="flex items-center gap-1.5 sm:gap-3 p-2 sm:p-3 md:p-4 bg-gray-50 dark:bg-gray-800 rounded-lg overflow-hidden"
+      className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-gray-50 dark:bg-gray-800 rounded-lg w-full overflow-hidden"
     >
-      <button {...listeners} className="cursor-grab touch-none p-0.5 sm:p-1 flex-shrink-0">
+      <button {...listeners} className="cursor-grab touch-none p-1 flex-shrink-0">
         <GripVertical className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 dark:text-gray-500" />
       </button>
       <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 dark:text-gray-400 flex-shrink-0" />
       <div 
-        className="flex-1 min-w-0 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded p-2 transition-colors overflow-hidden"
+        className="flex-1 min-w-0 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded p-1 sm:p-2 transition-colors overflow-hidden"
         onClick={() => onClientClick(client)}
       >
         <p className="font-semibold truncate text-gray-900 dark:text-gray-100 text-sm sm:text-base">{client.name}</p>
@@ -171,7 +171,7 @@ export default function RoteirosPage() {
   
   return (
     <div className="w-full overflow-x-hidden">
-      <div className="container mx-auto px-2 sm:px-4 overflow-x-hidden">
+      <div className="w-full px-3 sm:px-4 md:px-6">
         <div className="mb-4 sm:mb-6">
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate">Roteiros da Semana</h1>
           <p className="text-muted-foreground text-xs sm:text-sm md:text-base">
@@ -180,41 +180,41 @@ export default function RoteirosPage() {
         </div>
 
         {/* Lista vertical de dias da semana */}
-        <div className="space-y-3 overflow-x-hidden">
+        <div className="space-y-3 w-full overflow-x-hidden">
           {daysOfWeek.map((day) => {
             const dayClients = localGroupedClients[day.key] || [];
             const isExpanded = expandedDays.includes(day.key);
             const clientsCount = dayClients.length;
 
             return (
-              <Card key={day.key} className="overflow-hidden">
+              <Card key={day.key} className="w-full overflow-hidden">
                 {/* Cabeçalho do dia - clicável para expandir/colapsar */}
                 <CardHeader 
-                  className="px-2 sm:px-4 md:px-6 py-2.5 sm:py-3 md:py-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   onClick={() => toggleDay(day.key)}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 min-w-0 flex-1">
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                       <Calendar className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
                       <div className="min-w-0 flex-1">
                         <CardTitle className="text-base sm:text-lg md:text-xl truncate">
                           {day.label}
                         </CardTitle>
-                        <CardDescription className="text-xs sm:text-sm">
+                        <CardDescription className="text-xs sm:text-sm truncate">
                           {clientsCount} cliente(s) agendado(s)
                         </CardDescription>
                       </div>
                     </div>
                     <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                       {clientsCount > 0 && (
-                        <span className="bg-blue-500 text-white text-xs rounded-full h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 flex items-center justify-center font-medium">
+                        <span className="bg-blue-500 text-white text-xs rounded-full h-6 w-6 sm:h-7 sm:w-7 flex items-center justify-center font-medium">
                           {clientsCount}
                         </span>
                       )}
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-6 w-6 sm:h-8 sm:w-8 p-0 text-xs sm:text-sm"
+                        className="h-8 w-8 p-0"
                       >
                         {isExpanded ? '▲' : '▼'}
                       </Button>
@@ -224,7 +224,7 @@ export default function RoteirosPage() {
 
                 {/* Conteúdo expandido com os clientes */}
                 {isExpanded && (
-                  <CardContent className="px-2 sm:px-4 md:px-6 pb-3 sm:pb-4 overflow-hidden">
+                  <CardContent className="px-3 sm:px-4 md:px-6 pb-4 w-full overflow-hidden">
                     {dayClients.length > 0 ? (
                       <DndContext
                         sensors={sensors}
@@ -235,7 +235,7 @@ export default function RoteirosPage() {
                           items={dayClients.map(c => c.id)}
                           strategy={verticalListSortingStrategy}
                         >
-                          <ul className="space-y-2 overflow-hidden">
+                          <ul className="space-y-2 sm:space-y-3 w-full overflow-hidden">
                             {dayClients.map((client) => (
                               <SortableClientItem 
                                 key={client.id} 
@@ -265,8 +265,8 @@ export default function RoteirosPage() {
         <Dialog open={!!selectedClient} onOpenChange={() => setSelectedClient(null)}>
           <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="text-base sm:text-lg md:text-xl">Registrar Visita</DialogTitle>
-              <DialogDescription className="text-xs sm:text-sm">
+              <DialogTitle className="text-lg sm:text-xl">Registrar Visita</DialogTitle>
+              <DialogDescription className="text-sm">
                 Registrar nova visita para {selectedClient?.name}
               </DialogDescription>
             </DialogHeader>
