@@ -1,7 +1,7 @@
 'use client';
 
 import { useForm } from 'react-hook-form';
-import * as z from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,17 +17,7 @@ import { useClientDetails } from '@/hooks/useClientDetails';
 import { toast } from 'sonner';
 import { Send, Camera, Clock, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-
-const formSchema = z.object({
-  ph: z.coerce.number().min(0, { message: 'pH inválido.' }),
-  cloro: z.coerce.number().min(0, { message: 'Cloro inválido.' }),
-  alcalinidade: z.coerce.number().min(0, { message: 'Alcalinidade inválida.' }),
-  description: z.string().optional(),
-  departureTime: z.string().optional(),
-  poolPhoto: z.string().optional(),
-});
-
-type VisitFormData = z.infer<typeof formSchema>;
+import { visitFormSchema, VisitFormData } from '@/lib/schemas/visitSchema';
 
 export type { VisitFormData };
 
@@ -51,6 +41,7 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
   };
   
   const form = useForm<VisitFormData>({
+    resolver: zodResolver(visitFormSchema),
     defaultValues: {
       ph: initialData?.ph || 7.4,
       cloro: initialData?.cloro || 0,
@@ -122,7 +113,7 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
 
   const handleFormSubmit = async (data: VisitFormData) => {
     try {
-      const validatedData = formSchema.parse(data);
+      const validatedData = visitFormSchema.parse(data);
       
       // Filtrar campos undefined antes de enviar ao Firebase
       const cleanedData = {
@@ -147,14 +138,8 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
       setPhotoPreview('');
       setIsCapturing(false);
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        error.issues.forEach((err) => {
-          form.setError(err.path[0] as keyof VisitFormData, {
-            type: 'manual',
-            message: err.message,
-          });
-        });
-      }
+      // Validation errors are handled by react-hook-form
+      console.error('Form validation error:', error);
     }
   };
 

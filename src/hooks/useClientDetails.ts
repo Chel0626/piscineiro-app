@@ -5,7 +5,7 @@ import { doc, onSnapshot, collection, query, orderBy, Timestamp } from 'firebase
 import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
 import { ClientFormData } from '@/lib/validators/clientSchema';
-import { VisitFormData } from '@/components/VisitForm';
+import { VisitFormData } from '@/lib/schemas/visitSchema';
 
 // Tipos de dados
 interface ClientDetails extends ClientFormData {
