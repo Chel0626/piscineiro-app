@@ -26,7 +26,7 @@ export async function GET() {
         weather_code: currentWeatherCode
       },
       hourly: hourly,
-      city: 'São Paulo, SP'
+      city: 'Indaiatuba, SP'
     };
 
     return NextResponse.json(weatherData);
