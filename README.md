@@ -108,8 +108,26 @@ src/
 ├── hooks/                  # Custom hooks
 ├── context/               # Context providers (Auth, etc)
 ├── lib/                   # Utilities, schemas, Firebase
+│   ├── schemas/           # Zod schemas & types
+│   └── validators/        # Validation functions
 └── public/                # Assets estáticos, PWA
 ```
+
+### 📖 Arquitetura de Módulos
+
+O projeto segue uma **arquitetura em camadas** com separação clara de responsabilidades:
+
+```
+app/ (Páginas) → components/ (UI) → hooks/ + context/ (Lógica) → lib/ (Base)
+```
+
+**Regras importantes:**
+- ✅ Camadas superiores podem importar das inferiores
+- ❌ Camadas inferiores NÃO devem importar das superiores
+- ✅ Tipos compartilhados devem estar em `/lib/schemas`
+- ✅ Lógica de negócio deve estar em hooks, não em componentes
+
+Para mais detalhes sobre a arquitetura, boas práticas e como evitar dependências circulares, consulte o [**ARCHITECTURE.md**](./ARCHITECTURE.md).
 
 ---
 
