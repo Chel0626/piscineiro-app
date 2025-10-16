@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useClients } from '@/hooks/useClients';
 import { usePayments } from '@/hooks/usePayments';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -13,6 +14,7 @@ export function OverduePaymentsWidget() {
   const { clients, authLoading } = useClients();
   const { markAsPaid, getPaymentStatus } = usePayments();
   const router = useRouter();
+  const [isExpanded, setIsExpanded] = useState(true);
 
   if (authLoading) {
     return null;
@@ -56,17 +58,28 @@ export function OverduePaymentsWidget() {
   return (
     <Card className="border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/30">
       <CardHeader>
-        <CardTitle className="text-red-700 dark:text-red-400 flex items-center gap-2">
-          <AlertTriangle className="h-5 w-5" />
-          Pagamentos Vencidos
-        </CardTitle>
-        <CardDescription className="dark:text-red-300">
-          {overdueClients.length} cliente(s) com mensalidade em atraso.
-          <br />
-          <strong className="text-red-600 dark:text-red-400">Total: R$ {getTotalOverdue().toFixed(2)}</strong>
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <CardTitle className="text-red-700 dark:text-red-400 flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5" />
+              Pagamentos Vencidos
+            </CardTitle>
+            <CardDescription className="dark:text-red-300">
+              {overdueClients.length} cliente(s) • Total: R$ {getTotalOverdue().toFixed(2)}
+            </CardDescription>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="text-xs text-red-600 dark:text-red-400"
+          >
+            {isExpanded ? 'Ocultar' : 'Expandir'}
+          </Button>
+        </div>
       </CardHeader>
-      <CardContent>
+      {isExpanded && (
+        <CardContent>
         <ul className="space-y-3">
           {overdueClients.map(client => {
             const daysOverdue = new Date().getDate() - client.paymentDueDate;
@@ -123,7 +136,8 @@ export function OverduePaymentsWidget() {
             );
           })}
         </ul>
-      </CardContent>
+        </CardContent>
+      )}
     </Card>
   );
 }
