@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Sun, Cloud, CloudRain, CloudSnow, CloudSun, Zap, CloudFog, Moon, Cloudy } from 'lucide-react';
 
 interface WeatherData {
@@ -40,6 +41,7 @@ const WeatherIcon = ({ code, hour }: { code: number; hour: number }) => {
 export function WeatherWidget() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     // Buscar dados do tempo
@@ -87,31 +89,45 @@ export function WeatherWidget() {
 
   return (
     <Card className="dark:bg-gray-800 dark:border-gray-700">
-      <CardHeader className="pb-3 sm:pb-6">
-        <CardTitle className="text-base sm:text-lg dark:text-white">Previsão para {weather.city}</CardTitle>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base sm:text-lg dark:text-white">
+            Previsão para {weather.city}
+          </CardTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="text-xs text-gray-600 dark:text-gray-400"
+          >
+            {isExpanded ? 'Mostrar menos' : 'Ver mais'}
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center gap-3 sm:gap-4">
           <WeatherIcon code={weather.current.weather_code} hour={currentHour} />
           <div>
-            <p className="text-2xl sm:text-4xl font-bold dark:text-white">{weather.current.temp}°C</p>
+            <p className="text-2xl sm:text-3xl font-bold dark:text-white">{weather.current.temp}°C</p>
             <p className="text-sm text-muted-foreground dark:text-gray-400 capitalize">{description}</p>
           </div>
         </div>
         
-        <div>
-          <h4 className="font-semibold mb-3 text-sm sm:text-base dark:text-white">Próximas horas:</h4>
-          {/* Grid responsivo que se adapta ao tamanho da tela */}
-          <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2 sm:gap-3">
-            {weather.hourly.slice(0, 8).map((hour, index) => (
-              <div key={index} className="flex flex-col items-center gap-1 sm:gap-2 p-2 sm:p-3 rounded-lg bg-gray-100 dark:bg-gray-700">
-                <span className="text-xs sm:text-sm font-medium dark:text-gray-300">{hour.time}h</span>
-                <WeatherIcon code={hour.weather_code} hour={hour.time} />
-                <span className="text-xs sm:text-sm font-bold dark:text-white">{hour.temp}°</span>
-              </div>
-            ))}
+        {isExpanded && (
+          <div>
+            <h4 className="font-semibold mb-3 text-sm dark:text-white">Próximas horas:</h4>
+            {/* Grid responsivo que se adapta ao tamanho da tela */}
+            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+              {weather.hourly.slice(0, 8).map((hour, index) => (
+                <div key={index} className="flex flex-col items-center gap-1 p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
+                  <span className="text-xs font-medium dark:text-gray-300">{hour.time}h</span>
+                  <WeatherIcon code={hour.weather_code} hour={hour.time} />
+                  <span className="text-xs font-bold dark:text-white">{hour.temp}°</span>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   );

@@ -36,6 +36,7 @@ export function DailyRouteWidget() {
   const [visitedToday, setVisitedToday] = useState<Set<string>>(new Set());
   const [showAllPending, setShowAllPending] = useState(false);
   const [showAllCompleted, setShowAllCompleted] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
   const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState<string>('');
 
@@ -142,16 +143,29 @@ export function DailyRouteWidget() {
   return (
     <Card>
       <CardHeader className="pb-3 sm:pb-6">
-        <CardTitle className="text-base sm:text-lg">Roteiro de Hoje ({today})</CardTitle>
-        <CardDescription className="text-sm">
-          {pendingClients.length > 0
-            ? `Você tem ${pendingClients.length} cliente(s) pendente(s) para visitar hoje.`
-            : allDailyClients.length > 0 
-              ? 'Todas as visitas de hoje foram concluídas! 🎉'
-              : 'Você não tem visitas agendadas para hoje.'}
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <CardTitle className="text-base sm:text-lg">Roteiro de Hoje ({today})</CardTitle>
+            <CardDescription className="text-sm">
+              {pendingClients.length > 0
+                ? `${pendingClients.length} pendente(s) • ${completedClients.length} concluído(s)`
+                : allDailyClients.length > 0 
+                  ? 'Todas as visitas concluídas! 🎉'
+                  : 'Sem visitas agendadas'}
+            </CardDescription>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="text-xs text-gray-600 dark:text-gray-400"
+          >
+            {isExpanded ? 'Ocultar' : 'Expandir'}
+          </Button>
+        </div>
       </CardHeader>
-      <CardContent>
+      {isExpanded && (
+        <CardContent>
         {/* Clientes pendentes */}
         {pendingClients.length > 0 && (
           <div className="space-y-3">
@@ -268,7 +282,8 @@ export function DailyRouteWidget() {
             Aproveite o dia de descanso!
           </div>
         )}
-      </CardContent>
+        </CardContent>
+      )}
 
       {/* Modal de Check-out */}
       <CheckoutModal

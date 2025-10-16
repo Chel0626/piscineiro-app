@@ -1,6 +1,7 @@
 // src/components/PaymentsDueWidget.tsx
 'use client';
 
+import { useState } from 'react';
 import { useClients } from '@/hooks/useClients';
 import { usePayments } from '@/hooks/usePayments';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -14,6 +15,7 @@ export function PaymentsDueWidget() {
   const { clients, authLoading } = useClients();
   const { markAsPaid, getPaymentStatus } = usePayments();
   const router = useRouter();
+  const [isExpanded, setIsExpanded] = useState(true);
 
   if (authLoading) {
     return null; // Não mostra nada enquanto carrega
@@ -57,17 +59,28 @@ export function PaymentsDueWidget() {
   return (
     <Card className="border-orange-200 dark:border-orange-700 bg-orange-50 dark:bg-orange-900/30">
       <CardHeader>
-        <CardTitle className="text-orange-700 dark:text-orange-400 flex items-center gap-2">
-          <Clock className="h-5 w-5" />
-          Vencimentos de Hoje
-        </CardTitle>
-        <CardDescription className="dark:text-orange-300">
-          {dueClients.length} cliente(s) com mensalidade vencendo hoje.
-          <br />
-          <strong className="text-orange-600 dark:text-orange-400">Total: R$ {getTotalDue().toFixed(2)}</strong>
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <CardTitle className="text-orange-700 dark:text-orange-400 flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              Vencimentos de Hoje
+            </CardTitle>
+            <CardDescription className="dark:text-orange-300">
+              {dueClients.length} cliente(s) • Total: R$ {getTotalDue().toFixed(2)}
+            </CardDescription>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="text-xs text-orange-600 dark:text-orange-400"
+          >
+            {isExpanded ? 'Ocultar' : 'Expandir'}
+          </Button>
+        </div>
       </CardHeader>
-      <CardContent>
+      {isExpanded && (
+        <CardContent>
         <ul className="space-y-3">
           {dueClients.map(client => (
             <li 
@@ -118,7 +131,8 @@ export function PaymentsDueWidget() {
             </li>
           ))}
         </ul>
-      </CardContent>
+        </CardContent>
+      )}
     </Card>
   );
 }
