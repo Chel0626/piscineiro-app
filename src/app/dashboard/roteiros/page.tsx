@@ -95,8 +95,8 @@ export default function RoteirosPage() {
   const { groupedClients, isLoading } = useRoutines();
   // Estado local para gerenciar a ordem dos clientes de cada dia
   const [localGroupedClients, setLocalGroupedClients] = useState(groupedClients);
-  // Estado para controlar qual dia está selecionado
-  const [selectedDay, setSelectedDay] = useState(daysOfWeek[0].key);
+  // Estado para controlar quais dias estão expandidos (pode ter vários abertos ao mesmo tempo)
+  const [expandedDays, setExpandedDays] = useState<string[]>([daysOfWeek[0].key]);
   // Estado para o modal de registrar visita
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -105,6 +105,14 @@ export default function RoteirosPage() {
   useEffect(() => {
     setLocalGroupedClients(groupedClients);
   }, [groupedClients]);
+
+  const toggleDay = (dayKey: string) => {
+    setExpandedDays(prev => 
+      prev.includes(dayKey) 
+        ? prev.filter(d => d !== dayKey)
+        : [...prev, dayKey]
+    );
+  };
 
   const handleClientClick = (client: Client) => {
     setSelectedClient(client);
@@ -136,20 +144,19 @@ export default function RoteirosPage() {
     })
   );
 
-  function handleDragEnd(event: DragEndEvent) {
+  function handleDragEnd(event: DragEndEvent, dayKey: string) {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      // Trabalha apenas com o dia selecionado
       setLocalGroupedClients(prev => {
-        const clientsForDay = prev[selectedDay] || [];
+        const clientsForDay = prev[dayKey] || [];
         const oldIndex = clientsForDay.findIndex(c => c.id === active.id);
         const newIndex = clientsForDay.findIndex(c => c.id === over.id);
         
         if (oldIndex !== -1 && newIndex !== -1) {
           return {
             ...prev,
-            [selectedDay]: arrayMove(clientsForDay, oldIndex, newIndex),
+            [dayKey]: arrayMove(clientsForDay, oldIndex, newIndex),
           };
         }
         return prev;
@@ -161,110 +168,98 @@ export default function RoteirosPage() {
   if (isLoading) {
     return <div>Carregando roteiros...</div>;
   }
-
-  const selectedDayClients = localGroupedClients[selectedDay] || [];
-  const selectedDayInfo = daysOfWeek.find(day => day.key === selectedDay);
   
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragEnd={handleDragEnd}
-    >
-      <div className="w-full max-w-full overflow-x-hidden min-w-0">
-        <div className="container mx-auto px-4 max-w-full overflow-x-hidden min-w-0">
+    <div className="w-full max-w-full overflow-x-hidden min-w-0">
+      <div className="container mx-auto px-4 max-w-full overflow-x-hidden min-w-0">
         <div className="mb-4 sm:mb-6">
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate">Roteiros da Semana</h1>
           <p className="text-muted-foreground text-xs sm:text-sm md:text-base">
-            Selecione um dia e arraste os clientes para reordenar sua rota de visitas.
+            Clique em um dia para expandir e arraste os clientes para reordenar sua rota.
           </p>
         </div>
 
-        {/* Botões dos dias da semana */}
-        <div className="mb-4 sm:mb-6 w-full max-w-full overflow-x-hidden">
-          <div className="flex flex-col gap-2 w-full max-w-full min-w-0">
-            {/* Primeira linha: Segunda a Quarta */}
-            <div className="grid grid-cols-3 gap-1 sm:gap-2 w-full max-w-full min-w-0 overflow-x-hidden">
-              {daysOfWeek.slice(0, 3).map((day) => {
-                const clientsCount = localGroupedClients[day.key]?.length || 0;
-                const isSelected = selectedDay === day.key;
-                return (
-                  <Button
-                    key={day.key}
-                    variant={isSelected ? "default" : "outline"}
-                    onClick={() => setSelectedDay(day.key)}
-                    className="flex flex-col h-12 sm:h-14 md:h-16 px-1 sm:px-2 md:px-3 py-1 sm:py-2 relative w-full text-center min-w-0 text-xs sm:text-sm"
-                  >
-                    <span className="font-medium truncate w-full leading-tight">{day.short}</span>
-                    <span className="text-xs opacity-75 hidden sm:block truncate w-full leading-tight">{day.label}</span>
-                    {clientsCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center text-xs">
-                        {clientsCount}
-                      </span>
-                    )}
-                  </Button>
-                );
-              })}
-            </div>
-            {/* Segunda linha: Quinta a Domingo */}
-            <div className="grid grid-cols-4 gap-1 sm:gap-2 w-full max-w-full min-w-0 overflow-x-hidden">
-              {daysOfWeek.slice(3).map((day) => {
-                const clientsCount = localGroupedClients[day.key]?.length || 0;
-                const isSelected = selectedDay === day.key;
-                return (
-                  <Button
-                    key={day.key}
-                    variant={isSelected ? "default" : "outline"}
-                    onClick={() => setSelectedDay(day.key)}
-                    className="flex flex-col h-12 sm:h-14 md:h-16 px-1 sm:px-2 md:px-3 py-1 sm:py-2 relative w-full text-center min-w-0 text-xs sm:text-sm"
-                  >
-                    <span className="font-medium truncate w-full leading-tight">{day.short}</span>
-                    <span className="text-xs opacity-75 hidden sm:block truncate w-full leading-tight">{day.label}</span>
-                    {clientsCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center text-xs">
-                        {clientsCount}
-                      </span>
-                    )}
-                  </Button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
+        {/* Lista vertical de dias da semana */}
+        <div className="space-y-3 w-full max-w-full overflow-x-hidden">
+          {daysOfWeek.map((day) => {
+            const dayClients = localGroupedClients[day.key] || [];
+            const isExpanded = expandedDays.includes(day.key);
+            const clientsCount = dayClients.length;
 
-        {/* Card do dia selecionado */}
-        <Card className="w-full max-w-full overflow-hidden min-w-0">
-          <CardHeader className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 min-w-0">
-            <CardTitle className="flex items-center gap-2 text-base sm:text-lg md:text-xl min-w-0">
-              <Calendar className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
-              <span className="truncate min-w-0">{selectedDayInfo?.label}</span>
-            </CardTitle>
-            <CardDescription className="text-xs sm:text-sm">
-              {selectedDayClients.length} cliente(s) agendado(s)
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="px-3 sm:px-4 md:px-6 pb-4 w-full max-w-full overflow-hidden min-w-0">
-            {selectedDayClients.length > 0 ? (
-              <SortableContext
-                items={selectedDayClients.map(c => c.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                <ul className="space-y-2 sm:space-y-3 w-full max-w-full overflow-hidden min-w-0">
-                  {selectedDayClients.map((client) => (
-                    <SortableClientItem key={client.id} client={client} onClientClick={handleClientClick} />
-                  ))}
-                </ul>
-              </SortableContext>
-            ) : (
-              <div className="text-center py-6 sm:py-8">
-                <Calendar className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 mx-auto text-gray-400 mb-4" />
-                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                  Nenhum cliente agendado para {selectedDayInfo?.label}.
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+            return (
+              <Card key={day.key} className="w-full max-w-full overflow-hidden min-w-0">
+                {/* Cabeçalho do dia - clicável para expandir/colapsar */}
+                <CardHeader 
+                  className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  onClick={() => toggleDay(day.key)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                      <Calendar className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <CardTitle className="text-base sm:text-lg md:text-xl truncate">
+                          {day.label}
+                        </CardTitle>
+                        <CardDescription className="text-xs sm:text-sm">
+                          {clientsCount} cliente(s) agendado(s)
+                        </CardDescription>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {clientsCount > 0 && (
+                        <span className="bg-blue-500 text-white text-xs rounded-full h-6 w-6 sm:h-7 sm:w-7 flex items-center justify-center font-medium">
+                          {clientsCount}
+                        </span>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                      >
+                        {isExpanded ? '▲' : '▼'}
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+
+                {/* Conteúdo expandido com os clientes */}
+                {isExpanded && (
+                  <CardContent className="px-3 sm:px-4 md:px-6 pb-4 w-full max-w-full overflow-hidden min-w-0">
+                    {dayClients.length > 0 ? (
+                      <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={(event) => handleDragEnd(event, day.key)}
+                      >
+                        <SortableContext
+                          items={dayClients.map(c => c.id)}
+                          strategy={verticalListSortingStrategy}
+                        >
+                          <ul className="space-y-2 sm:space-y-3 w-full max-w-full overflow-hidden min-w-0">
+                            {dayClients.map((client) => (
+                              <SortableClientItem 
+                                key={client.id} 
+                                client={client} 
+                                onClientClick={handleClientClick} 
+                              />
+                            ))}
+                          </ul>
+                        </SortableContext>
+                      </DndContext>
+                    ) : (
+                      <div className="text-center py-6 sm:py-8">
+                        <Calendar className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 mx-auto text-gray-400 mb-4" />
+                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                          Nenhum cliente agendado para {day.label}.
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                )}
+              </Card>
+            );
+          })}
+        </div>
 
         {/* Modal para registrar visita */}
         <Dialog open={!!selectedClient} onOpenChange={() => setSelectedClient(null)}>
@@ -286,8 +281,7 @@ export default function RoteirosPage() {
             </div>
           </DialogContent>
         </Dialog>
-        </div>
       </div>
-    </DndContext>
+    </div>
   );
 }
