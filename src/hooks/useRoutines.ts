@@ -57,6 +57,15 @@ export function useRoutines() {
         return acc;
       }, {} as GroupedClients);
 
+      // Ordenar clientes de cada dia pela ordem salva (routeOrder)
+      Object.keys(grouped).forEach(day => {
+        grouped[day].sort((a, b) => {
+          const orderA = a.routeOrder?.[day] ?? 999999;
+          const orderB = b.routeOrder?.[day] ?? 999999;
+          return orderA - orderB;
+        });
+      });
+
       setGroupedClients(grouped);
       setIsLoading(false);
     }, (error) => {

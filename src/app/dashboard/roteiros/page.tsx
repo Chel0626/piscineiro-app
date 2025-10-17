@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useRoutines } from '@/hooks/useRoutines';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -144,24 +144,39 @@ export default function RoteirosPage() {
     })
   );
 
-  function handleDragEnd(event: DragEndEvent, dayKey: string) {
+  async function handleDragEnd(event: DragEndEvent, dayKey: string) {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      setLocalGroupedClients(prev => {
-        const clientsForDay = prev[dayKey] || [];
-        const oldIndex = clientsForDay.findIndex(c => c.id === active.id);
-        const newIndex = clientsForDay.findIndex(c => c.id === over.id);
+      const clientsForDay = localGroupedClients[dayKey] || [];
+      const oldIndex = clientsForDay.findIndex(c => c.id === active.id);
+      const newIndex = clientsForDay.findIndex(c => c.id === over.id);
+      
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const reorderedClients = arrayMove(clientsForDay, oldIndex, newIndex);
         
-        if (oldIndex !== -1 && newIndex !== -1) {
-          return {
-            ...prev,
-            [dayKey]: arrayMove(clientsForDay, oldIndex, newIndex),
-          };
+        // Atualizar estado local imediatamente
+        setLocalGroupedClients(prev => ({
+          ...prev,
+          [dayKey]: reorderedClients,
+        }));
+
+        // Salvar a nova ordem no Firestore
+        try {
+          const updatePromises = reorderedClients.map((client, index) => {
+            const clientRef = doc(db, 'clients', client.id);
+            return updateDoc(clientRef, {
+              [`routeOrder.${dayKey}`]: index
+            });
+          });
+
+          await Promise.all(updatePromises);
+          toast.success("Ordem da rota salva!");
+        } catch (error) {
+          console.error('Erro ao salvar ordem:', error);
+          toast.error("Erro ao salvar a ordem. Tente novamente.");
         }
-        return prev;
-      });
-      toast.success("Ordem da rota atualizada!");
+      }
     }
   }
 

@@ -18,6 +18,9 @@ export const clientFormSchema = z.object({
   paymentDueDate: z.number().min(1, { message: "O dia do vencimento deve ser um número." })
     .min(1, { message: "O dia deve ser entre 1 e 31." })
     .max(31, { message: "O dia deve ser entre 1 e 31." }),
+  
+  // Campo opcional para armazenar a ordem dos clientes em cada dia
+  routeOrder: z.record(z.string(), z.number()).optional(),
 });
 
 // Schema para compatibilidade com dados antigos (migração)
