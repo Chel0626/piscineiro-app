@@ -1,39 +1,27 @@
-import { NextResponse, type NextRequest } from 'next/server';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth as adminAuth } from '@/lib/firebase-admin';
 
-export async function POST(request: NextRequest) {
+// Endpoint espera receber { token } (ID token do Firebase) enviado pelo cliente.
+// O cliente faz signIn client-side e envia o idToken para cá.
+export async function POST(request: Request) {
+  console.log('[api/login] Recebendo requisição POST');
   try {
-    const { email, password } = await request.json();
+    const body = await request.json();
+    console.log('[api/login] Body recebido:', JSON.stringify(body));
+    const token = body?.token as string | undefined;
 
-    if (!email || !password) {
-      return NextResponse.json({ error: 'Email e senha são obrigatórios.' }, { status: 400 });
+    if (!token) {
+      console.warn('[api/login] Token ausente no body');
+      return new Response(JSON.stringify({ error: 'Token é obrigatório.' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
     }
 
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
-    
-    return NextResponse.json({ 
-      success: true, 
-      user: {
-        uid: user.uid,
-        email: user.email
-      }
-    });
+    console.log('[api/login] Verificando ID token com Firebase Admin...');
+    // Verifica o ID token com o Firebase Admin
+    const decoded = await adminAuth.verifyIdToken(token);
 
-  } catch (error) {
-    let message = 'Erro interno do servidor.';
-    if (typeof error === 'object' && error !== null && 'code' in error) {
-      const code = (error as { code?: string }).code;
-      if (code === 'auth/user-not-found') {
-        message = 'Usuário não encontrado.';
-      } else if (code === 'auth/wrong-password') {
-        message = 'Senha incorreta.';
-      } else if (code === 'auth/invalid-email') {
-        message = 'Email inválido.';
-      }
-    }
-    console.error('Erro no login:', error);
-    return NextResponse.json({ error: message }, { status: 400 });
+    console.log('[api/login] Token válido para uid=', decoded.uid);
+    return new Response(JSON.stringify({ success: true, user: { uid: decoded.uid, email: decoded.email ?? null } }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  } catch (err) {
+    console.error('[api/login] Erro ao verificar token:', err);
+    return new Response(JSON.stringify({ error: 'Token inválido ou expirado.' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
   }
 }
