@@ -21,6 +21,11 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Gera apenas as páginas estáticas, deixa rotas dinâmicas para client-side
+  distDir: '.next',
+  // Desabilita geração de páginas dinâmicas no build
+  // Elas serão renderizadas client-side (SPA mode)
+  skipTrailingSlashRedirect: true,
 };
 
 export default nextConfig;
