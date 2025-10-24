@@ -5,6 +5,8 @@ const path = require('path');
 
 const nextConfigPath = path.join(__dirname, '..', 'next.config.mjs');
 const nextConfigBackupPath = path.join(__dirname, '..', 'next.config.mjs.backup');
+const apiPath = path.join(__dirname, '..', 'src', 'app', 'api');
+const apiBackupPath = path.join(__dirname, '..', 'src', 'app', 'api.backup');
 
 const mobileConfig = `/** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -39,16 +41,33 @@ if (command === 'prepare') {
   fs.writeFileSync(nextConfigPath, mobileConfig);
   console.log('✅ Configuração mobile aplicada');
   
+  // Backup e remove pasta API (não compatível com export estático)
+  if (fs.existsSync(apiPath) && !fs.existsSync(apiBackupPath)) {
+    fs.renameSync(apiPath, apiBackupPath);
+    console.log('✅ Pasta API temporariamente removida para build mobile');
+  }
+  
 } else if (command === 'restore') {
   console.log('🔄 Restaurando configuração original...');
   
-  // Restaura backup
+  // Restaura backup do next.config
   if (fs.existsSync(nextConfigBackupPath)) {
     fs.copyFileSync(nextConfigBackupPath, nextConfigPath);
     fs.unlinkSync(nextConfigBackupPath);
     console.log('✅ Configuração original restaurada');
   } else {
-    console.log('⚠️  Nenhum backup encontrado para restaurar');
+    console.log('⚠️  Nenhum backup do next.config encontrado');
+  }
+  
+  // Restaura pasta API
+  if (fs.existsSync(apiBackupPath)) {
+    if (fs.existsSync(apiPath)) {
+      fs.rmSync(apiPath, { recursive: true, force: true });
+    }
+    fs.renameSync(apiBackupPath, apiPath);
+    console.log('✅ Pasta API restaurada');
+  } else {
+    console.log('⚠️  Nenhum backup da pasta API encontrado');
   }
   
 } else {
