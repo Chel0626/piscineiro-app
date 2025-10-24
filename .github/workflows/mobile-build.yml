@@ -34,6 +34,12 @@ jobs:
       - name: Update version
         run: node scripts/update-version.js
 
+      - name: Create placeholder web directory
+        run: |
+          mkdir -p out
+          echo '<!DOCTYPE html><html><body><p>Loading from Vercel...</p></body></html>' > out/index.html
+          cp capacitor.config.ts out/ || true
+
       - name: Sync Capacitor
         run: npx cap sync android
 
