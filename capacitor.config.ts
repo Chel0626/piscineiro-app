@@ -5,6 +5,8 @@ const config: CapacitorConfig = {
   appName: 'Piscineiro App',
   webDir: 'out',
   server: {
+    url: 'https://piscineiro-app.vercel.app',
+    cleartext: true,
     androidScheme: 'https'
   },
   plugins: {

@@ -6,7 +6,7 @@
     "dev": "next dev --turbopack",
     "postinstall": "cd functions && npm install",
     "build": "next build --turbopack",
-    "build:mobile": "node scripts/prepare-mobile-build.js prepare && CAPACITOR_BUILD=true next build --turbopack && node scripts/prepare-mobile-build.js restore",
+    "build:mobile": "node scripts/build-mobile.js",
     "start": "next start",
     "lint": "eslint",
     "mobile:sync": "npx cap sync",
