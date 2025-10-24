@@ -1,24 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import admin from 'firebase-admin';
+import { auth } from '@/lib/firebase-admin';
+import { getFirestore } from 'firebase-admin/firestore';
 
-// Garante que a chave de serviço seja lida como uma string
-const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-
-if (!serviceAccountString) {
-  // Lança um erro claro se a variável de ambiente não estiver configurada
-  // Isso fará o build falhar se a variável não estiver na Vercel, o que é o desejado.
-  throw new Error('A variável de ambiente FIREBASE_SERVICE_ACCOUNT_KEY não está definida.');
-}
-
-const serviceAccount = JSON.parse(serviceAccountString);
-
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
-}
-
-const db = admin.firestore();
+const db = getFirestore();
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,7 +17,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Não autorizado: Token não encontrado.' }, { status: 401 });
     }
 
-    const decodedToken = await admin.auth().verifyIdToken(token);
+    const decodedToken = await auth.verifyIdToken(token);
     const uid = decodedToken.uid;
 
     if (!uid) {

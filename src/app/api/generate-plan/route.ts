@@ -7,14 +7,17 @@ import {
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-if (!GEMINI_API_KEY) {
-  throw new Error('GEMINI_API_KEY não está definida.');
-}
-
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-
 export async function POST(request: NextRequest) {
   try {
+    if (!GEMINI_API_KEY) {
+      return NextResponse.json(
+        { error: 'GEMINI_API_KEY não está configurada. Configure a chave da API do Google Gemini.' },
+        { status: 500 }
+      );
+    }
+
+    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+    
     const body = await request.json();
     const { imageBase64, mimeType, poolVolume, ph, cloro, alcalinidade, description } = body;
 
