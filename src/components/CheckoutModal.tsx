@@ -268,7 +268,7 @@ export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps)
             )}
           </Card>
 
-          {/* Seção 3: Checkout Mecânico */}
+          {/* Seção 3: Checkout Hidráulico */}
           <Card className="border-orange-200 dark:border-orange-800">
             <CardHeader 
               className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
@@ -277,7 +277,7 @@ export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps)
               <CardTitle className="flex items-center justify-between text-lg">
                 <div className="flex items-center gap-2">
                   <Settings className="h-5 w-5 text-orange-600" />
-                  Checkout Mecânico
+                  Checkout Hidráulico
                 </div>
                 {openSections.mechanical ? (
                   <ChevronDown className="h-5 w-5" />

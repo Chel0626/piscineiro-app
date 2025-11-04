@@ -252,9 +252,9 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
             control={form.control}
             name="alcalinidade"
             render={({ field }) => {
-              // Para alcalinidade vou usar intervalos de 10 entre 80-120
-              const alcalinidadeValues = [80, 90, 100, 110, 120];
-              const currentIndex = alcalinidadeValues.indexOf(Number(field.value)) >= 0 ? alcalinidadeValues.indexOf(Number(field.value)) : 2; // default 100
+              // Permitir alcalinidade de 0 até 200, de 10 em 10
+              const alcalinidadeValues = Array.from({ length: 21 }, (_, i) => i * 10); // [0, 10, ..., 200]
+              const currentIndex = alcalinidadeValues.indexOf(Number(field.value)) >= 0 ? alcalinidadeValues.indexOf(Number(field.value)) : 8; // default 80
               return (
                 <FormItem>
                   <FormLabel>Alcalinidade (ppm)</FormLabel>

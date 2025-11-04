@@ -86,7 +86,9 @@ export function ProductCalculator({ poolVolume }: ProductCalculatorProps) {
     <Card>
       <CardHeader>
         <CardTitle>Calculadora de Produtos</CardTitle>
-        <CardDescription>Insira os parâmetros atuais para calcular a dosagem. Metas: pH 7.2-7.6 | Cloro 3.0 ppm | Alcalinidade 12</CardDescription>
+  <CardDescription>Insira os parâmetros atuais para calcular a dosagem.<br />
+  <strong>Metas:</strong> pH 7.2–7.6 | Cloro 3.0 ppm | Alcalinidade 120 ppm
+  </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -135,14 +137,23 @@ export function ProductCalculator({ poolVolume }: ProductCalculatorProps) {
               <FormField
                 control={form.control}
                 name="alcalinidade"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Alcalinidade (ppm)</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="1" placeholder="100" {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  // Alcalinidade de 0 até 200, de 10 em 10
+                  const alcalinidadeValues = Array.from({ length: 21 }, (_, i) => i * 10);
+                  const currentIndex = alcalinidadeValues.indexOf(Number(field.value)) >= 0 ? alcalinidadeValues.indexOf(Number(field.value)) : 8; // default 80
+                  return (
+                    <FormItem>
+                      <FormLabel>Alcalinidade (ppm)</FormLabel>
+                      <FormControl>
+                        <div className="flex items-center gap-2">
+                          <Button type="button" variant="outline" size="sm" onClick={() => field.onChange(alcalinidadeValues[Math.max(0, currentIndex - 1)])} disabled={currentIndex === 0}>-</Button>
+                          <span className="min-w-[40px] text-center font-mono text-lg">{alcalinidadeValues[currentIndex]}</span>
+                          <Button type="button" variant="outline" size="sm" onClick={() => field.onChange(alcalinidadeValues[Math.min(alcalinidadeValues.length - 1, currentIndex + 1)])} disabled={currentIndex === alcalinidadeValues.length - 1}>+</Button>
+                        </div>
+                      </FormControl>
+                    </FormItem>
+                  );
+                }}
               />
             </div>
           </form>
