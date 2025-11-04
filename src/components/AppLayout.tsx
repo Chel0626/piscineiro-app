@@ -52,7 +52,7 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
           
           {/* Conteúdo principal */}
           <main className="flex-1 p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-gray-900 transition-all duration-300 ease-in-out md:ml-64 pb-20 md:pb-8 overflow-x-hidden w-full">
-            {/* Header com botão hambúrguer e abastecimento */}
+            {/* Header com botão hambúrguer (sem abastecimento) */}
             <div className="md:hidden mb-4 flex items-center justify-between">
               <div className="flex items-center">
                 <Button variant="outline" size="icon" onClick={() => setIsSidebarOpen(true)}>
@@ -63,23 +63,10 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
                   <h2 className="text-xl font-semibold dark:text-white">PiscineiroApp</h2>
                 </div>
               </div>
-              
-              {/* Botão de Abastecimento no canto direito */}
-              <FillReminderButton 
-                variant="outline" 
-                size="icon"
-                icon={<ShowerHead className="h-5 w-5" />}
-                showText={false}
-              />
             </div>
 
-            {/* Header para desktop */}
-            <div className="hidden md:flex justify-end mb-4">
-              <FillReminderButton 
-                icon={<ShowerHead className="h-4 w-4" />}
-                showText={true}
-              />
-            </div>
+            {/* Header para desktop (sem abastecimento) */}
+            <div className="hidden md:flex justify-end mb-4"></div>
             
             {children}
           </main>
