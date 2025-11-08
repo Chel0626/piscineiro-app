@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { ListChecks, CheckCircle, UserPlus } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
-import { collection, query, where, onSnapshot, Timestamp } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, Timestamp, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { ClientFormData } from '@/lib/validators/clientSchema';
 import { CheckoutModal } from '@/components/CheckoutModal';
@@ -36,6 +36,23 @@ export function DailyRouteWidget() {
   const [visitedToday, setVisitedToday] = useState<Set<string>>(new Set());
   const [showAllPending, setShowAllPending] = useState(false);
   const [showAllCompleted, setShowAllCompleted] = useState(false);
+  // Função para finalizar visita sem abrir modal
+  const handleFinalizeVisit = async (clientId: string) => {
+    try {
+      const visitsCollectionRef = collection(db, 'clients', clientId, 'visits');
+      await addDoc(visitsCollectionRef, {
+        timestamp: Timestamp.now(),
+        finalized: true,
+      });
+      setVisitedToday(prev => {
+        const newSet = new Set(prev);
+        newSet.add(clientId);
+        return newSet;
+      });
+    } catch (error) {
+      console.error('Erro ao finalizar visita:', error);
+    }
+  };
   const [isExpanded, setIsExpanded] = useState(true);
   const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState<string>('');
@@ -197,7 +214,7 @@ export function DailyRouteWidget() {
                         )}
                       </p>
                     </div>
-                    
+                    {/* Botão Registro de Visita */}
                     <Button 
                       variant="outline" 
                       size="sm" 
@@ -205,7 +222,17 @@ export function DailyRouteWidget() {
                       className="flex-shrink-0 text-xs sm:text-sm"
                     >
                       <ListChecks className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                      Check-out
+                      Registro de Visita
+                    </Button>
+                    {/* Botão Finalizar Visita */}
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="flex-shrink-0 text-xs sm:text-sm ml-2"
+                      onClick={() => handleFinalizeVisit(client.id)}
+                    >
+                      <CheckCircle className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                      Finalizar Visita
                     </Button>
                   </div>
 
