@@ -194,7 +194,7 @@ export function DailyRouteWidget() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="font-semibold text-sm sm:text-base truncate text-gray-900 dark:text-gray-100">
-                          {client.name}
+                          {client.name && client.name.trim().length > 0 ? client.name : `Cliente ${client.id}`}
                         </p>
                         {('isRescheduled' in client && client.isRescheduled) && (
                           <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900 rounded-full">
@@ -278,7 +278,7 @@ export function DailyRouteWidget() {
                 <li key={client.id} className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/30 rounded-lg">
                   <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm text-green-800 dark:text-green-200 truncate">{client.name}</p>
+                    <p className="font-semibold text-sm text-green-800 dark:text-green-200 truncate">{client.name && client.name.trim().length > 0 ? client.name : `Cliente ${client.id}`}</p>
                     <p className="text-xs text-green-600 dark:text-green-400 truncate">{client.neighborhood}</p>
                   </div>
                 </li>
