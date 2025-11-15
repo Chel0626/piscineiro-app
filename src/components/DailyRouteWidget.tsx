@@ -189,65 +189,61 @@ export function DailyRouteWidget() {
             <h4 className="text-sm font-medium text-gray-600 dark:text-gray-300">Pendentes</h4>
             <ul className="space-y-3">
               {displayedPendingClients.map(client => (
-                <li key={client.id} className="flex flex-col gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="font-semibold text-sm sm:text-base truncate text-gray-900 dark:text-gray-100" style={{maxWidth: '180px'}}>
-                          {client.name && client.name.trim().length > 0 ? client.name : `Cliente ${client.id}`}
-                        </p>
-                        {('isRescheduled' in client && client.isRescheduled) && (
-                          <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900 rounded-full">
-                            <UserPlus className="h-3 w-3 text-blue-600 dark:text-blue-400" />
-                            <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
-                              Reagendado
-                            </span>
-                          </div>
-                        )}
+                <li key={client.id} className="flex flex-col gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  {/* Linha 1: Nome e status */}
+                  <div className="flex items-center gap-2 min-w-0">
+                    <p className="font-semibold text-base sm:text-lg truncate text-gray-900 dark:text-gray-100 flex-1">
+                      {client.name && client.name.trim().length > 0 ? client.name : `Cliente ${client.id}`}
+                    </p>
+                    {('isRescheduled' in client && client.isRescheduled) && (
+                      <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900 rounded-full">
+                        <UserPlus className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                        <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                          Reagendado
+                        </span>
                       </div>
-                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 truncate">
-                        {client.neighborhood}
-                        {('isRescheduled' in client && client.isRescheduled) && (
-                          <span className="ml-2 text-blue-600 dark:text-blue-400">
-                            (movido de {client.originalDay})
-                          </span>
-                        )}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      {/* Botão Registro de Visita */}
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => handleCheckout(client.id)}
-                        className="flex-shrink-0 text-xs sm:text-sm"
-                      >
-                        <ListChecks className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                        Registro de Visita
-                      </Button>
-                      {/* Botão Finalizar Visita */}
-                      <Button
-                        variant="default"
-                        size="sm"
-                        className="flex-shrink-0 text-xs sm:text-sm"
-                        onClick={() => handleFinalizeVisit(client.id)}
-                      >
-                        <CheckCircle className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                        Finalizar Visita
-                      </Button>
-                    </div>
+                    )}
                   </div>
-
-                  {/* Botão de reagendamento apenas para clientes originais */}
-                  {!('isRescheduled' in client && client.isRescheduled) && (
-                    <div className="flex justify-end">
+                  {/* Linha 2: Bairro e info reagendamento */}
+                  <div className="flex items-center gap-2 min-w-0">
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 truncate flex-1">
+                      {client.neighborhood}
+                      {('isRescheduled' in client && client.isRescheduled) && (
+                        <span className="ml-2 text-blue-600 dark:text-blue-400">
+                          (movido de {client.originalDay})
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  {/* Linha 3: Botões de ação */}
+                  <div className="flex items-center gap-2 justify-end mt-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => handleCheckout(client.id)}
+                      className="text-xs sm:text-sm"
+                    >
+                      <ListChecks className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                      Registro de Visita
+                    </Button>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="text-xs sm:text-sm"
+                      onClick={() => handleFinalizeVisit(client.id)}
+                    >
+                      <CheckCircle className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                      Finalizar Visita
+                    </Button>
+                    {/* Botão de reagendamento apenas para clientes originais */}
+                    {!('isRescheduled' in client && client.isRescheduled) && (
                       <DayReschedule
                         clientId={client.id}
                         clientName={client.name}
                         originalDay={today}
                       />
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>
