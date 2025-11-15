@@ -190,10 +190,10 @@ export function DailyRouteWidget() {
             <ul className="space-y-3">
               {displayedPendingClients.map(client => (
                 <li key={client.id} className="flex flex-col gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <p className="font-semibold text-sm sm:text-base truncate text-gray-900 dark:text-gray-100">
+                        <p className="font-semibold text-sm sm:text-base truncate text-gray-900 dark:text-gray-100" style={{maxWidth: '180px'}}>
                           {client.name && client.name.trim().length > 0 ? client.name : `Cliente ${client.id}`}
                         </p>
                         {('isRescheduled' in client && client.isRescheduled) && (
@@ -214,26 +214,28 @@ export function DailyRouteWidget() {
                         )}
                       </p>
                     </div>
-                    {/* Botão Registro de Visita */}
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleCheckout(client.id)}
-                      className="flex-shrink-0 text-xs sm:text-sm"
-                    >
-                      <ListChecks className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                      Registro de Visita
-                    </Button>
-                    {/* Botão Finalizar Visita */}
-                    <Button
-                      variant="default"
-                      size="sm"
-                      className="flex-shrink-0 text-xs sm:text-sm ml-2"
-                      onClick={() => handleFinalizeVisit(client.id)}
-                    >
-                      <CheckCircle className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                      Finalizar Visita
-                    </Button>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {/* Botão Registro de Visita */}
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleCheckout(client.id)}
+                        className="flex-shrink-0 text-xs sm:text-sm"
+                      >
+                        <ListChecks className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                        Registro de Visita
+                      </Button>
+                      {/* Botão Finalizar Visita */}
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="flex-shrink-0 text-xs sm:text-sm"
+                        onClick={() => handleFinalizeVisit(client.id)}
+                      >
+                        <CheckCircle className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                        Finalizar Visita
+                      </Button>
+                    </div>
                   </div>
 
                   {/* Botão de reagendamento apenas para clientes originais */}
