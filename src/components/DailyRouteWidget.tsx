@@ -36,8 +36,10 @@ export function DailyRouteWidget() {
   const [visitedToday, setVisitedToday] = useState<Set<string>>(new Set());
   const [showAllPending, setShowAllPending] = useState(false);
   const [showAllCompleted, setShowAllCompleted] = useState(false);
-  // Função para finalizar visita sem abrir modal
+  const [loadingClientId, setLoadingClientId] = useState<string | null>(null);
+  // Função para finalizar visita com feedback visual
   const handleFinalizeVisit = async (clientId: string) => {
+    setLoadingClientId(clientId);
     try {
       const visitsCollectionRef = collection(db, 'clients', clientId, 'visits');
       await addDoc(visitsCollectionRef, {
@@ -49,8 +51,19 @@ export function DailyRouteWidget() {
         newSet.add(clientId);
         return newSet;
       });
+      // Toast de sucesso
+      if (typeof window !== 'undefined') {
+        // @ts-ignore
+        import('sonner').then(({ toast }) => toast.success('Visita finalizada com sucesso!'));
+      }
     } catch (error) {
       console.error('Erro ao finalizar visita:', error);
+      if (typeof window !== 'undefined') {
+        // @ts-ignore
+        import('sonner').then(({ toast }) => toast.error('Erro ao finalizar visita!'));
+      }
+    } finally {
+      setLoadingClientId(null);
     }
   };
   const [isExpanded, setIsExpanded] = useState(true);
@@ -189,10 +202,17 @@ export function DailyRouteWidget() {
             <h4 className="text-sm font-medium text-gray-600 dark:text-gray-300">Pendentes</h4>
             <ul className="space-y-3">
               {displayedPendingClients.map(client => (
-                <li key={client.id} className="flex flex-col gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  {/* Linha 1: Nome e status */}
-                  <div className="flex items-center gap-2 min-w-0">
-                    <p className="font-semibold text-base sm:text-lg truncate text-gray-900 dark:text-gray-100 flex-1">
+                <li
+                  key={client.id}
+                  className={`flex flex-col gap-2 p-3 rounded-lg transition-all ${
+                    ('isRescheduled' in client && client.isRescheduled)
+                      ? 'bg-blue-50 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-500 shadow-sm'
+                      : 'bg-gray-50 dark:bg-gray-800'
+                  }`}
+                >
+                  {/* Card expansível: clique no nome para expandir */}
+                  <div className="flex items-center gap-2 min-w-0 cursor-pointer group" onClick={() => client.showDetails = !client.showDetails}>
+                    <p className="font-semibold text-base sm:text-lg truncate text-gray-900 dark:text-gray-100 flex-1 group-hover:underline">
                       {client.name && client.name.trim().length > 0 ? client.name : `Cliente ${client.id}`}
                     </p>
                     {('isRescheduled' in client && client.isRescheduled) && (
@@ -204,7 +224,6 @@ export function DailyRouteWidget() {
                       </div>
                     )}
                   </div>
-                  {/* Linha 2: Bairro e info reagendamento */}
                   <div className="flex items-center gap-2 min-w-0">
                     <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 truncate flex-1">
                       {client.neighborhood}
@@ -215,33 +234,82 @@ export function DailyRouteWidget() {
                       )}
                     </p>
                   </div>
-                  {/* Linha 3: Botões de ação */}
-                  <div className="flex items-center gap-2 justify-end mt-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleCheckout(client.id)}
-                      className="text-xs sm:text-sm"
-                    >
-                      <ListChecks className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                      Registro de Visita
-                    </Button>
-                    <Button
-                      variant="default"
-                      size="sm"
-                      className="text-xs sm:text-sm"
-                      onClick={() => handleFinalizeVisit(client.id)}
-                    >
-                      <CheckCircle className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                      Finalizar Visita
-                    </Button>
-                    {/* Botão de reagendamento apenas para clientes originais */}
+                  {/* Detalhes extras do cliente (expansível) */}
+                  {client.showDetails && (
+                    <div className="mt-2 p-2 rounded bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-xs sm:text-sm">
+                      <div><strong>Telefone:</strong> {client.phone || 'Não informado'}</div>
+                      <div><strong>Endereço:</strong> {client.address || 'Não informado'}</div>
+                      {/* Histórico rápido de visitas */}
+                      <div className="mt-2">
+                        <strong>Últimas visitas:</strong>
+                        <ul className="list-disc ml-4">
+                          {client.visits && client.visits.length > 0 ? (
+                            client.visits.slice(0,3).map((visit: any) => (
+                              <li key={visit.id}>
+                                {visit.timestamp?.toDate().toLocaleDateString('pt-BR')} - {visit.description ? visit.description : 'Sem observações'}
+                              </li>
+                            ))
+                          ) : (
+                            <li>Nenhuma visita registrada</li>
+                          )}
+                        </ul>
+                      </div>
+                    </div>
+                  )}
+                  {/* Botões de ação, responsivos */}
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 justify-end mt-2">
+                    {/* Tooltip: Registro de Visita */}
+                    <div className="relative group">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleCheckout(client.id)}
+                        className="text-xs sm:text-sm w-full sm:w-auto"
+                        disabled={loadingClientId === client.id}
+                      >
+                        {loadingClientId === client.id ? (
+                          <svg className="animate-spin h-4 w-4 mr-2 text-blue-600" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                          </svg>
+                        ) : (
+                          <ListChecks className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                        )}
+                        Registro de Visita
+                      </Button>
+                      <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none z-10 whitespace-nowrap">Registrar visita do cliente</span>
+                    </div>
+                    {/* Tooltip: Finalizar Visita */}
+                    <div className="relative group">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="text-xs sm:text-sm w-full sm:w-auto"
+                        onClick={() => handleFinalizeVisit(client.id)}
+                        disabled={loadingClientId === client.id}
+                      >
+                        {loadingClientId === client.id ? (
+                          <svg className="animate-spin h-4 w-4 mr-2 text-white" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                          </svg>
+                        ) : (
+                          <CheckCircle className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                        )}
+                        Finalizar Visita
+                      </Button>
+                      <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none z-10 whitespace-nowrap">Finalizar visita do cliente</span>
+                    </div>
+                    {/* Tooltip: Mover Dia */}
                     {!('isRescheduled' in client && client.isRescheduled) && (
-                      <DayReschedule
-                        clientId={client.id}
-                        clientName={client.name}
-                        originalDay={today}
-                      />
+                      <div className="relative group">
+                        <DayReschedule
+                          clientId={client.id}
+                          clientName={client.name}
+                          originalDay={today}
+                        />
+                        <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none z-10 whitespace-nowrap">Mover cliente para outro dia</span>
+                      </div>
                     )}
                   </div>
                 </li>
