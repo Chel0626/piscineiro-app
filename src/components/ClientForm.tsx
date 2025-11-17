@@ -249,7 +249,7 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
                         type="button"
                         size="sm"
                         variant="default"
-                        onClick={async () => {
+                        onClick={() => {
                           if (!novoValor || novoValor <= 0) return;
                           const novoReajuste = {
                             date: new Date().toISOString(),
@@ -261,16 +261,6 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
                           };
                           form.setValue('serviceValue', novoValor);
                           form.setValue('reajusteHistory', [...reajusteHistory, novoReajuste]);
-                          // Persistir no Firestore imediatamente
-                          if (form.getValues().id) {
-                            const { doc, updateDoc } = await import('firebase/firestore');
-                            const { db } = await import('@/lib/firebase');
-                            const clientDoc = doc(db, 'clients', form.getValues().id);
-                            await updateDoc(clientDoc, {
-                              serviceValue: novoValor,
-                              reajusteHistory: [...reajusteHistory, novoReajuste],
-                            });
-                          }
                           setShowReajuste(false);
                           setNovoValor(null);
                         }}
