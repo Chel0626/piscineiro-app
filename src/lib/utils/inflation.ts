@@ -9,9 +9,9 @@ export async function fetchInflationIndex(startDate: string, endDate: string): P
     const data = await response.json();
     if (!Array.isArray(data) || data.length === 0) return null;
     // Soma dos índices mensais
-    const total = data.reduce((acc: number, item: any) => acc + parseFloat(item.valor), 0);
+    const total = data.reduce((acc: number, item: { valor: string }) => acc + parseFloat(item.valor), 0);
     return total;
-  } catch (err) {
+  } catch {
     return null;
   }
 }
