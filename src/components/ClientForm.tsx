@@ -28,6 +28,30 @@ interface ClientFormProps {
 }
 
 export function ClientForm({ form, onSubmit }: ClientFormProps) {
+  // Imports e hooks do reajuste
+  import { useState } from 'react';
+  import { format } from 'date-fns';
+  import { fetchInflationIndex } from '@/lib/utils/inflation';
+  const [showReajuste, setShowReajuste] = useState(false);
+  const [novoValor, setNovoValor] = useState(null as number | null);
+  const [inflacaoSugestao, setInflacaoSugestao] = useState(null as number | null);
+  const [indiceInflacao, setIndiceInflacao] = useState(null as number | null);
+  const [loadingInflacao, setLoadingInflacao] = useState(false);
+
+  async function buscarInflacaoOnline() {
+    if (!dataUltimoReajuste) return;
+    setLoadingInflacao(true);
+    const startDate = format(new Date(dataUltimoReajuste), 'yyyy-MM-dd');
+    const endDate = format(new Date(), 'yyyy-MM-dd');
+    const indice = await fetchInflationIndex(startDate, endDate);
+    if (indice !== null) setIndiceInflacao(Number(indice.toFixed(2)));
+    setLoadingInflacao(false);
+  }
+
+  function calcularInflacaoReal(valorAntigo: number, indice: number) {
+    return valorAntigo * (1 + (indice / 100));
+  }
+
   return (
     <Form {...form}>
       <form id="client-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4">
@@ -160,9 +184,9 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
           import { format } from 'date-fns';
           import { fetchInflationIndex } from '@/lib/utils/inflation';
           const [showReajuste, setShowReajuste] = useState(false);
-          const [novoValor, setNovoValor] = useState<number | null>(null);
-          const [inflacaoSugestao, setInflacaoSugestao] = useState<number | null>(null);
-          const [indiceInflacao, setIndiceInflacao] = useState<number | null>(null);
+          const [novoValor, setNovoValor] = useState(null as number | null);
+          const [inflacaoSugestao, setInflacaoSugestao] = useState(null as number | null);
+          const [indiceInflacao, setIndiceInflacao] = useState(null as number | null);
           const [loadingInflacao, setLoadingInflacao] = useState(false);
   async function buscarInflacaoOnline() {
     if (!dataUltimoReajuste) return;
