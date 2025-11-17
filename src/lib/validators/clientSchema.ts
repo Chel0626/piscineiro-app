@@ -27,6 +27,7 @@ export const clientFormSchema = z.object({
       newValue: z.number(),
       diffValue: z.number(),
       diffPercent: z.number(),
+      inflationIndex: z.number().nullable().optional(),
     })).optional(),
 });
 
