@@ -9,6 +9,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -20,7 +21,7 @@ import { IMaskInput } from 'react-imask';
 import { UseFormReturn } from 'react-hook-form';
 // Importamos nosso tipo unificado
 import { ClientFormData } from '@/lib/validators/clientSchema';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { fetchInflationIndex } from '@/lib/utils/inflation';
 
@@ -37,6 +38,12 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
   const [indiceInflacao, setIndiceInflacao] = useState(null as number | null);
   const [loadingInflacao, setLoadingInflacao] = useState(false);
 
+  // Buscar último reajuste
+  const reajusteHistory = form.getValues().reajusteHistory || [];
+  const ultimoReajuste = reajusteHistory.length > 0 ? reajusteHistory[reajusteHistory.length - 1] : null;
+  const valorAntigo = ultimoReajuste ? ultimoReajuste.newValue : form.getValues().serviceValue;
+  const dataUltimoReajuste = ultimoReajuste ? ultimoReajuste.date : null;
+
   async function buscarInflacaoOnline() {
     if (!dataUltimoReajuste) return;
     setLoadingInflacao(true);
@@ -50,6 +57,15 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
   function calcularInflacaoReal(valorAntigo: number, indice: number) {
     return valorAntigo * (1 + (indice / 100));
   }
+
+  // Sugestão de valor pelo índice de inflação
+  React.useEffect(() => {
+    if (valorAntigo && indiceInflacao !== null && !isNaN(indiceInflacao)) {
+      setInflacaoSugestao(Number(calcularInflacaoReal(valorAntigo, indiceInflacao).toFixed(2)));
+    } else {
+      setInflacaoSugestao(null);
+    }
+  }, [valorAntigo, indiceInflacao]);
 
   return (
     <Form {...form}>
@@ -179,45 +195,34 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
               </FormItem>
             )}
           />
-        import { useState } from 'react';
-          import { format } from 'date-fns';
-          import { fetchInflationIndex } from '@/lib/utils/inflation';
-          const [showReajuste, setShowReajuste] = useState(false);
-          const [novoValor, setNovoValor] = useState(null as number | null);
-          const [inflacaoSugestao, setInflacaoSugestao] = useState(null as number | null);
-          const [indiceInflacao, setIndiceInflacao] = useState(null as number | null);
-          const [loadingInflacao, setLoadingInflacao] = useState(false);
-  async function buscarInflacaoOnline() {
-    if (!dataUltimoReajuste) return;
-    setLoadingInflacao(true);
-    const startDate = format(new Date(dataUltimoReajuste), 'yyyy-MM-dd');
-    const endDate = format(new Date(), 'yyyy-MM-dd');
-    const indice = await fetchInflationIndex(startDate, endDate);
-    if (indice !== null) setIndiceInflacao(Number(indice.toFixed(2)));
-    setLoadingInflacao(false);
-  }
-
-          // Simulação de cálculo de inflação (pode ser substituído por API real)
-          function calcularInflacaoReal(valorAntigo: number, indice: number) {
-            // indice em % acumulado (ex: 12.5 para 12,5%)
-            return valorAntigo * (1 + (indice / 100));
-          }
-
-          // Buscar último reajuste
-          const reajusteHistory = form.getValues().reajusteHistory || [];
-          const ultimoReajuste = reajusteHistory.length > 0 ? reajusteHistory[reajusteHistory.length - 1] : null;
-          const valorAntigo = ultimoReajuste ? ultimoReajuste.newValue : form.getValues().serviceValue;
-          const dataUltimoReajuste = ultimoReajuste ? ultimoReajuste.date : null;
-
-          // Sugestão de valor pelo índice de inflação
-          React.useEffect(() => {
-            if (valorAntigo && indiceInflacao !== null && !isNaN(indiceInflacao)) {
-              setInflacaoSugestao(Number(calcularInflacaoReal(valorAntigo, indiceInflacao).toFixed(2)));
-            } else {
-              setInflacaoSugestao(null);
-            }
-          }, [valorAntigo, indiceInflacao]);
-                          <div className="mt-2 p-3 border rounded bg-gray-50">
+        </div>
+        
+        <FormField
+          control={form.control}
+          name="serviceFrequency"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-sm font-medium">Frequência</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger className="text-sm">
+                    <SelectValue placeholder="Selecione a frequência" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="weekly">Semanal</SelectItem>
+                  <SelectItem value="biweekly">Quinzenal</SelectItem>
+                  <SelectItem value="monthly">Mensal</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </form>
+    </Form>
+  );
+}
                             <p className="text-xs mb-2 font-semibold">Reajuste de valor</p>
                             <Input
                               type="number"
