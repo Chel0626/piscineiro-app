@@ -20,6 +20,9 @@ import { IMaskInput } from 'react-imask';
 import { UseFormReturn } from 'react-hook-form';
 // Importamos nosso tipo unificado
 import { ClientFormData } from '@/lib/validators/clientSchema';
+import { useState } from 'react';
+import { format } from 'date-fns';
+import { fetchInflationIndex } from '@/lib/utils/inflation';
 
 interface ClientFormProps {
   // O formulário e a função de submit agora usam o mesmo tipo
@@ -28,10 +31,6 @@ interface ClientFormProps {
 }
 
 export function ClientForm({ form, onSubmit }: ClientFormProps) {
-  // Imports e hooks do reajuste
-  import { useState } from 'react';
-  import { format } from 'date-fns';
-  import { fetchInflationIndex } from '@/lib/utils/inflation';
   const [showReajuste, setShowReajuste] = useState(false);
   const [novoValor, setNovoValor] = useState(null as number | null);
   const [inflacaoSugestao, setInflacaoSugestao] = useState(null as number | null);
