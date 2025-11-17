@@ -21,6 +21,13 @@ export const clientFormSchema = z.object({
   
   // Campo opcional para armazenar a ordem dos clientes em cada dia
   routeOrder: z.record(z.string(), z.number()).optional(),
+    reajusteHistory: z.array(z.object({
+      date: z.string(),
+      oldValue: z.number(),
+      newValue: z.number(),
+      diffValue: z.number(),
+      diffPercent: z.number(),
+    })).optional(),
 });
 
 // Schema para compatibilidade com dados antigos (migração)
