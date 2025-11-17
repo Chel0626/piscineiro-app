@@ -273,29 +273,6 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
             )}
           />
         </div>
-        
-        <FormField
-          control={form.control}
-          name="serviceFrequency"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-sm font-medium">Frequência</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger className="text-sm">
-                    <SelectValue placeholder="Selecione a frequência" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="weekly">Semanal</SelectItem>
-                  <SelectItem value="biweekly">Quinzenal</SelectItem>
-                  <SelectItem value="monthly">Mensal</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
       </form>
     </Form>
   );
