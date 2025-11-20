@@ -204,13 +204,24 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
                           {loadingInflacao ? 'Buscando...' : 'Buscar online'}
                         </Button>
                       </div>
-                      <Input
-                        type="number"
-                        placeholder="Sugestão pelo índice informado"
-                        className="mb-1"
-                        value={inflacaoSugestao ?? ''}
-                        disabled
-                      />
+                      <div className="flex gap-2 items-center mb-1">
+                        <Input
+                          type="number"
+                          placeholder="Sugestão pelo índice informado"
+                          value={inflacaoSugestao ?? ''}
+                          disabled
+                          className="w-32"
+                        />
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="default"
+                          disabled={inflacaoSugestao === null || inflacaoSugestao === novoValor}
+                          onClick={() => {
+                            if (inflacaoSugestao !== null) setNovoValor(inflacaoSugestao);
+                          }}
+                        >Aplicar sugestão</Button>
+                      </div>
                     </div>
                     
                     {/* Histórico de reajustes */}
