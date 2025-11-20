@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth, connectAuthEmulator } from "firebase/auth";
+import { getAuth, connectAuthEmulator, setPersistence, browserLocalPersistence } from "firebase/auth";
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 import { getStorage, connectStorageEmulator } from "firebase/storage";
 import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
@@ -49,6 +49,12 @@ try {
 }
 
 const auth = getAuth(appInstance);
+// Garante persistência local do login
+if (typeof window !== 'undefined') {
+  setPersistence(auth, browserLocalPersistence).catch((err) => {
+    console.error('[firebase] Erro ao definir persistência do Auth:', err);
+  });
+}
 const db = getFirestore(appInstance);
 const storage = getStorage(appInstance);
 const functions = getFunctions(appInstance);
