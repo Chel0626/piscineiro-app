@@ -57,13 +57,11 @@ export function DailyRouteWidget() {
       });
       // Toast de sucesso
       if (typeof window !== 'undefined') {
-        // @ts-ignore
         import('sonner').then(({ toast }) => toast.success('Visita finalizada com sucesso!'));
       }
     } catch (error) {
       console.error('Erro ao finalizar visita:', error);
       if (typeof window !== 'undefined') {
-        // @ts-ignore
         import('sonner').then(({ toast }) => toast.error('Erro ao finalizar visita!'));
       }
     } finally {

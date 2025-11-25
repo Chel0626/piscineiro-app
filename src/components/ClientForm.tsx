@@ -389,3 +389,8 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
                       )}
                     />
                   </div>
+                </div>
+              </form>
+            </Form>
+          );
+        }
