@@ -297,11 +297,10 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
                                 >Salvar reajuste</Button>
                                 <Button type="button" size="sm" variant="ghost" onClick={() => setShowReajuste(false)}>Cancelar</Button>
                               </div>
-                            </div>
-                          )}
-                        </FormItem>
-                      )}
-                    />
+                            )}
+                          </FormItem>
+                        )}
+                      />
                   </div>
 
                   {/* Frequência e dias da semana das visitas */}
