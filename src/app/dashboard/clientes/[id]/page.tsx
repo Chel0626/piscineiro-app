@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 
 import { useClientDetails } from '@/hooks/useClientDetails';
+import { ClientDashboard, ClientData } from '@/components/ClientDashboard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -31,50 +32,40 @@ export default function ClienteDetailPage() {
       const visitDocRef = doc(db, 'clients', clientId, 'visits', visitId);
       await deleteDoc(visitDocRef);
       toast.success('Visita deletada com sucesso!');
-    } catch (error) {
-      console.error('Erro ao deletar visita:', error);
-      toast.error('Não foi possível deletar a visita.');
-    } finally {
-      setIsDeleting(null);
-    }
-  };
+    // Transformar dados do client para o formato do dashboard
+    const clientDashboardData: ClientData = {
+      id: clientId,
+      profile: {
+        name: client.name,
+        address: client.address,
+        phone: client.phone || '',
+        coordinates: undefined, // Adapte se houver dados
+      },
+      equipment: {
+        filter_model: client.filterModel || '',
+        sand_capacity_kg: client.filterSandKg || 0,
+        last_sand_change: client.lastSandChange || '',
+        next_change_forecast: client.nextSandChange || '',
+        maintenance_history: [], // Adapte se houver histórico
+      },
+      financial: {
+        current_value: client.serviceValue || 0,
+        frequency: client.visitFrequency || 'weekly',
+        visit_day: client.visitDays?.[0] || '',
+        active_since: '', // Adapte se houver data
+        price_history: [], // Adapte se houver histórico
+      },
+    };
 
-  const handleSendHistoryWhatsApp = (visit: { id: string; timestamp: { toDate: () => Date }; ph?: number; cloro?: number; alcalinidade?: number; arrivalTime?: string; departureTime?: string; observations?: string; photoUrl?: string }) => {
-    if (!client?.phone) {
-      toast.error('Cliente não possui telefone cadastrado.');
-      return;
-    }
-
-    const visitDate = visit.timestamp?.toDate().toLocaleDateString('pt-BR', {
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric',
-    });
-
-    let message = `🏊‍♂️ *Relatório de Visita - ${client.name}*\n\n`;
-    message += `📅 Data: ${visitDate}\n`;
-    message += `📍 Endereço: ${client.address}\n\n`;
-    
-    // Parâmetros da água
-    message += `💧 *Parâmetros da Água:*\n`;
-    message += `• pH: ${visit.ph}\n`;
-    message += `• Cloro: ${visit.cloro} ppm\n`;
-    message += `• Alcalinidade: ${visit.alcalinidade} ppm\n\n`;
-    
-    // Horários se disponíveis
-    if (visit.departureTime) {
-      message += `⏰ *Horário de Saída:* ${visit.departureTime}\n\n`;
-    }
-    
-    // Observações
-    if (visit.observations) {
-      message += `📝 *Observações:*\n${visit.observations}\n\n`;
-    }
-    
-    message += `✅ Serviço realizado com sucesso!`;
-
-    const phoneNumber = client.phone.replace(/\D/g, '');
-    const url = `https://wa.me/55${phoneNumber}?text=${encodeURIComponent(message)}`;
+    // Renderiza o novo dashboard
+    return (
+      <div className="p-2 sm:p-4">
+        {/*
+        FORMULÁRIO ANTIGO E TABS COMENTADOS PARA TESTE DO NOVO DASHBOARD
+        */}
+        <ClientDashboard client={clientDashboardData} />
+      </div>
+    );
     window.open(url, '_blank');
     toast.success('WhatsApp aberto com o relatório da visita!');
   };
@@ -96,7 +87,40 @@ export default function ClienteDetailPage() {
         </Link>
         <h1 className="text-lg sm:text-2xl md:text-3xl font-bold truncate">{client.name}</h1>
       </div>
+    // Transformar dados do client para o formato do dashboard
+    const clientDashboardData: ClientData = {
+      id: clientId,
+      profile: {
+        name: client.name,
+        address: client.address,
+        phone: client.phone || '',
+        coordinates: undefined, // Adapte se houver dados
+      },
+      equipment: {
+        filter_model: client.filterModel || '',
+        sand_capacity_kg: client.filterSandKg || 0,
+        last_sand_change: client.lastSandChange || '',
+        next_change_forecast: client.nextSandChange || '',
+        maintenance_history: [], // Adapte se houver histórico
+      },
+      financial: {
+        current_value: client.serviceValue || 0,
+        frequency: client.visitFrequency || 'weekly',
+        visit_day: client.visitDays?.[0] || '',
+        active_since: '', // Adapte se houver data
+        price_history: [], // Adapte se houver histórico
+      },
+    };
 
+    // Renderiza o novo dashboard
+    return (
+      <div className="p-2 sm:p-4">
+        {/*
+        FORMULÁRIO ANTIGO E TABS COMENTADOS PARA TESTE DO NOVO DASHBOARD
+        */}
+        <ClientDashboard client={clientDashboardData} />
+      </div>
+    );
       <Tabs defaultValue="history" className="w-full">
         {/* TabsList melhorada com espaçamento adequado */}
         <TabsList className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-1 h-auto w-full bg-gray-100 dark:bg-gray-800 p-2 mb-6">
