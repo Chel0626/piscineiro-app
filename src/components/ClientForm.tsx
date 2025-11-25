@@ -32,6 +32,18 @@ interface ClientFormProps {
 }
 
 export function ClientForm({ form, onSubmit }: ClientFormProps) {
+    // Sugere a data prevista da próxima troca de areia
+    React.useEffect(() => {
+      const lastSandChange = form.watch('lastSandChange');
+      if (lastSandChange) {
+        const lastDate = new Date(lastSandChange);
+        if (!isNaN(lastDate.getTime())) {
+          lastDate.setMonth(lastDate.getMonth() + 18);
+          const suggested = format(lastDate, 'yyyy-MM-dd');
+          form.setValue('nextSandChange', suggested);
+        }
+      }
+    }, [form.watch('lastSandChange')]);
   const [showReajuste, setShowReajuste] = useState(false);
   const [novoValor, setNovoValor] = useState(null as number | null);
   const [inflacaoSugestao, setInflacaoSugestao] = useState(null as number | null);
@@ -135,8 +147,60 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
           )}
         />
         
-        {/* Grid responsivo para campos numéricos */}
+        {/* Campos do filtro */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <FormField
+            control={form.control}
+            name="filterModel"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium">Modelo do filtro</FormLabel>
+                <FormControl>
+                  <Input placeholder="Ex: Jacuzzi, Nautilus..." {...field} className="text-sm" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="filterSandKg"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium">Carga de areia (kg)</FormLabel>
+                <FormControl>
+                  <Input type="number" placeholder="Ex: 50" {...field} onChange={e => field.onChange(Number(e.target.value))} className="text-sm" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="lastSandChange"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium">Data da última troca de areia</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} className="text-sm" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="nextSandChange"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium">Data prevista da próxima troca</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} className="text-sm" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <FormField
             control={form.control}
             name="poolVolume"

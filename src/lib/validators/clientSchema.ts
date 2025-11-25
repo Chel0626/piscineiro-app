@@ -18,17 +18,23 @@ export const clientFormSchema = z.object({
   paymentDueDate: z.number().min(1, { message: "O dia do vencimento deve ser um número." })
     .min(1, { message: "O dia deve ser entre 1 e 31." })
     .max(31, { message: "O dia deve ser entre 1 e 31." }),
-  
+
   // Campo opcional para armazenar a ordem dos clientes em cada dia
   routeOrder: z.record(z.string(), z.number()).optional(),
-    reajusteHistory: z.array(z.object({
-      date: z.string(),
-      oldValue: z.number(),
-      newValue: z.number(),
-      diffValue: z.number(),
-      diffPercent: z.number(),
-      inflationIndex: z.number().nullable().optional(),
-    })).optional(),
+  reajusteHistory: z.array(z.object({
+    date: z.string(),
+    oldValue: z.number(),
+    newValue: z.number(),
+    diffValue: z.number(),
+    diffPercent: z.number(),
+    inflationIndex: z.number().nullable().optional(),
+  })).optional(),
+
+  // Campos do filtro
+  filterModel: z.string().min(2, { message: 'Informe o modelo do filtro.' }).optional(),
+  filterSandKg: z.number().min(0, { message: 'A carga de areia deve ser positiva.' }).optional(),
+  lastSandChange: z.string().optional(),
+  nextSandChange: z.string().optional(),
 });
 
 // Schema para compatibilidade com dados antigos (migração)
