@@ -2,8 +2,6 @@
 
 import { useClients } from '@/hooks/useClients';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-
-
 import { Button } from '@/components/ui/button';
 import { ListChecks, CheckCircle, UserPlus } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
@@ -12,8 +10,8 @@ import { db } from '@/lib/firebase';
 import { ClientFormData } from '@/lib/validators/clientSchema';
 import { CheckoutModal } from '@/components/CheckoutModal';
 import { DayReschedule } from '@/components/DayReschedule';
-import { ClientDetails } from '@/components/ClientDetails';
 import { useTemporaryReschedule } from '@/hooks/useTemporaryReschedule';
+import { VisitLog } from '@/components/VisitModal';
 
 const getCurrentDayName = () => {
   const days = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
@@ -22,15 +20,21 @@ const getCurrentDayName = () => {
 };
 
 type DailyClient = ClientFormData & { 
-  id: string; 
-  isRescheduled?: boolean; 
-  originalDay?: string 
+  id: string;
+  isRescheduled?: boolean;
+  originalDay?: string;
+  checkInTime?: string;
+  showDetails?: boolean;
+  visits?: VisitLog[];
 };
 
 type RescheduledClient = ClientFormData & { 
-  id: string; 
-  isRescheduled: true; 
-  originalDay: string 
+  id: string;
+  isRescheduled: true;
+  originalDay: string;
+  checkInTime?: string;
+  showDetails?: boolean;
+  visits?: VisitLog[];
 };
 
 export function DailyRouteWidget() {
@@ -41,8 +45,6 @@ export function DailyRouteWidget() {
   const [showAllCompleted, setShowAllCompleted] = useState(false);
   const [loadingClientId, setLoadingClientId] = useState<string | null>(null);
   // Função para finalizar visita com feedback visual
-  // Estado para controlar qual cliente está expandido
-  const [expandedClientId, setExpandedClientId] = useState<string | null>(null);
   const handleFinalizeVisit = async (clientId: string) => {
     setLoadingClientId(clientId);
     try {
@@ -214,7 +216,7 @@ export function DailyRouteWidget() {
                   }`}
                 >
                   {/* Card expansível: clique no nome para expandir */}
-                  <div className="flex items-center gap-2 min-w-0 cursor-pointer group" onClick={() => setExpandedClientId(expandedClientId === client.id ? null : client.id)}>
+                  <div className="flex items-center gap-2 min-w-0 cursor-pointer group" onClick={() => client.showDetails = !client.showDetails}>
                     <p className="font-semibold text-base sm:text-lg truncate text-gray-900 dark:text-gray-100 flex-1 group-hover:underline">
                       {client.name && client.name.trim().length > 0 ? client.name : `Cliente ${client.id}`}
                     </p>
@@ -238,8 +240,28 @@ export function DailyRouteWidget() {
                     </p>
                   </div>
                   {/* Detalhes extras do cliente (expansível) */}
-                  {expandedClientId === client.id && (
-                    <ClientDetails clientId={client.id} phone={client.phone} address={client.address} />
+                  {client.showDetails && (
+                    <div className="mt-2 p-2 rounded bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-xs sm:text-sm">
+                      <div><strong>Telefone:</strong> {client.phone || 'Não informado'}</div>
+                      <div><strong>Endereço:</strong> {client.address || 'Não informado'}</div>
+                      {/* Histórico rápido de visitas */}
+                      <div className="mt-2">
+                        <strong>Últimas visitas:</strong>
+                        <ul className="list-disc ml-4">
+                          {client.visits && client.visits.length > 0 ? (
+                            client.visits.slice(0,3).map((visit: VisitLog) => (
+                              <li key={visit.id}>
+                                {visit.date ? new Date(visit.date).toLocaleDateString('pt-BR') : 'Data desconhecida'}
+                                {' - '}
+                                {visit.notes && visit.notes.length > 0 ? visit.notes : 'Sem observações'}
+                              </li>
+                            ))
+                          ) : (
+                            <li>Nenhuma visita registrada</li>
+                          )}
+                        </ul>
+                      </div>
+                    </div>
                   )}
                   {/* Botões de ação, responsivos */}
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 justify-end mt-2">

@@ -27,10 +27,11 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ClientFormData } from '@/lib/validators/clientSchema';
-import { VisitForm, VisitFormData } from '@/components/VisitForm';
+import { VisitModal, InventoryItem, CalculatorData, VisitLog } from '@/components/VisitModal';
+import { RouteList, RouteClient, RouteClientState } from '@/components/RouteList';
 
 // Tipagem para os clientes
-type Client = ClientFormData & { id: string; };
+type Client = ClientFormData & { id: string; state: RouteClientState; checkInTime?: string; checkOutTime?: string; durationMinutes?: number };
 
 const daysOfWeek = [
   { key: 'Segunda-feira', label: 'Segunda', short: 'SEG' },
@@ -42,68 +43,25 @@ const daysOfWeek = [
   { key: 'Domingo', label: 'Domingo', short: 'DOM' },
 ];
 
-// --- Componente para cada item arrastável ---
-function SortableClientItem({ client, onClientClick }: { client: Client; onClientClick: (client: Client) => void }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-  } = useSortable({ id: client.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
-  return (
-    <li
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-gray-50 dark:bg-gray-800 rounded-lg w-full overflow-hidden"
-    >
-      <button {...listeners} className="cursor-grab touch-none p-1 flex-shrink-0">
-        <GripVertical className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 dark:text-gray-500" />
-      </button>
-      <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 dark:text-gray-400 flex-shrink-0" />
-      <div 
-        className="flex-1 min-w-0 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded p-1 sm:p-2 transition-colors overflow-hidden"
-        onClick={() => onClientClick(client)}
-      >
-        <p className="font-semibold truncate text-gray-900 dark:text-gray-100 text-sm sm:text-base">{client.name}</p>
-        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 truncate">
-          {`${client.address}, ${client.neighborhood}`}
-        </p>
-      </div>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => onClientClick(client)}
-        className="h-8 w-8 sm:h-9 sm:w-9 p-0 flex-shrink-0"
-        title="Registrar visita"
-      >
-        <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
-      </Button>
-    </li>
-  );
-}
+// --- Removido SortableClientItem: agora usamos RouteList
 
 // --- Componente principal da página ---
 export default function RoteirosPage() {
   const { groupedClients, isLoading } = useRoutines();
   // Estado local para gerenciar a ordem dos clientes de cada dia
-  const [localGroupedClients, setLocalGroupedClients] = useState(groupedClients);
+  const [localGroupedClients, setLocalGroupedClients] = useState<Record<string, Client[]>>(groupedClients as Record<string, Client[]>);
   // Estado para controlar quais dias estão expandidos (pode ter vários abertos ao mesmo tempo)
   const [expandedDays, setExpandedDays] = useState<string[]>([daysOfWeek[0].key]);
   // Estado para o modal de registrar visita
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const [visitModalOpen, setVisitModalOpen] = useState(false);
+  const [visitModalCheckInTime, setVisitModalCheckInTime] = useState<string>('');
+  const [visitModalInventory, setVisitModalInventory] = useState<InventoryItem[]>([]);
+  const [visitModalCalculatorData, setVisitModalCalculatorData] = useState<CalculatorData | undefined>(undefined);
 
   // Sincroniza o estado local quando os dados do Firebase são carregados
   useEffect(() => {
-    setLocalGroupedClients(groupedClients);
+    setLocalGroupedClients(groupedClients as Record<string, Client[]>);
   }, [groupedClients]);
 
   const toggleDay = (dayKey: string) => {
@@ -114,26 +72,46 @@ export default function RoteirosPage() {
     );
   };
 
-  const handleClientClick = (client: Client) => {
-    setSelectedClient(client);
+  // Funções para fluxo de estados dos cards
+  const handleCheckIn = (clientId: string, checkInTime: string) => {
+    setVisitModalCheckInTime(checkInTime);
+    setSelectedClientId(clientId);
+    setVisitModalOpen(false);
+    // Aqui você pode atualizar localGroupedClients ou persistir check-in
   };
 
-  const handleVisitSubmit = async (data: VisitFormData) => {
-    if (!selectedClient) return;
-    setIsSubmitting(true);
+  const handleCheckOut = (clientId: string, checkOutTime: string) => {
+    setSelectedClientId(clientId);
+    setVisitModalOpen(true);
+    // Buscar inventário do cliente (mock ou integração real)
+    setVisitModalInventory([
+      { item_id: 'prod_01', name: 'Cloro Granulado', qty: 300, unit: 'g' },
+      { item_id: 'prod_02', name: 'Barrilha', qty: 100, unit: 'g' },
+      { item_id: 'prod_03', name: 'Limpa Bordas', qty: 50, unit: 'ml' }
+    ]);
+    // Buscar dados recentes da calculadora (mock ou integração real)
+    setVisitModalCalculatorData({ ph: 7.4, chlorine_ppm: 1.0, alkalinity_ppm: 80, timestamp: new Date().toISOString() });
+    const foundClient = (localGroupedClients[Object.keys(localGroupedClients)[0]] as Client[]).find(c => c.id === clientId);
+    setVisitModalCheckInTime(foundClient?.checkInTime ?? new Date().toISOString());
+  };
+
+  const handleOpenTools = (clientId: string) => {
+    // Abre calculadora ou estoque
+    // Implemente conforme integração
+  };
+
+  const handleVisitSubmit = async (visitLog: VisitLog) => {
+    if (!selectedClientId) return;
     try {
-      const visitsCollectionRef = collection(db, 'clients', selectedClient.id, 'visits');
-      await addDoc(visitsCollectionRef, {
-        ...data,
-        timestamp: serverTimestamp(),
-      });
-      toast.success('Visita registrada com sucesso!');
-      setSelectedClient(null);
+      // Salvar log da visita no Firestore
+      const visitsCollectionRef = collection(db, 'clients', selectedClientId, 'visits');
+      await addDoc(visitsCollectionRef, visitLog);
+      // Atualizar inventário do cliente (mock: apenas exibe toast)
+      toast.success('Visita registrada e inventário atualizado!');
+      setVisitModalOpen(false);
     } catch (error) {
       console.error('Erro ao salvar visita:', error);
       toast.error('Não foi possível registrar a visita.');
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -190,112 +168,34 @@ export default function RoteirosPage() {
         <div className="mb-4 sm:mb-6">
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate">Roteiros da Semana</h1>
           <p className="text-muted-foreground text-xs sm:text-sm md:text-base">
-            Clique em um dia para expandir e arraste os clientes para reordenar sua rota.
+            Clique em um dia para expandir e reordene sua rota. Inicie e registre visitas conforme o fluxo profissional.
           </p>
         </div>
-
-        {/* Lista vertical de dias da semana */}
-        <div className="space-y-3 w-full overflow-x-hidden">
-          {daysOfWeek.map((day) => {
-            const dayClients = localGroupedClients[day.key] || [];
-            const isExpanded = expandedDays.includes(day.key);
-            const clientsCount = dayClients.length;
-
-            return (
-              <Card key={day.key} className="w-full overflow-hidden">
-                {/* Cabeçalho do dia - clicável para expandir/colapsar */}
-                <CardHeader 
-                  className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  onClick={() => toggleDay(day.key)}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                      <Calendar className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
-                      <div className="min-w-0 flex-1">
-                        <CardTitle className="text-base sm:text-lg md:text-xl truncate">
-                          {day.label}
-                        </CardTitle>
-                        <CardDescription className="text-xs sm:text-sm truncate">
-                          {clientsCount} cliente(s) agendado(s)
-                        </CardDescription>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-                      {clientsCount > 0 && (
-                        <span className="bg-blue-500 text-white text-xs rounded-full h-6 w-6 sm:h-7 sm:w-7 flex items-center justify-center font-medium">
-                          {clientsCount}
-                        </span>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                      >
-                        {isExpanded ? '▲' : '▼'}
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-
-                {/* Conteúdo expandido com os clientes */}
-                {isExpanded && (
-                  <CardContent className="px-3 sm:px-4 md:px-6 pb-4 w-full overflow-hidden">
-                    {dayClients.length > 0 ? (
-                      <DndContext
-                        sensors={sensors}
-                        collisionDetection={closestCenter}
-                        onDragEnd={(event) => handleDragEnd(event, day.key)}
-                      >
-                        <SortableContext
-                          items={dayClients.map(c => c.id)}
-                          strategy={verticalListSortingStrategy}
-                        >
-                          <ul className="space-y-2 sm:space-y-3 w-full overflow-hidden">
-                            {dayClients.map((client) => (
-                              <SortableClientItem 
-                                key={client.id} 
-                                client={client} 
-                                onClientClick={handleClientClick} 
-                              />
-                            ))}
-                          </ul>
-                        </SortableContext>
-                      </DndContext>
-                    ) : (
-                      <div className="text-center py-6 sm:py-8">
-                        <Calendar className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 mx-auto text-gray-400 mb-4" />
-                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                          Nenhum cliente agendado para {day.label}.
-                        </p>
-                      </div>
-                    )}
-                  </CardContent>
-                )}
-              </Card>
-            );
-          })}
-        </div>
-
-        {/* Modal para registrar visita */}
-        <Dialog open={!!selectedClient} onOpenChange={() => setSelectedClient(null)}>
-          <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="text-lg sm:text-xl">Registrar Visita</DialogTitle>
-              <DialogDescription className="text-sm">
-                Registrar nova visita para {selectedClient?.name}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="max-h-[70vh] overflow-y-auto px-1">
-              {selectedClient && (
-                <VisitForm 
-                  onSubmit={handleVisitSubmit} 
-                  isLoading={isSubmitting}
-                  clientId={selectedClient.id} 
-                />
-              )}
+        {/* Lista de clientes por dia usando RouteList */}
+        {daysOfWeek.map(day => {
+          const dayClients = localGroupedClients[day.key] || [];
+          return (
+            <div key={day.key} className="mb-6">
+              <h2 className="font-bold text-lg mb-2">{day.label}</h2>
+              <RouteList
+                clients={dayClients}
+                onCheckIn={handleCheckIn}
+                onCheckOut={handleCheckOut}
+                onOpenTools={handleOpenTools}
+              />
             </div>
-          </DialogContent>
-        </Dialog>
+          );
+        })}
+        {/* Modal de registro de visita inteligente */}
+        <VisitModal
+          open={visitModalOpen}
+          onClose={() => setVisitModalOpen(false)}
+          onSubmit={handleVisitSubmit}
+          clientId={selectedClientId || ''}
+          inventory={visitModalInventory}
+          lastCalculatorData={visitModalCalculatorData}
+          checkInTime={visitModalCheckInTime}
+        />
       </div>
     </div>
   );
