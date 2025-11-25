@@ -233,14 +233,14 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
                   </Button>
                 </div>
                 <FormControl>
-                   <Input 
-                     type="number" 
-                     placeholder="250" 
-                     {...field} 
-                     onChange={(e) => field.onChange(Number(e.target.value))}
-                     value={field.value}
-                     className="text-sm"
-                   />
+                  <Input
+                    type="number"
+                    placeholder="250"
+                    {...field}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                    value={field.value}
+                    className="text-sm"
+                  />
                 </FormControl>
                 <FormMessage />
                 {showReajuste && (
@@ -253,121 +253,87 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
                       value={novoValor ?? ''}
                       onChange={e => setNovoValor(Number(e.target.value))}
                     />
-                    <FormField
-                      control={form.control}
-                      name="serviceValue"
-                      render={({ field }) => (
-                        <FormItem>
-                          <div className="flex items-center gap-2">
-                            <FormLabel className="text-sm font-medium">Valor (R$)</FormLabel>
-                            <Button type="button" variant="outline" size="sm" onClick={() => setShowReajuste(true)}>
-                              Reajustar
-                            </Button>
-                          </div>
-                          <FormControl>
-                             <Input 
-                               type="number" 
-                               placeholder="250" 
-                               {...field} 
-                               onChange={(e) => field.onChange(Number(e.target.value))}
-                               value={field.value}
-                               className="text-sm"
-                             />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    {showReajuste && (
-                      <div className="mt-2 p-3 border rounded bg-gray-50">
-                        <p className="text-xs mb-2 font-semibold">Reajuste de valor</p>
+                    <div className="mb-2 flex flex-col gap-1">
+                      <label className="text-xs font-medium">Índice de inflação acumulado (%)</label>
+                      <div className="flex gap-2 mb-1">
                         <Input
                           type="number"
-                          placeholder="Novo valor manual"
-                          className="mb-2"
-                          value={novoValor ?? ''}
-                          onChange={e => setNovoValor(Number(e.target.value))}
+                          step="0.01"
+                          placeholder="Ex: 12.5"
+                          value={indiceInflacao ?? ''}
+                          onChange={e => setIndiceInflacao(Number(e.target.value))}
+                          className="w-32"
                         />
-                        <div className="mb-2 flex flex-col gap-1">
-                          <label className="text-xs font-medium">Índice de inflação acumulado (%)</label>
-                          <div className="flex gap-2 mb-1">
-                            <Input
-                              type="number"
-                              step="0.01"
-                              placeholder="Ex: 12.5"
-                              value={indiceInflacao ?? ''}
-                              onChange={e => setIndiceInflacao(Number(e.target.value))}
-                              className="w-32"
-                            />
-                            <Button type="button" size="sm" variant="outline" onClick={buscarInflacaoOnline} disabled={loadingInflacao}>
-                              {loadingInflacao ? 'Buscando...' : 'Buscar online'}
-                            </Button>
-                          </div>
-                          <Input
-                            type="number"
-                            placeholder="Sugestão pelo índice informado"
-                            className="mb-1"
-                            value={inflacaoSugestao ?? ''}
-                            disabled
-                          />
-                        </div>
-                        {/* Histórico de reajustes */}
-                        {reajusteHistory && reajusteHistory.length > 0 && (
-                          <div className="mt-4">
-                            <h4 className="text-sm font-semibold mb-2">Histórico de Reajustes</h4>
-                            <ul className="space-y-2 text-xs max-h-32 overflow-y-auto">
-                              {reajusteHistory.map((r, idx) => (
-                                <li key={idx} className="border rounded p-2 bg-gray-50">
-                                  <div>Data: {format(new Date(r.date), 'dd/MM/yyyy')}</div>
-                                  <div>Valor antigo: R$ {r.oldValue.toFixed(2)}</div>
-                                  <div>Valor novo: R$ {r.newValue.toFixed(2)}</div>
-                                  <div>Acréscimo: R$ {r.diffValue.toFixed(2)} ({r.diffPercent.toFixed(2)}%)</div>
-                                  {r.inflationIndex !== undefined && r.inflationIndex !== null && (
-                                    <div>Índice usado: {r.inflationIndex}%</div>
-                                  )}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                        <div className="text-xs text-gray-600 mb-2">
-                          Valor anterior: R$ {valorAntigo?.toFixed(2)}<br />
-                          {dataUltimoReajuste && (
-                            <>Último reajuste: {format(new Date(dataUltimoReajuste), 'dd/MM/yyyy')}</>
-                          )}
-                        </div>
-                        {novoValor && valorAntigo && (
-                          <div className="text-xs text-gray-700 mb-2">
-                            Acréscimo: R$ {(novoValor - valorAntigo).toFixed(2)} ({(((novoValor - valorAntigo) / valorAntigo) * 100).toFixed(2)}%)
-                          </div>
-                        )}
-                        <div className="flex gap-2">
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="default"
-                            onClick={() => {
-                              if (!novoValor || novoValor <= 0) return;
-                              const novoReajuste = {
-                                date: new Date().toISOString(),
-                                oldValue: valorAntigo,
-                                newValue: novoValor,
-                                diffValue: novoValor - valorAntigo,
-                                diffPercent: ((novoValor - valorAntigo) / valorAntigo) * 100,
-                                inflationIndex: indiceInflacao ?? null,
-                              };
-                              form.setValue('serviceValue', novoValor);
-                              form.setValue('reajusteHistory', [...reajusteHistory, novoReajuste]);
-                              setShowReajuste(false);
-                              setNovoValor(null);
-                            }}
-                          >Salvar reajuste</Button>
-                          <Button type="button" size="sm" variant="ghost" onClick={() => setShowReajuste(false)}>Cancelar</Button>
-                        </div>
+                        <Button type="button" size="sm" variant="outline" onClick={buscarInflacaoOnline} disabled={loadingInflacao}>
+                          {loadingInflacao ? 'Buscando...' : 'Buscar online'}
+                        </Button>
+                      </div>
+                      <Input
+                        type="number"
+                        placeholder="Sugestão pelo índice informado"
+                        className="mb-1"
+                        value={inflacaoSugestao ?? ''}
+                        disabled
+                      />
+                    </div>
+                    {/* Histórico de reajustes */}
+                    {reajusteHistory && reajusteHistory.length > 0 && (
+                      <div className="mt-4">
+                        <h4 className="text-sm font-semibold mb-2">Histórico de Reajustes</h4>
+                        <ul className="space-y-2 text-xs max-h-32 overflow-y-auto">
+                          {reajusteHistory.map((r, idx) => (
+                            <li key={idx} className="border rounded p-2 bg-gray-50">
+                              <div>Data: {format(new Date(r.date), 'dd/MM/yyyy')}</div>
+                              <div>Valor antigo: R$ {r.oldValue.toFixed(2)}</div>
+                              <div>Valor novo: R$ {r.newValue.toFixed(2)}</div>
+                              <div>Acréscimo: R$ {r.diffValue.toFixed(2)} ({r.diffPercent.toFixed(2)}%)</div>
+                              {r.inflationIndex !== undefined && r.inflationIndex !== null && (
+                                <div>Índice usado: {r.inflationIndex}%</div>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     )}
-                  />
+                    <div className="text-xs text-gray-600 mb-2">
+                      Valor anterior: R$ {valorAntigo?.toFixed(2)}<br />
+                      {dataUltimoReajuste && (
+                        <>Último reajuste: {format(new Date(dataUltimoReajuste), 'dd/MM/yyyy')}</>
+                      )}
+                    </div>
+                    {novoValor && valorAntigo && (
+                      <div className="text-xs text-gray-700 mb-2">
+                        Acréscimo: R$ {(novoValor - valorAntigo).toFixed(2)} ({(((novoValor - valorAntigo) / valorAntigo) * 100).toFixed(2)}%)
+                      </div>
+                    )}
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="default"
+                        onClick={() => {
+                          if (!novoValor || novoValor <= 0) return;
+                          const novoReajuste = {
+                            date: new Date().toISOString(),
+                            oldValue: valorAntigo,
+                            newValue: novoValor,
+                            diffValue: novoValor - valorAntigo,
+                            diffPercent: ((novoValor - valorAntigo) / valorAntigo) * 100,
+                            inflationIndex: indiceInflacao ?? null,
+                          };
+                          form.setValue('serviceValue', novoValor);
+                          form.setValue('reajusteHistory', [...reajusteHistory, novoReajuste]);
+                          setShowReajuste(false);
+                          setNovoValor(null);
+                        }}
+                      >Salvar reajuste</Button>
+                      <Button type="button" size="sm" variant="ghost" onClick={() => setShowReajuste(false)}>Cancelar</Button>
+                    </div>
                   </div>
+                )}
+              </FormItem>
+            )}
+          />
 
                   {/* Frequência e dias da semana das visitas */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-4">
