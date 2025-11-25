@@ -17,6 +17,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { IMaskInput } from 'react-imask';
 import { UseFormReturn } from 'react-hook-form';
 // Importamos nosso tipo unificado
@@ -32,18 +34,32 @@ interface ClientFormProps {
 }
 
 export function ClientForm({ form, onSubmit }: ClientFormProps) {
+  const daysOfWeek = [
+    'Segunda-feira',
+    'Terça-feira',
+    'Quarta-feira',
+    'Quinta-feira',
+    'Sexta-feira',
+    'Sábado',
+    'Domingo'
+  ];
     // Sugere a data prevista da próxima troca de areia
     React.useEffect(() => {
-      const lastSandChange = form.watch('lastSandChange');
-      if (lastSandChange) {
-        const lastDate = new Date(lastSandChange);
-        if (!isNaN(lastDate.getTime())) {
-          lastDate.setMonth(lastDate.getMonth() + 18);
-          const suggested = format(lastDate, 'yyyy-MM-dd');
-          form.setValue('nextSandChange', suggested);
+      const subscription = form.watch((value, { name }) => {
+        if (name === 'lastSandChange') {
+          const lastSandChange = value.lastSandChange;
+          if (lastSandChange) {
+            const lastDate = new Date(lastSandChange);
+            if (!isNaN(lastDate.getTime())) {
+              lastDate.setMonth(lastDate.getMonth() + 18);
+              const suggested = format(lastDate, 'yyyy-MM-dd');
+              form.setValue('nextSandChange', suggested);
+            }
+          }
         }
-      }
-    }, [form.watch('lastSandChange')]);
+      });
+      return () => subscription.unsubscribe();
+    }, [form]);
   const [showReajuste, setShowReajuste] = useState(false);
   const [novoValor, setNovoValor] = useState(null as number | null);
   const [inflacaoSugestao, setInflacaoSugestao] = useState(null as number | null);
@@ -365,24 +381,24 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
                         <FormItem>
                           <FormLabel className="text-sm font-medium">Dia(s) da semana das visitas</FormLabel>
                           <FormControl>
-                            <Select
-                              multiple
-                              value={field.value}
-                              onValueChange={field.onChange}
-                            >
-                              <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Selecione o(s) dia(s)" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Segunda-feira">Segunda-feira</SelectItem>
-                                <SelectItem value="Terça-feira">Terça-feira</SelectItem>
-                                <SelectItem value="Quarta-feira">Quarta-feira</SelectItem>
-                                <SelectItem value="Quinta-feira">Quinta-feira</SelectItem>
-                                <SelectItem value="Sexta-feira">Sexta-feira</SelectItem>
-                                <SelectItem value="Sábado">Sábado</SelectItem>
-                                <SelectItem value="Domingo">Domingo</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            <div className="space-y-2">
+                              {daysOfWeek.map((day) => (
+                                <div key={day} className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id={day}
+                                    checked={field.value?.includes(day) || false}
+                                    onCheckedChange={(checked) => {
+                                      if (checked) {
+                                        field.onChange([...(field.value || []), day]);
+                                      } else {
+                                        field.onChange(field.value?.filter((d: string) => d !== day) || []);
+                                      }
+                                    }}
+                                  />
+                                  <Label htmlFor={day} className="text-sm">{day}</Label>
+                                </div>
+                              ))}
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
