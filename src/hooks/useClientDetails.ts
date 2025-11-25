@@ -10,6 +10,7 @@ import { VisitFormData } from '@/components/VisitForm';
 // Tipos de dados
 interface ClientDetails extends ClientFormData {
   id: string;
+  inventory?: import('@/components/InventoryCard').InventoryItem[];
 }
 
 interface Visit extends VisitFormData {
