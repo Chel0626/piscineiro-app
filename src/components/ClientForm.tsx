@@ -366,8 +366,7 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
                         </div>
                       </div>
                     )}
-                        )}
-                      />
+                  />
                   </div>
 
                   {/* Frequência e dias da semana das visitas */}
