@@ -156,6 +156,8 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
     const url = `https://wa.me/55${phoneNumber}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
     toast.success('WhatsApp aberto com o relatório!');
+  };
+
   const removePhoto = () => {
     setPhotoPreview('');
     form.setValue('poolPhoto', '');
