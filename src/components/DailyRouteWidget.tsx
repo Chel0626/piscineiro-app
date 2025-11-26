@@ -44,7 +44,7 @@ export function DailyRouteWidget() {
   const [loadingClientId, setLoadingClientId] = useState<string | null>(null);
   // Estados para modais customizados
   const [modalType, setModalType] = useState<'relatorio' | 'concluir' | null>(null);
-  const [modalClient, setModalClient] = useState<ClientFormData | null>(null);
+  const [modalClient, setModalClient] = useState<(ClientFormData & { id: string }) | DailyClient | RescheduledClient | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   // Função para finalizar visita com feedback visual
   // Estado para controlar qual cliente está expandido
@@ -174,12 +174,12 @@ export function DailyRouteWidget() {
   const displayedCompletedClients = showAllCompleted ? completedClients : completedClients.slice(0, 2);
 
   // Handler para abrir modal Relatório
-  const handleOpenRelatorio = (client: ClientFormData) => {
+  const handleOpenRelatorio = (client: DailyClient | RescheduledClient) => {
     setModalType('relatorio');
     setModalClient(client);
   };
   // Handler para abrir modal Concluir
-  const handleOpenConcluir = (client: ClientFormData) => {
+  const handleOpenConcluir = (client: DailyClient | RescheduledClient) => {
     setModalType('concluir');
     setModalClient(client);
   };
