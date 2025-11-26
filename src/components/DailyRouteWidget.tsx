@@ -2,16 +2,20 @@
 
 import { useClients } from '@/hooks/useClients';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+
+
 import { Button } from '@/components/ui/button';
 import { ListChecks, CheckCircle, UserPlus } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { VisitForm, VisitFormData } from '@/components/VisitForm';
 import { useState, useEffect, useMemo } from 'react';
 import { collection, query, where, onSnapshot, Timestamp, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { ClientFormData } from '@/lib/validators/clientSchema';
 import { CheckoutModal } from '@/components/CheckoutModal';
 import { DayReschedule } from '@/components/DayReschedule';
+import { ClientDetails } from '@/components/ClientDetails';
 import { useTemporaryReschedule } from '@/hooks/useTemporaryReschedule';
-import { VisitLog } from '@/components/VisitModal';
 
 const getCurrentDayName = () => {
   const days = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
@@ -20,21 +24,15 @@ const getCurrentDayName = () => {
 };
 
 type DailyClient = ClientFormData & { 
-  id: string;
-  isRescheduled?: boolean;
-  originalDay?: string;
-  checkInTime?: string;
-  showDetails?: boolean;
-  visits?: VisitLog[];
+  id: string; 
+  isRescheduled?: boolean; 
+  originalDay?: string 
 };
 
 type RescheduledClient = ClientFormData & { 
-  id: string;
-  isRescheduled: true;
-  originalDay: string;
-  checkInTime?: string;
-  showDetails?: boolean;
-  visits?: VisitLog[];
+  id: string; 
+  isRescheduled: true; 
+  originalDay: string 
 };
 
 export function DailyRouteWidget() {
@@ -44,7 +42,13 @@ export function DailyRouteWidget() {
   const [showAllPending, setShowAllPending] = useState(false);
   const [showAllCompleted, setShowAllCompleted] = useState(false);
   const [loadingClientId, setLoadingClientId] = useState<string | null>(null);
+  // Estados para modais customizados
+  const [modalType, setModalType] = useState<'relatorio' | 'concluir' | null>(null);
+  const [modalClient, setModalClient] = useState<ClientFormData | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   // Função para finalizar visita com feedback visual
+  // Estado para controlar qual cliente está expandido
+  const [expandedClientId, setExpandedClientId] = useState<string | null>(null);
   const handleFinalizeVisit = async (clientId: string) => {
     setLoadingClientId(clientId);
     try {
@@ -72,8 +76,7 @@ export function DailyRouteWidget() {
     }
   };
   const [isExpanded, setIsExpanded] = useState(true);
-  const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
-  const [selectedClientId, setSelectedClientId] = useState<string>('');
+  // Removido uso do CheckoutModal para Relatório
 
   const today = getCurrentDayName();
   
@@ -170,9 +173,15 @@ export function DailyRouteWidget() {
   const displayedPendingClients = showAllPending ? pendingClients : pendingClients.slice(0, 2);
   const displayedCompletedClients = showAllCompleted ? completedClients : completedClients.slice(0, 2);
 
-  const handleCheckout = (clientId: string) => {
-    setSelectedClientId(clientId);
-    setCheckoutModalOpen(true);
+  // Handler para abrir modal Relatório
+  const handleOpenRelatorio = (client: ClientFormData) => {
+    setModalType('relatorio');
+    setModalClient(client);
+  };
+  // Handler para abrir modal Concluir
+  const handleOpenConcluir = (client: ClientFormData) => {
+    setModalType('concluir');
+    setModalClient(client);
   };
 
   return (
@@ -216,7 +225,7 @@ export function DailyRouteWidget() {
                   }`}
                 >
                   {/* Card expansível: clique no nome para expandir */}
-                  <div className="flex items-center gap-2 min-w-0 cursor-pointer group" onClick={() => client.showDetails = !client.showDetails}>
+                  <div className="flex items-center gap-2 min-w-0 cursor-pointer group" onClick={() => setExpandedClientId(expandedClientId === client.id ? null : client.id)}>
                     <p className="font-semibold text-base sm:text-lg truncate text-gray-900 dark:text-gray-100 flex-1 group-hover:underline">
                       {client.name && client.name.trim().length > 0 ? client.name : `Cliente ${client.id}`}
                     </p>
@@ -240,84 +249,55 @@ export function DailyRouteWidget() {
                     </p>
                   </div>
                   {/* Detalhes extras do cliente (expansível) */}
-                  {client.showDetails && (
-                    <div className="mt-2 p-2 rounded bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-xs sm:text-sm">
-                      <div><strong>Telefone:</strong> {client.phone || 'Não informado'}</div>
-                      <div><strong>Endereço:</strong> {client.address || 'Não informado'}</div>
-                      {/* Histórico rápido de visitas */}
-                      <div className="mt-2">
-                        <strong>Últimas visitas:</strong>
-                        <ul className="list-disc ml-4">
-                          {client.visits && client.visits.length > 0 ? (
-                            client.visits.slice(0,3).map((visit: VisitLog) => (
-                              <li key={visit.id}>
-                                {visit.date ? new Date(visit.date).toLocaleDateString('pt-BR') : 'Data desconhecida'}
-                                {' - '}
-                                {visit.notes && visit.notes.length > 0 ? visit.notes : 'Sem observações'}
-                              </li>
-                            ))
-                          ) : (
-                            <li>Nenhuma visita registrada</li>
-                          )}
-                        </ul>
-                      </div>
-                    </div>
+                  {expandedClientId === client.id && (
+                    <ClientDetails clientId={client.id} phone={client.phone} address={client.address} />
                   )}
-                  {/* Botões de ação, responsivos */}
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 justify-end mt-2">
-                    {/* Tooltip: Registro de Visita */}
-                    <div className="relative group">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => handleCheckout(client.id)}
-                        className="text-xs sm:text-sm w-full sm:w-auto"
+                  {/* Rodapé do Card: Ações horizontais e calculadora flutuante */}
+                  <div className="flex flex-row items-center gap-2 justify-between mt-3">
+                    {/* Ícone Calculadora flutuante */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="p-2 text-blue-600 hover:bg-blue-50"
+                      title="Abrir Calculadora de Dosagem"
+                      onClick={() => {/* TODO: abrir modal/calculadora */}}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="4" y="4" width="16" height="16" rx="2" strokeWidth="2"/><circle cx="8" cy="8" r="1"/><circle cx="12" cy="8" r="1"/><circle cx="16" cy="8" r="1"/><rect x="7" y="12" width="2" height="2" rx="0.5"/><rect x="11" y="12" width="2" height="2" rx="0.5"/><rect x="15" y="12" width="2" height="2" rx="0.5"/></svg>
+                    </Button>
+                    <div className="flex flex-1 flex-row gap-2 justify-end">
+                      {/* Botão Relatório (azul) */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs sm:text-sm flex-1 border-blue-600 text-blue-700 hover:bg-blue-50 hover:border-blue-700"
+                        onClick={() => handleOpenRelatorio(client)}
                         disabled={loadingClientId === client.id}
                       >
-                        {loadingClientId === client.id ? (
-                          <svg className="animate-spin h-4 w-4 mr-2 text-blue-600" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                          </svg>
-                        ) : (
-                          <ListChecks className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                        )}
-                        Registro de Visita
+                        <svg xmlns="http://www.w3.org/2000/svg" className="mr-2 h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="6" y="4" width="12" height="16" rx="2" strokeWidth="2"/><path d="M9 8h6M9 12h6M9 16h6" strokeWidth="2"/></svg>
+                        Relatório
                       </Button>
-                      <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none z-10 whitespace-nowrap">Registrar visita do cliente</span>
-                    </div>
-                    {/* Tooltip: Finalizar Visita */}
-                    <div className="relative group">
+                      {/* Botão Concluir (verde) */}
                       <Button
                         variant="default"
                         size="sm"
-                        className="text-xs sm:text-sm w-full sm:w-auto"
-                        onClick={() => handleFinalizeVisit(client.id)}
+                        className="text-xs sm:text-sm flex-1 bg-green-600 hover:bg-green-700"
+                        onClick={() => handleOpenConcluir(client)}
                         disabled={loadingClientId === client.id}
                       >
-                        {loadingClientId === client.id ? (
-                          <svg className="animate-spin h-4 w-4 mr-2 text-white" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                          </svg>
-                        ) : (
-                          <CheckCircle className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                        )}
-                        Finalizar Visita
+                        <svg xmlns="http://www.w3.org/2000/svg" className="mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M5 13l4 4L19 7" strokeWidth="2"/></svg>
+                        Concluir
                       </Button>
-                      <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none z-10 whitespace-nowrap">Finalizar visita do cliente</span>
+                      {/* Botão Mover Dia, alinhado à direita */}
+                      {!('isRescheduled' in client && client.isRescheduled) && (
+                        <div className="flex items-center ml-2">
+                          <DayReschedule
+                            clientId={client.id}
+                            clientName={client.name}
+                            originalDay={today}
+                          />
+                        </div>
+                      )}
                     </div>
-                    {/* Tooltip: Mover Dia */}
-                    {!('isRescheduled' in client && client.isRescheduled) && (
-                      <div className="relative group">
-                        <DayReschedule
-                          clientId={client.id}
-                          clientName={client.name}
-                          originalDay={today}
-                        />
-                        <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none z-10 whitespace-nowrap">Mover cliente para outro dia</span>
-                      </div>
-                    )}
                   </div>
                 </li>
               ))}
@@ -385,12 +365,70 @@ export function DailyRouteWidget() {
         </CardContent>
       )}
 
-      {/* Modal de Check-out */}
-      <CheckoutModal
-        clientId={selectedClientId}
-        isOpen={checkoutModalOpen}
-        onClose={() => setCheckoutModalOpen(false)}
-      />
+      {/* Modal customizado para Relatório e Concluir */}
+      <Dialog open={!!modalType && !!modalClient} onOpenChange={open => { if (!open) { setModalType(null); setModalClient(null); } }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {modalType === 'relatorio' ? 'Registrar Relatório Completo' : 'Finalizar Visita Expressa'}
+            </DialogTitle>
+          </DialogHeader>
+          {modalClient && (
+            <div className="space-y-4">
+              <div className="text-sm font-semibold mb-2">Cliente: {modalClient.name}</div>
+              {modalType === 'relatorio' ? (
+                <VisitForm
+                  clientId={modalClient.id}
+                  isLoading={isSubmitting}
+                  onSubmit={async (data: VisitFormData) => {
+                    setIsSubmitting(true);
+                    try {
+                      // Salva visita detalhada no Firestore
+                      const { collection, addDoc, serverTimestamp } = await import('firebase/firestore');
+                      const { db } = await import('@/lib/firebase');
+                      await addDoc(collection(db, 'clients', modalClient.id, 'visits'), {
+                        ...data,
+                        timestamp: serverTimestamp(),
+                        finalized: true,
+                      });
+                      if (typeof window !== 'undefined') {
+                        const { toast } = await import('sonner');
+                        toast.success('Relatório registrado com sucesso!');
+                      }
+                      setModalType(null);
+                      setModalClient(null);
+                    } catch (error) {
+                      if (typeof window !== 'undefined') {
+                        const { toast } = await import('sonner');
+                        toast.error('Erro ao registrar relatório!');
+                      }
+                    } finally {
+                      setIsSubmitting(false);
+                    }
+                  }}
+                />
+              ) : (
+                <div>
+                  {/* TODO: Formulário simplificado de conclusão */}
+                  <div className="text-gray-500">Confirmação rápida para finalizar visita.</div>
+                </div>
+              )}
+            </div>
+          )}
+          {modalType === 'concluir' && modalClient && (
+            <DialogFooter>
+              <Button onClick={() => {
+                handleFinalizeVisit(modalClient.id);
+                setModalType(null);
+                setModalClient(null);
+              }}>
+                Finalizar Visita
+              </Button>
+              <Button variant="ghost" onClick={() => { setModalType(null); setModalClient(null); }}>Cancelar</Button>
+            </DialogFooter>
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

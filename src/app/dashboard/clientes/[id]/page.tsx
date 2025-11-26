@@ -3,9 +3,7 @@
 import { useParams } from 'next/navigation';
 
 import { useClientDetails } from '@/hooks/useClientDetails';
-import { ClientDashboard } from '@/components/ClientDashboard';
-import { ClientOperationalPanel } from '@/components/ClientOperationalPanel';
-import { InventoryItem } from '@/components/InventoryCard';
+import { ClientDashboard, ClientData } from '@/components/ClientDashboard';
 
 export default function ClienteDetailPage() {
   const params = useParams();
@@ -19,49 +17,35 @@ export default function ClienteDetailPage() {
     return <div className="text-center p-6 text-sm sm:text-base">Cliente não encontrado.</div>;
   }
 
-  // Dados para painel operacional
-  const poolVolume = client.poolVolume || 0;
-  const clientName = client.name;
-  // Suporte para inventory: se não existir, inicia vazio
-  const inventory = client.inventory || [];
-  // Função para atualizar inventory (pode ser adaptada para persistir no backend)
-  function handleInventoryUpdate(newInventory: InventoryItem[]) {
-    // Aqui pode ser feita uma chamada para atualizar no backend
-    // Exemplo: updateDoc(...)
-  }
+  // Transformar dados do client para o formato do dashboard
+  const clientDashboardData: ClientData = {
+    id: clientId,
+    profile: {
+      name: client.name,
+      address: client.address,
+      phone: client.phone || '',
+      coordinates: undefined, // Adapte se houver dados
+    },
+    equipment: {
+      filter_model: client.filterModel || '',
+      sand_capacity_kg: client.filterSandKg || 0,
+      last_sand_change: client.lastSandChange || '',
+      next_change_forecast: client.nextSandChange || '',
+      maintenance_history: [], // Adapte se houver histórico
+    },
+    financial: {
+      current_value: client.serviceValue || 0,
+      frequency: client.visitFrequency || 'weekly',
+      visit_day: client.visitDays?.[0] || '',
+      active_since: '', // Adapte se houver data
+      price_history: [], // Adapte se houver histórico
+    },
+  };
 
-  // Renderiza dashboard + painel operacional
+  // Renderiza o novo dashboard
   return (
-    <div className="p-2 sm:p-4 space-y-6">
-      <ClientDashboard client={{
-        id: clientId,
-        profile: {
-          name: client.name,
-          address: client.address,
-          phone: client.phone || '',
-          coordinates: undefined,
-        },
-        equipment: {
-          filter_model: client.filterModel || '',
-          sand_capacity_kg: client.filterSandKg || 0,
-          last_sand_change: client.lastSandChange || '',
-          next_change_forecast: client.nextSandChange || '',
-          maintenance_history: [],
-        },
-        financial: {
-          current_value: client.serviceValue || 0,
-          frequency: client.visitFrequency || 'weekly',
-          visit_day: client.visitDays?.[0] || '',
-          active_since: '',
-          price_history: [],
-        },
-      }} />
-      <ClientOperationalPanel
-        poolVolume={poolVolume}
-        clientName={clientName}
-        inventory={inventory}
-        onInventoryUpdate={handleInventoryUpdate}
-      />
+    <div className="p-2 sm:p-4">
+      <ClientDashboard client={clientDashboardData} />
     </div>
   );
 }

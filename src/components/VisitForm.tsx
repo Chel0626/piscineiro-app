@@ -114,81 +114,83 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
     setIsCapturing(false);
   };
 
-  // Função para remover foto
-  const removePhoto = () => {
-    setPhotoPreview('');
-    form.setValue('poolPhoto', '');
-  };
+        {/* Seção de Foto da Piscina desabilitada por falta de backend. Para reativar, remova os comentários abaixo e configure armazenamento. */}
+        {/**
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Camera className="h-5 w-5" />
+              Foto da Piscina
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {!photoPreview && !isCapturing && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={startCamera}
+                className="w-full"
+              >
+                <Camera className="h-4 w-4 mr-2" />
+                Tirar Foto da Piscina
+              </Button>
+            )}
 
-  const handleFormSubmit = async (data: VisitFormData) => {
-    try {
-      const validatedData = formSchema.parse(data);
-      
-      // Filtrar campos undefined antes de enviar ao Firebase
-      const cleanedData = {
-        ...validatedData,
-        // Remove description se for vazia
-        ...(validatedData.description && validatedData.description.trim() 
-          ? { description: validatedData.description.trim() } 
-          : {})
-      };
-      
-      onSubmit(cleanedData);
-      form.reset({
-        ph: 7.4,
-        cloro: 0,
-        alcalinidade: 100,
-        description: '',
-        departureTime: '',
-        poolPhoto: '',
-      });
-      
-      // Limpar estados de foto
-      setPhotoPreview('');
-      setIsCapturing(false);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        error.issues.forEach((err) => {
-          form.setError(err.path[0] as keyof VisitFormData, {
-            type: 'manual',
-            message: err.message,
-          });
-        });
-      }
-    }
-  };
+            {isCapturing && (
+              <div className="space-y-4">
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  className="w-full max-w-md rounded-lg border mx-auto"
+                />
+                <div className="flex gap-2 justify-center">
+                  <Button
+                    type="button"
+                    onClick={capturePhoto}
+                  >
+                    Capturar
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={stopCamera}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </div>
+            )}
 
-  const handleSendReportWhatsApp = () => {
-    if (!client?.phone) {
-      toast.error('Cliente não possui telefone cadastrado.');
-      return;
-    }
+            {photoPreview && (
+              <div className="space-y-4">
+                <div className="relative">
+                  <img
+                    src={photoPreview}
+                    alt="Foto da piscina"
+                    className="w-full max-w-md rounded-lg border mx-auto"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={removePhoto}
+                    className="absolute top-2 right-2"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="text-sm text-center text-gray-600 dark:text-gray-400">
+                  Foto capturada com sucesso!
+                </p>
+              </div>
+            )}
 
-    const data = form.getValues();
-    
-    // Validar se há dados para enviar
-    if (!data.ph && !data.cloro && !data.alcalinidade && !data.description) {
-      toast.error('Preencha pelo menos alguns dados para enviar o relatório.');
-      return;
-    }
-
-    // Construir mensagem do relatório
-    let message = `🏊 Relatório da Manutenção - ${client.name}\n`;
-    message += `📅 Data: ${new Date().toLocaleDateString('pt-BR')}\n`;
-    
-    // Gerar mensagem para WhatsApp
-    if (data.departureTime) {
-      message += `⏰ *Horários:*\n`;
-      if (data.departureTime) message += `• Saída: ${data.departureTime}\n`;
-    }
-    
-    // Parâmetros da água
-    message += `💧 Parâmetros da Água:\n`;
-    if (data.ph) message += `• pH: ${data.ph}\n`;
-    if (data.cloro) message += `• Cloro: ${data.cloro} ppm\n`;
-    if (data.alcalinidade) message += `• Alcalinidade: ${data.alcalinidade} ppm\n`;
-    
-    // Descrição/observações
+            {/* Canvas oculto para captura */}
+            <canvas ref={canvasRef} style={{ display: 'none' }} />
+          </CardContent>
+        </Card>
+        */}
     if (data.description) {
       message += `\n📝 Observações:\n${data.description}\n`;
     }
