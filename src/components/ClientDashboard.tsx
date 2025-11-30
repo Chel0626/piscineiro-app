@@ -63,7 +63,7 @@ export const ClientDashboard: React.FC<{ client: ClientData }> = ({ client }) =>
   }
 
   // Registrar manutenção
-  function handleRegisterMaintenance(event: MaintenanceEvent) {
+  async function handleRegisterMaintenance(event: MaintenanceEvent) {
     // Atualiza last_sand_change e next_change_forecast se for troca de areia
     const updatedEquipment = { ...clientData.equipment };
     if (event.type === 'sand_change') {
@@ -75,6 +75,19 @@ export const ClientDashboard: React.FC<{ client: ClientData }> = ({ client }) =>
     }
     updatedEquipment.maintenance_history = [event, ...updatedEquipment.maintenance_history];
     setClientData(prev => ({ ...prev, equipment: updatedEquipment }));
+
+    // Salvar no Firestore
+    try {
+      // @ts-ignore
+      const { db } = await import('@/lib/firebase');
+      // Atualiza o documento do cliente
+      await db.collection('clients').doc(clientData.id).update({
+        equipment: updatedEquipment
+      });
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Erro ao salvar manutenção no banco:', error);
+    }
   }
 
   // Reajustar contrato

@@ -174,15 +174,38 @@ export default function RoteirosPage() {
         {/* Lista de clientes por dia usando RouteList */}
         {daysOfWeek.map(day => {
           const dayClients = localGroupedClients[day.key] || [];
+          const isExpanded = expandedDays.includes(day.key);
           return (
-            <div key={day.key} className="mb-6">
-              <h2 className="font-bold text-lg mb-2">{day.label}</h2>
-              <RouteList
-                clients={dayClients}
-                onCheckIn={handleCheckIn}
-                onCheckOut={handleCheckOut}
-                onOpenTools={handleOpenTools}
-              />
+            <div key={day.key} className="mb-6 border rounded-lg bg-white dark:bg-gray-900 shadow-sm">
+              <button
+                className={`w-full flex items-center justify-between px-4 py-3 text-lg font-bold focus:outline-none transition-colors ${isExpanded ? 'bg-blue-50 dark:bg-blue-900/30' : 'bg-gray-50 dark:bg-gray-800'}`}
+                onClick={() => toggleDay(day.key)}
+                aria-expanded={isExpanded}
+              >
+                <span>{day.label}</span>
+                <span className={`ml-2 transition-transform ${isExpanded ? 'rotate-90' : ''}`}>▶</span>
+              </button>
+              {isExpanded && (
+                <div className="p-4">
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={event => handleDragEnd(event, day.key)}
+                  >
+                    <SortableContext
+                      items={dayClients.map(c => c.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <RouteList
+                        clients={dayClients}
+                        onCheckIn={handleCheckIn}
+                        onCheckOut={handleCheckOut}
+                        onOpenTools={handleOpenTools}
+                      />
+                    </SortableContext>
+                  </DndContext>
+                </div>
+              )}
             </div>
           );
         })}

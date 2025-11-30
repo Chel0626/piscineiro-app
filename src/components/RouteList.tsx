@@ -1,5 +1,86 @@
 import React, { useState, useEffect } from 'react';
 
+interface SortableClientItemProps {
+  client: RouteClient;
+  state: RouteClientState;
+  timer: number;
+  onCheckIn: () => void;
+  onCheckOut: () => void;
+  onOpenTools: () => void;
+}
+
+const SortableClientItem: React.FC<SortableClientItemProps> = ({ client, state, timer, onCheckIn, onCheckOut, onOpenTools }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: client.id });
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+        cursor: 'grab',
+      }}
+      className={`rounded-lg p-4 shadow-md transition-all flex items-center ${
+        state === 'pending'
+          ? 'bg-white border'
+          : state === 'inProgress'
+          ? 'border-blue-500 bg-blue-50 animate-pulse'
+          : 'bg-gray-100 opacity-60 border-green-500'
+      }`}
+    >
+      <button
+        {...attributes}
+        {...listeners}
+        className="mr-3 p-2 rounded-full bg-gray-200 hover:bg-gray-300 active:bg-gray-400 cursor-grab"
+        title="Arraste para reordenar"
+        style={{ touchAction: 'none' }}
+      >
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeWidth="2" d="M7 10v4m5-4v4m5-4v4"/></svg>
+      </button>
+      <div className="flex-1">
+        <div className="font-bold text-lg">{client.name}</div>
+        <div className="text-sm text-gray-600">{client.address} - {client.neighborhood}</div>
+      </div>
+      <div className="flex gap-2 items-center">
+        {state === 'pending' && (
+          <button
+            className="bg-blue-500 text-white px-3 py-1 rounded"
+            onClick={onCheckIn}
+          >Iniciar Visita</button>
+        )}
+        {state === 'inProgress' && (
+          <>
+            <span className="font-mono text-blue-700">{timer ? `${timer} min` : '00:00 min'}</span>
+            <button
+              className="bg-gray-200 px-2 py-1 rounded"
+              onClick={onOpenTools}
+            >Ferramentas</button>
+            <button
+              className="bg-green-500 text-white px-3 py-1 rounded"
+              onClick={onCheckOut}
+            >Finalizar Visita</button>
+          </>
+        )}
+        {state === 'done' && (
+          <span className="text-green-600 font-bold flex items-center gap-1">
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeWidth="2" d="M5 13l4 4L19 7"/></svg>
+            Concluído
+          </span>
+        )}
+      </div>
+    </div>
+  );
+};
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
 export type RouteClientState = 'pending' | 'inProgress' | 'done';
 
 export interface RouteClient {
@@ -61,59 +142,15 @@ export const RouteList: React.FC<RouteListProps> = ({ clients, onCheckIn, onChec
   return (
     <div className="space-y-4">
       {clients.map(client => (
-        <div
+        <SortableClientItem
           key={client.id}
-          className={`rounded-lg p-4 shadow-md transition-all ${
-            clientStates[client.id] === 'pending'
-              ? 'bg-white border'
-              : clientStates[client.id] === 'inProgress'
-              ? 'border-blue-500 bg-blue-50 animate-pulse'
-              : 'bg-gray-100 opacity-60 border-green-500'
-          }`}
-        >
-          <div className="flex justify-between items-center">
-            <div>
-              <div className="font-bold text-lg">{client.name}</div>
-              <div className="text-sm text-gray-600">{client.address} - {client.neighborhood}</div>
-            </div>
-            <div className="flex gap-2 items-center">
-              {clientStates[client.id] === 'pending' && (
-                <button
-                  className="bg-blue-500 text-white px-3 py-1 rounded"
-                  onClick={() => handleCheckInLocal(client.id)}
-                >Iniciar Visita</button>
-              )}
-              {clientStates[client.id] === 'inProgress' && (
-                <>
-                  <span className="font-mono text-blue-700">{timers[client.id] ? `${timers[client.id]} min` : '00:00 min'}</span>
-                  <button
-                    className="bg-gray-200 px-2 py-1 rounded"
-                    onClick={() => onOpenTools(client.id)}
-                  >Ferramentas</button>
-                  <button
-                    className="bg-green-500 text-white px-3 py-1 rounded"
-                    onClick={() => handleCheckOutLocal(client.id)}
-                  >Finalizar Visita</button>
-                </>
-              )}
-              {clientStates[client.id] === 'done' && (
-                <span className="text-green-600 font-bold flex items-center gap-1">
-                  <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeWidth="2" d="M5 13l4 4L19 7"/></svg>
-                  Concluído
-                </span>
-              )}
-              <a
-                href={`https://waze.com/ul?ll=${encodeURIComponent(client.address)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ml-2 text-blue-400 hover:text-blue-600"
-                title="Navegar"
-              >
-                <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeWidth="2" d="M12 19V5m0 0l-7 7m7-7l7 7"/></svg>
-              </a>
-            </div>
-          </div>
-        </div>
+          client={client}
+          state={clientStates[client.id]}
+          timer={timers[client.id]}
+          onCheckIn={() => handleCheckInLocal(client.id)}
+          onCheckOut={() => handleCheckOutLocal(client.id)}
+          onOpenTools={() => onOpenTools(client.id)}
+        />
       ))}
     </div>
   );
