@@ -78,10 +78,10 @@ export const ClientDashboard: React.FC<{ client: ClientData }> = ({ client }) =>
 
     // Salvar no Firestore
     try {
-      // @ts-ignore
       const { db } = await import('@/lib/firebase');
-      // Atualiza o documento do cliente
-      await db.collection('clients').doc(clientData.id).update({
+      // Firestore modular: updateDoc(doc(db, ...), {...})
+      const { updateDoc, doc } = await import('firebase/firestore');
+      await updateDoc(doc(db, 'clients', clientData.id), {
         equipment: updatedEquipment
       });
     } catch (error) {
