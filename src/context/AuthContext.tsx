@@ -34,7 +34,7 @@ export function AuthContextProvider({ children }: { children: ReactNode }) {
         // Define o cookie de autenticação para o middleware
         try {
           const token = await user.getIdToken();
-          document.cookie = `firebase-auth-token=${token}; path=/; max-age=3600; SameSite=Lax`;
+          document.cookie = `firebase-auth-token=${token}; path=/; max-age=604800; SameSite=Lax`;
           console.log('AuthContext: Cookie de autenticação definido');
         } catch (error) {
           console.error('AuthContext: Erro ao obter token:', error);
