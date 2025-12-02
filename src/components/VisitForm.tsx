@@ -15,8 +15,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { useClientDetails } from '@/hooks/useClientDetails';
 import { toast } from 'sonner';
-import { Send, Camera, Clock, X } from 'lucide-react';
+import { Send, Camera, Clock, X, Upload } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { storage } from '@/lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const formSchema = z.object({
   ph: z.coerce.number().min(0, { message: 'pH inválido.' }),
@@ -64,6 +66,7 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
   // Estados para captura de foto
   const [photoPreview, setPhotoPreview] = useState<string>('');
   const [isCapturing, setIsCapturing] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -87,7 +90,7 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
   };
 
   // Função para tirar foto
-  const capturePhoto = () => {
+  const capturePhoto = async () => {
     if (videoRef.current && canvasRef.current) {
       const canvas = canvasRef.current;
       const video = videoRef.current;
@@ -100,8 +103,36 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
       const photoDataUrl = canvas.toDataURL('image/jpeg', 0.8);
       
       setPhotoPreview(photoDataUrl);
-      form.setValue('poolPhoto', photoDataUrl);
-      stopCamera();
+      setIsUploadingPhoto(true);
+      
+      try {
+        // Converter base64 para blob
+        const response = await fetch(photoDataUrl);
+        const blob = await response.blob();
+        
+        // Criar referência no Storage
+        const timestamp = Date.now();
+        const fileName = `pool-photos/${clientId}/visit-${timestamp}.jpg`;
+        const storageRef = ref(storage, fileName);
+        
+        // Fazer upload
+        await uploadBytes(storageRef, blob);
+        
+        // Obter URL de download
+        const downloadURL = await getDownloadURL(storageRef);
+        
+        // Salvar URL no formulário
+        form.setValue('poolPhoto', downloadURL);
+        
+        toast.success('Foto salva com sucesso!');
+      } catch (error) {
+        console.error('Erro ao fazer upload da foto:', error);
+        toast.error('Erro ao salvar foto. Tente novamente.');
+        setPhotoPreview('');
+      } finally {
+        setIsUploadingPhoto(false);
+        stopCamera();
+      }
     }
   };
 
@@ -350,12 +381,20 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
                     size="sm"
                     onClick={removePhoto}
                     className="absolute top-2 right-2"
+                    disabled={isUploadingPhoto}
                   >
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
                 <p className="text-sm text-center text-gray-600 dark:text-gray-400">
-                  Foto capturada com sucesso!
+                  {isUploadingPhoto ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <Upload className="h-4 w-4 animate-spin" />
+                      Salvando foto...
+                    </span>
+                  ) : (
+                    'Foto capturada e salva com sucesso!'
+                  )}
                 </p>
               </div>
             )}

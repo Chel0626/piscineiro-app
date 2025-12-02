@@ -95,10 +95,17 @@ export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps)
       });
     }
 
+    let photoInfo = '';
+    if (visitData.poolPhoto) {
+      photoInfo = `\n📸 *Foto da Piscina:* ${visitData.poolPhoto}\n`;
+    }
+
     const message = `🏊‍♂️ *Relatório de Visita - ${client.name}*\n\n` +
       `📅 Data: ${new Date().toLocaleDateString('pt-BR')}\n` +
       `📍 Endereço: ${client.address}\n` +
-      `📋 Observações: ${visitData.description || 'Nenhuma observação'}${mechanicalReport}\n\n` +
+      `💧 pH: ${visitData.ph || 'N/A'} | Cloro: ${visitData.cloro || 'N/A'} ppm | Alcalinidade: ${visitData.alcalinidade || 'N/A'} ppm\n` +
+      `⏰ Saída: ${visitData.departureTime || 'N/A'}\n` +
+      `📋 Observações: ${visitData.description || 'Nenhuma observação'}${photoInfo}${mechanicalReport}\n\n` +
       `✅ Visita concluída com sucesso!`;
 
     const phoneNumber = client.phone?.replace(/\D/g, '');
