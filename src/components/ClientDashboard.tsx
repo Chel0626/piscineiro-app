@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useClientDetails } from '@/hooks/useClientDetails';
 import { ClientProfileForm } from './ClientProfileForm';
 import { EquipmentCard } from './EquipmentCard';
 import { FinancialCard } from './FinancialCard';
@@ -49,12 +50,16 @@ export type ClientData = {
 };
 
 // Componente principal do dashboard do cliente
+
 export const ClientDashboard: React.FC<{ client: ClientData }> = ({ client }) => {
   // Estados para modais e edição
   const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
   const [showAdjustModal, setShowAdjustModal] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [clientData, setClientData] = useState<ClientData>(client);
+
+  // Dados dinâmicos do Firestore
+  const { client: clientDetails, visits, isLoading } = useClientDetails(client.id);
 
   // Atualização do perfil
   function handleSaveProfile(newProfile: ClientProfile) {
@@ -63,39 +68,13 @@ export const ClientDashboard: React.FC<{ client: ClientData }> = ({ client }) =>
   }
 
   // Registrar manutenção
-  function handleRegisterMaintenance(event: MaintenanceEvent) {
-    // Atualiza last_sand_change e next_change_forecast se for troca de areia
-    const updatedEquipment = { ...clientData.equipment };
-    if (event.type === 'sand_change') {
-      updatedEquipment.last_sand_change = event.date;
-      // Próxima troca: +18 meses
-      const lastDate = new Date(event.date);
-      lastDate.setMonth(lastDate.getMonth() + 18);
-      updatedEquipment.next_change_forecast = lastDate.toISOString().slice(0, 10);
-    }
-    updatedEquipment.maintenance_history = [event, ...updatedEquipment.maintenance_history];
-    setClientData(prev => ({ ...prev, equipment: updatedEquipment }));
+  async function handleRegisterMaintenance(event: MaintenanceEvent) {
+    // ...existing code...
   }
 
   // Reajustar contrato
   function handleAdjustContract(newValue: number, dateStart: string, reason: string) {
-    // Move valor atual para price_history
-    const prevValue = clientData.financial.current_value;
-    const prevStart = clientData.financial.active_since;
-    const newHistory: PriceHistory = {
-      date_start: prevStart,
-      date_end: dateStart,
-      value: prevValue,
-    };
-    setClientData(prev => ({
-      ...prev,
-      financial: {
-        ...prev.financial,
-        current_value: newValue,
-        active_since: dateStart,
-        price_history: [newHistory, ...prev.financial.price_history],
-      },
-    }));
+    // ...existing code...
   }
 
   return (
@@ -122,9 +101,69 @@ export const ClientDashboard: React.FC<{ client: ClientData }> = ({ client }) =>
       </div>
 
       {/* Cards principais */}
+
       <div className="space-y-4">
         <EquipmentCard equipment={clientData.equipment} onRegisterMaintenance={() => setShowMaintenanceModal(true)} />
         <FinancialCard financial={clientData.financial} onAdjustContract={() => setShowAdjustModal(true)} />
+
+        {/* Card: Histórico de Análises Químicas (dinâmico) */}
+        <div className="bg-white rounded-lg shadow p-4 border border-gray-200">
+          <div className="font-semibold text-base mb-1">
+            {clientDetails?.name || clientData.profile.name} - {clientDetails?.address || clientData.profile.address}
+          </div>
+          <div className="text-sm text-gray-600 mb-2">Análise da Água</div>
+          <hr className="mb-2" />
+          {isLoading ? (
+            <div className="text-xs text-gray-500">Carregando análises...</div>
+          ) : visits.length === 0 ? (
+            <div className="text-xs text-gray-500">Nenhuma análise registrada.</div>
+          ) : (
+            <>
+              {/* Última análise */}
+              <div className="mb-2">
+                <div className="text-xs text-gray-500">
+                  Última análise: {visits[0].timestamp && typeof visits[0].timestamp.toDate === 'function' ? visits[0].timestamp.toDate().toLocaleString('pt-BR') : '---'}
+                </div>
+                {visits[0].poolPhoto && (
+                  <img src={visits[0].poolPhoto} alt="Foto da piscina" className="w-full max-w-xs rounded border my-2" />
+                )}
+                <div className="flex items-center justify-between text-sm">
+                  <span>pH: <span className="font-semibold">{visits[0].ph ?? '--'}</span></span>
+                  <span className="text-green-600 font-medium">{visits[0].ph >= 7.2 && visits[0].ph <= 7.6 ? '✓ Ideal (7.2-7.6)' : 'Fora do ideal'}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span>Cloro Livre: <span className="font-semibold">{visits[0].cloro ?? '--'} ppm</span></span>
+                  <span className="text-green-600 font-medium">{visits[0].cloro >= 1 && visits[0].cloro <= 3 ? '✓ Bom (1.0-3.0)' : 'Fora do ideal'}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span>Alcalinidade: <span className="font-semibold">{visits[0].alcalinidade ?? '--'} ppm</span></span>
+                  <span className="text-green-600 font-medium">{visits[0].alcalinidade >= 80 && visits[0].alcalinidade <= 120 ? '✓ Ideal (80-120)' : 'Fora do ideal'}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span>Condição da Água: <span className="font-semibold capitalize">{visits[0].waterCondition ?? '--'}</span></span>
+                </div>
+                {visits[0].description && (
+                  <div className="text-xs text-gray-700 mt-1">Obs: {visits[0].description}</div>
+                )}
+              </div>
+              <button className="text-blue-600 text-xs underline mb-2">Ver Gráfico de Evolução</button>
+              <hr className="my-2" />
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-lg">📊</span>
+                <span className="text-xs text-gray-700 font-medium">Últimos 30 dias</span>
+              </div>
+              {/* Histórico simplificado */}
+              <ul className="text-xs text-gray-600 space-y-1">
+                {visits.slice(0, 5).map((v, idx) => (
+                  <li key={v.id}>
+                    • {v.timestamp && typeof v.timestamp.toDate === 'function' ? v.timestamp.toDate().toLocaleDateString('pt-BR') : '--'} - pH {v.ph ?? '--'}, Cloro {v.cloro ?? '--'}, Condição: <span className="capitalize">{v.waterCondition ?? '--'}</span>{v.poolPhoto ? ' 📷' : ''}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+          <button className="w-full bg-blue-100 hover:bg-blue-200 text-blue-800 font-semibold py-1 px-2 rounded text-xs mt-3">Registrar Nova Análise</button>
+        </div>
       </div>
 
       {/* Modais de ação */}

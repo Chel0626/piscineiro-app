@@ -20,10 +20,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { storage } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
+
 const formSchema = z.object({
   ph: z.coerce.number().min(0, { message: 'pH inválido.' }),
   cloro: z.coerce.number().min(0, { message: 'Cloro inválido.' }),
   alcalinidade: z.coerce.number().min(0, { message: 'Alcalinidade inválida.' }),
+  waterCondition: z.enum(['cristalina', 'turva', 'verde', 'leitosa', 'decantando'], { message: 'Selecione a condição da água.' }),
+  productsUsed: z.string().optional(), // Ex: "Cloro 2L, Algicida 100ml"
+  checklist: z.string().optional(), // Ex: "Escovação, Aspiração, Retrolavagem"
   description: z.string().optional(),
   departureTime: z.string().optional(),
   poolPhoto: z.string().optional(),
@@ -57,6 +61,9 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
       ph: initialData?.ph || 7.4,
       cloro: initialData?.cloro || 0,
       alcalinidade: initialData?.alcalinidade || 100,
+      waterCondition: initialData?.waterCondition || 'cristalina',
+      productsUsed: initialData?.productsUsed || '',
+      checklist: initialData?.checklist || '',
       description: initialData?.description || '',
       departureTime: initialData?.departureTime || getCurrentTime(),
       poolPhoto: initialData?.poolPhoto || '',
@@ -163,7 +170,7 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
     let message = `🏊 Relatório da Manutenção - ${client.name}\n`;
     message += `📅 Data: ${new Date().toLocaleDateString('pt-BR')}\n`;
 
-    // Gerar mensagem para WhatsApp
+    // Horários
     if (data.departureTime) {
       message += `⏰ *Horários:*\n`;
       if (data.departureTime) message += `• Saída: ${data.departureTime}\n`;
@@ -174,10 +181,26 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
     if (data.ph) message += `• pH: ${data.ph}\n`;
     if (data.cloro) message += `• Cloro: ${data.cloro} ppm\n`;
     if (data.alcalinidade) message += `• Alcalinidade: ${data.alcalinidade} ppm\n`;
+    if (data.waterCondition) message += `• Condição: ${data.waterCondition.charAt(0).toUpperCase() + data.waterCondition.slice(1)}\n`;
+
+    // Checklist/processos
+    if (data.checklist) {
+      message += `\n🔄 Processos realizados:\n${data.checklist}\n`;
+    }
+
+    // Produtos utilizados
+    if (data.productsUsed) {
+      message += `\n🧪 Produtos utilizados:\n${data.productsUsed}\n`;
+    }
 
     // Descrição/observações
     if (data.description) {
       message += `\n📝 Observações:\n${data.description}\n`;
+    }
+
+    // Foto
+    if (data.poolPhoto) {
+      message += `\n📷 Foto: ${data.poolPhoto}\n`;
     }
 
     message += `\n✅ Serviço realizado com sucesso!`;
@@ -270,6 +293,66 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
         </div>
 
         <div className="mt-4 space-y-4">
+          {/* Produtos Utilizados */}
+          <FormField
+            control={form.control}
+            name="productsUsed"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Produtos Utilizados (opcional)</FormLabel>
+                <FormControl>
+                  <input
+                    type="text"
+                    className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    placeholder="Ex: Cloro 2L, Algicida 100ml"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          {/* Checklist/Processos */}
+          <FormField
+            control={form.control}
+            name="checklist"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Checklist/Processos (opcional)</FormLabel>
+                <FormControl>
+                  <input
+                    type="text"
+                    className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    placeholder="Ex: Escovação, Aspiração, Retrolavagem"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="waterCondition"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Condição da Água</FormLabel>
+                <FormControl>
+                  <select
+                    className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    {...field}
+                  >
+                    <option value="cristalina">Cristalina</option>
+                    <option value="turva">Turva</option>
+                    <option value="verde">Verde</option>
+                    <option value="leitosa">Leitosa</option>
+                    <option value="decantando">Decantando</option>
+                  </select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <FormField
             control={form.control}
             name="description"
