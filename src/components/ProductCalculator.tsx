@@ -38,15 +38,23 @@ export function ProductCalculator({ poolVolume, onProductsSelected }: ProductCal
 
   const calcularProdutos = (data: Partial<CalculatorFormData>): ProductSuggestion[] => {
     const volume = poolVolume || 0;
+    if (volume === 0) return [];
+    
     const suggestions: ProductSuggestion[] = [];
 
-    // NOVOS CÁLCULOS CONFORME ESPECIFICAÇÃO
+    // CÁLCULOS BASEADOS EM ESPECIFICAÇÕES TÉCNICAS DA INDÚSTRIA
 
-    // 1. CLORO GRANULADO - Meta: 3ppm
+    // 1. CLORO GRANULADO (Dicloro ou Tricloro)
+    // Meta: 1-3 ppm (ideal 2-3 ppm)
+    // Cálculo: Para elevar 1 ppm = 10g por m³
     const cloroAtual = data.cloro ?? 0;
-    if (cloroAtual < 3.0) {
-      const cloroFaltante = 3.0 - cloroAtual;
-      const cloroNecessario = 4 * volume * cloroFaltante;
+    const cloroIdeal = 3.0;
+    
+    if (cloroAtual < cloroIdeal) {
+      const cloroFaltante = cloroIdeal - cloroAtual;
+      // 10g por m³ para elevar 1 ppm
+      const cloroNecessario = 10 * volume * cloroFaltante;
+      
       suggestions.push({
         id: 'cloro-granulado',
         name: 'Cloro Granulado',
@@ -55,73 +63,160 @@ export function ProductCalculator({ poolVolume, onProductsSelected }: ProductCal
       });
     }
 
-    // Oxidação de choque se cloro está zerado
-    if (cloroAtual === 0) {
-      const choqueOxidacao = volume * 20;
+    // Tratamento de choque/oxidação quando cloro está muito baixo ou zerado
+    if (cloroAtual <= 0.5) {
+      // Choque: 20-30g por m³ (usando 25g como média)
+      const choqueOxidacao = 25 * volume;
       suggestions.push({
         id: 'cloro-choque',
-        name: 'Cloro Granulado (Choque)',
+        name: 'Cloro Granulado (Tratamento de Choque)',
         quantity: Math.round(choqueOxidacao),
         unit: 'g'
       });
     }
 
-    // 2. ELEVADOR DE ALCALINIDADE - Meta: 12
-    const alcalinidadeAtual = data.alcalinidade ?? 12;
-    if (alcalinidadeAtual < 12) {
-      const alcalinidadeFaltante = 12 - alcalinidadeAtual;
-      const elevadorAlcalinidadeGramas = 17 * volume * alcalinidadeFaltante;
-      const elevadorAlcalinidadeKg = elevadorAlcalinidadeGramas / 1000;
+    // 2. PASTILHAS DE CLORO (Manutenção preventiva)
+    // 1 pastilha de 200g para cada 45m³ por semana
+    const pastilhas = Math.ceil(volume / 45);
+    if (pastilhas > 0) {
       suggestions.push({
-        id: 'elevador-alcalinidade',
-        name: 'Elevador de Alcalinidade',
-        quantity: parseFloat(elevadorAlcalinidadeKg.toFixed(2)),
-        unit: 'kg'
+        id: 'pastilha-cloro',
+        name: 'Pastilha de Cloro 200g (manutenção semanal)',
+        quantity: pastilhas,
+        unit: 'unidades'
       });
     }
 
-    // 3. REDUTOR DE pH
+    // 3. ALCALINIDADE TOTAL
+    // Meta: 80-120 ppm (ideal 100-120 ppm)
+    // Cálculo: Para elevar 10 ppm = 170g por m³
+    const alcalinidadeAtual = data.alcalinidade ?? 100;
+    const alcalinidadeIdeal = 120;
+    
+    if (alcalinidadeAtual < alcalinidadeIdeal) {
+      const alcalinidadeFaltante = alcalinidadeIdeal - alcalinidadeAtual;
+      // 170g por m³ para elevar 10 ppm
+      const elevadorNecessario = (170 * volume * alcalinidadeFaltante) / 10;
+      
+      suggestions.push({
+        id: 'elevador-alcalinidade',
+        name: 'Elevador de Alcalinidade',
+        quantity: Math.round(elevadorNecessario),
+        unit: 'g'
+      });
+    }
+
+    // 4. pH
+    // Meta: 7.2-7.6 (ideal 7.4)
     const phAtual = data.ph ?? 7.4;
+    
+    // REDUTOR DE pH (para pH alto)
     if (phAtual > 7.6) {
-      const redutorPh = volume * 10;
+      const diferencaPh = phAtual - 7.4;
+      // 100ml por m³ para reduzir 0.2 no pH
+      const redutorNecessario = (100 * volume * diferencaPh) / 0.2;
+      
       suggestions.push({
         id: 'redutor-ph',
-        name: 'Redutor de pH',
-        quantity: Math.round(redutorPh),
+        name: 'Redutor de pH (Ácido)',
+        quantity: Math.round(redutorNecessario),
+        unit: 'ml'
+      });
+    }
+    
+    // ELEVADOR DE pH / BARRILHA (para pH baixo)
+    if (phAtual < 7.2) {
+      const diferencaPh = 7.4 - phAtual;
+      // 100g por m³ para elevar 0.2 no pH
+      const barrilhaNecessaria = (100 * volume * diferencaPh) / 0.2;
+      
+      suggestions.push({
+        id: 'elevador-ph',
+        name: 'Barrilha / Elevador de pH',
+        quantity: Math.round(barrilhaNecessaria),
+        unit: 'g'
+      });
+    }
+
+    // 5. ALGICIDA
+    // Manutenção preventiva: 50-100ml por 10m³ (usando 80ml como média)
+    // Tratamento corretivo: 200-300ml por 10m³
+    const algicidaAtual = cloroAtual; // Usar cloro como proxy para necessidade de algicida
+    
+    if (algicidaAtual < 1.0) {
+      // Água com tendência a algas - tratamento corretivo
+      const algicidaChoque = (250 * volume) / 10;
+      suggestions.push({
+        id: 'algicida-choque',
+        name: 'Algicida (Tratamento de Choque)',
+        quantity: Math.round(algicidaChoque),
+        unit: 'ml'
+      });
+    } else {
+      // Manutenção preventiva semanal
+      const algicidaManutencao = (80 * volume) / 10;
+      suggestions.push({
+        id: 'algicida-manutencao',
+        name: 'Algicida (Manutenção Semanal)',
+        quantity: Math.round(algicidaManutencao),
         unit: 'ml'
       });
     }
 
-    // 4. PRODUTOS COMPLEMENTARES
-    const algicida = volume * 6;
-    suggestions.push({
-      id: 'algicida',
-      name: 'Algicida',
-      quantity: Math.round(algicida),
-      unit: 'ml'
-    });
-
-    const sulfatoAluminio = volume * 40;
-    suggestions.push({
-      id: 'sulfato-aluminio',
-      name: 'Sulfato de Alumínio',
-      quantity: Math.round(sulfatoAluminio),
-      unit: 'g'
-    });
-
-    const clarificanteManutencao = volume * 1.5;
+    // 6. CLARIFICANTE
+    // Para água cristalina (manutenção): 30-50ml por m³
+    // Para água turva (decantação): 100-150ml por m³
+    
+    // Manutenção preventiva
+    const clarificanteManutencao = 40 * volume;
     suggestions.push({
       id: 'clarificante-manutencao',
-      name: 'Clarificante (manutenção)',
-      quantity: parseFloat(clarificanteManutencao.toFixed(1)),
+      name: 'Clarificante Líquido (Manutenção)',
+      quantity: Math.round(clarificanteManutencao),
       unit: 'ml'
     });
+    
+    // Para água turva (se cloro baixo, sugere água turva)
+    if (cloroAtual < 1.5) {
+      const clarificanteDecantacao = 120 * volume;
+      suggestions.push({
+        id: 'clarificante-decantacao',
+        name: 'Clarificante Líquido (Decantação)',
+        quantity: Math.round(clarificanteDecantacao),
+        unit: 'ml'
+      });
+    }
 
-    const clarificanteDecantacao = volume * 6;
+    // 7. CLARIFICANTE GEL (Forma sólida - sachês/pastilhas)
+    // 1 unidade (sachê de 50g) para cada 10-15m³
+    const clarificanteGel = Math.ceil(volume / 12);
+    if (clarificanteGel > 0) {
+      suggestions.push({
+        id: 'clarificante-gel',
+        name: 'Clarificante Gel / Sachê',
+        quantity: clarificanteGel,
+        unit: 'unidades'
+      });
+    }
+
+    // 8. SULFATO DE ALUMÍNIO (Decantante para água muito turva)
+    // Uso: 40-60g por m³ (usando 50g como média)
+    if (cloroAtual < 1.0) {
+      const sulfatoAluminio = 50 * volume;
+      suggestions.push({
+        id: 'sulfato-aluminio',
+        name: 'Sulfato de Alumínio (Decantante)',
+        quantity: Math.round(sulfatoAluminio),
+        unit: 'g'
+      });
+    }
+
+    // 9. LIMPA BORDAS (Manutenção da linha d'água)
+    // Aplicação direta - quantidade por aplicação: 200ml
     suggestions.push({
-      id: 'clarificante-decantacao',
-      name: 'Clarificante (decantação)',
-      quantity: Math.round(clarificanteDecantacao),
+      id: 'limpa-bordas',
+      name: 'Limpa Bordas',
+      quantity: 200,
       unit: 'ml'
     });
 
@@ -153,9 +248,10 @@ export function ProductCalculator({ poolVolume, onProductsSelected }: ProductCal
     <Card>
       <CardHeader>
         <CardTitle>Calculadora de Produtos</CardTitle>
-  <CardDescription>Insira os parâmetros atuais para calcular a dosagem.<br />
-  <strong>Metas:</strong> pH 7.2–7.6 | Cloro 3.0 ppm | Alcalinidade 120 ppm
-  </CardDescription>
+        <CardDescription>
+          Insira os parâmetros atuais para calcular a dosagem recomendada.<br />
+          <strong>Valores Ideais:</strong> pH 7.2-7.6 | Cloro 2-3 ppm | Alcalinidade 100-120 ppm
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
