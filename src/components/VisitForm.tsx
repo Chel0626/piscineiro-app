@@ -17,6 +17,7 @@ import { useClientDetails } from '@/hooks/useClientDetails';
 import { toast } from 'sonner';
 import { Send, Camera, Clock, X, Upload } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { storage } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
@@ -72,6 +73,7 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
 
   // Estados para captura de foto
   const [photoPreview, setPhotoPreview] = useState<string>('');
+  const [fullScreenPhoto, setFullScreenPhoto] = useState<string | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -223,6 +225,7 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
   };
 
   return (
+    <>
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -452,22 +455,28 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
 
             {photoPreview && (
               <div className="space-y-4">
-                <div className="relative">
+                <div className="relative cursor-pointer" onClick={() => setFullScreenPhoto(photoPreview)}>
                   <img
                     src={photoPreview}
                     alt="Foto da piscina"
-                    className="w-full max-w-md rounded-lg border mx-auto"
+                    className="w-full max-w-md rounded-lg border mx-auto hover:opacity-90 transition-opacity"
                   />
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={removePhoto}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removePhoto();
+                    }}
                     className="absolute top-2 right-2"
                     disabled={isUploadingPhoto}
                   >
                     <X className="h-4 w-4" />
                   </Button>
+                  <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                    Clique para ampliar
+                  </div>
                 </div>
                 <p className="text-sm text-center text-gray-600 dark:text-gray-400">
                   {isUploadingPhoto ? (
@@ -509,5 +518,27 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
         </div>
       </form>
     </Form>
+
+    {/* Modal de foto em tela cheia */}
+    <Dialog open={!!fullScreenPhoto} onOpenChange={() => setFullScreenPhoto(null)}>
+      <DialogContent className="max-w-full max-h-full w-screen h-screen p-0 bg-black/95">
+        <div className="relative w-full h-full flex items-center justify-center">
+          <img
+            src={fullScreenPhoto || ''}
+            alt="Foto da piscina em tela cheia"
+            className="max-w-full max-h-full object-contain"
+          />
+          <Button
+            variant="ghost"
+            size="lg"
+            onClick={() => setFullScreenPhoto(null)}
+            className="absolute top-4 right-4 text-white hover:bg-white/20"
+          >
+            <X className="h-8 w-8" />
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

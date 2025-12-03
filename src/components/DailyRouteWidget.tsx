@@ -3,151 +3,396 @@
 import { useClients } from '@/hooks/useClients';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ListChecks, CheckCircle, UserPlus } from 'lucide-react';
-import { useState, useEffect, useMemo } from 'react';
-import { collection, query, where, onSnapshot, Timestamp, addDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { ListChecks, CheckCircle, UserPlus, ChevronDown, ChevronUp } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { collection, query, where, getDocs, addDoc, Timestamp, doc, setDoc, getDoc } from 'firebase/firestore';
+import { db, storage, auth } from '@/lib/firebase';
 import { ClientFormData } from '@/lib/validators/clientSchema';
 import { CheckoutModal } from '@/components/CheckoutModal';
 import { DayReschedule } from '@/components/DayReschedule';
 import { useTemporaryReschedule } from '@/hooks/useTemporaryReschedule';
-import { VisitLog } from '@/components/VisitModal';
+import { format, startOfDay, endOfDay } from 'date-fns';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const getCurrentDayName = () => {
   const days = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
-  const todayIndex = new Date().getDay();
-  return days[todayIndex];
+  return days[new Date().getDay()];
 };
 
 type DailyClient = ClientFormData & { 
   id: string;
   isRescheduled?: boolean;
   originalDay?: string;
-  checkInTime?: string;
-  showDetails?: boolean;
-  visits?: VisitLog[];
 };
 
-type RescheduledClient = ClientFormData & { 
-  id: string;
-  isRescheduled: true;
-  originalDay: string;
-  checkInTime?: string;
-  showDetails?: boolean;
-  visits?: VisitLog[];
-};
+// Componente interno para item arrastável
+function SortableClientCard({ 
+  client, 
+  isCompleted,
+  isExpanded,
+  onToggleExpand,
+  onCheckout,
+  onFinalize,
+  isLoading
+}: { 
+  client: DailyClient;
+  isCompleted: boolean;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+  onCheckout: () => void;
+  onFinalize: () => void;
+  isLoading: boolean;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id: client.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  const today = getCurrentDayName();
+
+  return (
+    <li
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className={`flex flex-col gap-2 p-3 rounded-lg transition-all cursor-move ${
+        client.isRescheduled
+          ? 'bg-blue-50 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-500'
+          : isCompleted
+          ? 'bg-green-50 dark:bg-green-900/30 border border-green-300 dark:border-green-500'
+          : 'bg-gray-50 dark:bg-gray-800'
+      }`}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <p className="font-semibold text-base truncate text-gray-900 dark:text-gray-100">
+            {client.name || `Cliente ${client.id}`}
+          </p>
+          {client.isRescheduled && (
+            <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900 rounded-full shrink-0">
+              <UserPlus className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+              <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                Reagendado
+              </span>
+            </div>
+          )}
+          {isCompleted && (
+            <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 shrink-0" />
+          )}
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleExpand();
+          }}
+        >
+          {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </Button>
+      </div>
+
+      <p className="text-sm text-gray-600 dark:text-gray-300">
+        {client.neighborhood}
+        {client.isRescheduled && client.originalDay && (
+          <span className="ml-2 text-blue-600 dark:text-blue-400">
+            (movido de {client.originalDay})
+          </span>
+        )}
+      </p>
+
+      {isExpanded && (
+        <div className="space-y-2 mt-2">
+          <div className="p-2 rounded bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm">
+            <div><strong>Telefone:</strong> {client.phone || 'Não informado'}</div>
+            <div><strong>Endereço:</strong> {client.address || 'Não informado'}</div>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={(e) => {
+                e.stopPropagation();
+                onCheckout();
+              }}
+              disabled={isLoading}
+            >
+              <ListChecks className="mr-2 h-4 w-4" />
+              Registro de Visita
+            </Button>
+
+            {!client.isRescheduled && (
+              <DayReschedule
+                clientId={client.id}
+                clientName={client.name}
+                originalDay={today}
+              />
+            )}
+
+            {!isCompleted && (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onFinalize();
+                }}
+                disabled={isLoading}
+              >
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Finalizar
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+    </li>
+  );
+}
 
 export function DailyRouteWidget() {
   const { clients, authLoading } = useClients();
   const { getClientsForDay, isClientMovedAway } = useTemporaryReschedule();
+  
+  // Estados
   const [visitedToday, setVisitedToday] = useState<Set<string>>(new Set());
   const [showAllPending, setShowAllPending] = useState(false);
   const [showAllCompleted, setShowAllCompleted] = useState(false);
   const [loadingClientId, setLoadingClientId] = useState<string | null>(null);
-  // Função para finalizar visita com feedback visual
-  const handleFinalizeVisit = async (clientId: string) => {
-    setLoadingClientId(clientId);
-    try {
-      const visitsCollectionRef = collection(db, 'clients', clientId, 'visits');
-      await addDoc(visitsCollectionRef, {
-        timestamp: Timestamp.now(),
-        finalized: true,
-      });
-      setVisitedToday(prev => {
-        const newSet = new Set(prev);
-        newSet.add(clientId);
-        return newSet;
-      });
-      // Toast de sucesso
-      if (typeof window !== 'undefined') {
-        import('sonner').then(({ toast }) => toast.success('Visita finalizada com sucesso!'));
-      }
-    } catch (error) {
-      console.error('Erro ao finalizar visita:', error);
-      if (typeof window !== 'undefined') {
-        import('sonner').then(({ toast }) => toast.error('Erro ao finalizar visita!'));
-      }
-    } finally {
-      setLoadingClientId(null);
-    }
-  };
   const [isExpanded, setIsExpanded] = useState(true);
+  const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set());
+  const [items, setItems] = useState<string[]>([]);
+  
+  // Modal de checkout
   const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState<string>('');
+  
+  // Modal de finalização
+  const [finalizeModalOpen, setFinalizeModalOpen] = useState(false);
+  const [selectedClientForFinalize, setSelectedClientForFinalize] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  
+  // Drag & drop
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const today = getCurrentDayName();
-  
-  // Clientes do roteiro original + clientes reagendados para hoje
-  const originalDailyRouteClients = clients.filter(client => {
-    // Verificar compatibilidade com dados antigos
-    if (client.visitDays) {
-      return client.visitDays.includes(today);
-    }
-    // Fallback para dados antigos com tipo específico
-    const legacyClient = client as ClientFormData & { visitDay?: string };
-    return legacyClient.visitDay === today;
-  });
 
-  // Filtrar clientes que foram movidos para outro dia
-  const activeOriginalClients = originalDailyRouteClients.filter(client => 
-    !isClientMovedAway(client.id, today)
-  );
-
-  // Adicionar clientes reagendados para hoje
-  const rescheduledForToday = getClientsForDay(today);
-  const rescheduledClients = rescheduledForToday
-    .map(reschedule => {
-      const client = clients.find(c => c.id === reschedule.clientId);
-      if (!client) return null;
-      return { 
-        ...client, 
-        isRescheduled: true as const, 
-        originalDay: reschedule.originalDay 
-      };
-    })
-    .filter(client => client !== null);
-
-  // Combinar todos os clientes do dia
-  const allDailyClients: (DailyClient | RescheduledClient)[] = useMemo(() => 
-    [...activeOriginalClients, ...rescheduledClients], 
-    [activeOriginalClients, rescheduledClients]
-  );
-
-  // Verificar quais clientes já foram visitados hoje
+  // Carregar visitas do dia
   useEffect(() => {
-    if (!allDailyClients.length) return;
+    const loadVisitedToday = async () => {
+      if (!auth.currentUser?.uid) return;
 
-    const visitedSet = new Set<string>();
-    const unsubscribes: (() => void)[] = [];
-
-    allDailyClients.forEach(client => {
-      const visitsRef = collection(db, 'clients', client.id, 'visits');
-      
-      // Buscar visitas de hoje
-      const startOfDay = new Date();
-      startOfDay.setHours(0, 0, 0, 0);
-      
+      const visitsRef = collection(db, `users/${auth.currentUser.uid}/visits`);
       const q = query(
         visitsRef,
-        where('timestamp', '>=', Timestamp.fromDate(startOfDay))
+        where('date', '>=', startOfDay(new Date())),
+        where('date', '<=', endOfDay(new Date()))
       );
 
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-        if (!snapshot.empty) {
-          visitedSet.add(client.id);
-        } else {
-          visitedSet.delete(client.id);
+      const snapshot = await getDocs(q);
+      const visitedIds = new Set<string>();
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.clientId) {
+          visitedIds.add(data.clientId);
         }
-        setVisitedToday(new Set(visitedSet));
       });
+      setVisitedToday(visitedIds);
+    };
 
-      unsubscribes.push(unsubscribe);
+    if (!authLoading) {
+      loadVisitedToday();
+    }
+  }, [authLoading]);
+
+  // Carregar ordem salva
+  useEffect(() => {
+    const loadOrder = async () => {
+      if (!auth.currentUser?.uid) return;
+
+      const today = format(new Date(), 'yyyy-MM-dd');
+      const orderRef = doc(db, `users/${auth.currentUser.uid}/clientOrders/${today}`);
+      const orderDoc = await getDoc(orderRef);
+
+      if (orderDoc.exists()) {
+        setItems(orderDoc.data().order);
+      } else {
+        // Inicializar com ordem padrão
+        const originalClients = clients.filter(client => {
+          if (client.visitDays) {
+            return client.visitDays.includes(getCurrentDayName());
+          }
+          const legacyClient = client as ClientFormData & { visitDay?: string };
+          return legacyClient.visitDay === getCurrentDayName();
+        }).filter(client => !isClientMovedAway(client.id, getCurrentDayName()));
+
+        const rescheduledForToday = getClientsForDay(getCurrentDayName());
+        const allIds = [
+          ...originalClients.map(c => c.id),
+          ...rescheduledForToday.map(r => r.clientId)
+        ];
+        setItems(allIds);
+      }
+    };
+
+    if (!authLoading && clients.length > 0) {
+      loadOrder();
+    }
+  }, [authLoading, clients, getClientsForDay, isClientMovedAway]);
+
+  // Salvar ordem quando mudar
+  useEffect(() => {
+    const saveOrder = async () => {
+      if (!auth.currentUser?.uid || items.length === 0) return;
+
+      const today = format(new Date(), 'yyyy-MM-dd');
+      const orderRef = doc(db, `users/${auth.currentUser.uid}/clientOrders/${today}`);
+      await setDoc(orderRef, {
+        order: items,
+        updatedAt: new Date()
+      });
+    };
+
+    if (items.length > 0) {
+      saveOrder();
+    }
+  }, [items]);
+
+  // Obter clientes do dia
+  const allDailyClients: DailyClient[] = (() => {
+    const originalClients = clients.filter(client => {
+      if (client.visitDays) {
+        return client.visitDays.includes(today);
+      }
+      const legacyClient = client as ClientFormData & { visitDay?: string };
+      return legacyClient.visitDay === today;
+    }).filter(client => !isClientMovedAway(client.id, today));
+
+    const rescheduledForToday = getClientsForDay(today);
+    const rescheduledClients: DailyClient[] = [];
+    
+    rescheduledForToday.forEach(reschedule => {
+      const client = clients.find(c => c.id === reschedule.clientId);
+      if (client) {
+        rescheduledClients.push({ 
+          ...client, 
+          isRescheduled: true as const, 
+          originalDay: reschedule.originalDay 
+        });
+      }
     });
 
-    return () => {
-      unsubscribes.forEach(unsub => unsub());
-    };
-  }, [allDailyClients]);
+    return [...originalClients, ...rescheduledClients];
+  })();
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    setItems((items) => {
+      const oldIndex = items.indexOf(active.id as string);
+      const newIndex = items.indexOf(over.id as string);
+      return arrayMove(items, oldIndex, newIndex);
+    });
+  };
+
+  const handleCheckout = (clientId: string) => {
+    setSelectedClientId(clientId);
+    setCheckoutModalOpen(true);
+  };
+
+  const openFinalizeModal = (clientId: string) => {
+    setSelectedClientForFinalize(clientId);
+    setFinalizeModalOpen(true);
+  };
+
+  const closeFinalizeModal = () => {
+    setFinalizeModalOpen(false);
+    setSelectedClientForFinalize(null);
+  };
+
+  const handleFinalizeWithPhoto = async () => {
+    if (!selectedClientForFinalize || !auth.currentUser?.uid) return;
+    const file = fileInputRef.current?.files?.[0];
+    if (!file) return;
+
+    setUploadingPhoto(true);
+    try {
+      const photoRef = storageRef(
+        storage, 
+        `users/${auth.currentUser.uid}/clients/${selectedClientForFinalize}/visits/${Date.now()}_${file.name}`
+      );
+      await uploadBytes(photoRef, file);
+      const photoURL = await getDownloadURL(photoRef);
+
+      await addDoc(collection(db, `users/${auth.currentUser.uid}/visits`), {
+        clientId: selectedClientForFinalize,
+        date: new Date(),
+        photoURL,
+        timestamp: Timestamp.now(),
+      });
+
+      setVisitedToday(prev => new Set(prev).add(selectedClientForFinalize));
+      closeFinalizeModal();
+    } catch (error) {
+      console.error('Erro ao finalizar com foto:', error);
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  const openCheckoutFromFinalize = () => {
+    if (selectedClientForFinalize) {
+      handleCheckout(selectedClientForFinalize);
+      closeFinalizeModal();
+    }
+  };
+
+  const toggleClientExpansion = (clientId: string) => {
+    setExpandedClients(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(clientId)) {
+        newSet.delete(clientId);
+      } else {
+        newSet.add(clientId);
+      }
+      return newSet;
+    });
+  };
 
   if (authLoading) {
     return (
@@ -162,247 +407,161 @@ export function DailyRouteWidget() {
     );
   }
 
-  // Filtrar apenas clientes que ainda não foram visitados
-  const pendingClients = allDailyClients.filter(client => !visitedToday.has(client.id));
-  const completedClients = allDailyClients.filter(client => visitedToday.has(client.id));
+  // Ordenar clientes conforme ordem salva
+  const orderedClients = items
+    .map(id => allDailyClients.find(c => c.id === id))
+    .filter((c): c is DailyClient => c !== null);
 
-  // Limitar exibição inicial
-  const displayedPendingClients = showAllPending ? pendingClients : pendingClients.slice(0, 2);
-  const displayedCompletedClients = showAllCompleted ? completedClients : completedClients.slice(0, 2);
+  const pendingClients = orderedClients.filter(c => !visitedToday.has(c.id));
+  const completedClients = orderedClients.filter(c => visitedToday.has(c.id));
 
-  const handleCheckout = (clientId: string) => {
-    setSelectedClientId(clientId);
-    setCheckoutModalOpen(true);
-  };
+  const displayedPendingClients = showAllPending ? pendingClients : pendingClients.slice(0, 3);
+  const displayedCompletedClients = showAllCompleted ? completedClients : completedClients.slice(0, 3);
 
   return (
-    <Card>
-      <CardHeader className="pb-3 sm:pb-6">
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <CardTitle className="text-base sm:text-lg">Roteiro de Hoje ({today})</CardTitle>
-            <CardDescription className="text-sm">
-              {pendingClients.length > 0
-                ? `${pendingClients.length} pendente(s) • ${completedClients.length} concluído(s)`
-                : allDailyClients.length > 0 
-                  ? 'Todas as visitas concluídas! 🎉'
-                  : 'Sem visitas agendadas'}
-            </CardDescription>
+    <>
+      <Card>
+        <CardHeader className="pb-3 sm:pb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <CardTitle className="text-base sm:text-lg">Roteiro de Hoje ({today})</CardTitle>
+              <CardDescription className="text-sm">
+                {pendingClients.length > 0
+                  ? `${pendingClients.length} pendente(s) • ${completedClients.length} concluído(s)`
+                  : allDailyClients.length > 0 
+                    ? 'Todas as visitas concluídas! 🎉'
+                    : 'Sem visitas agendadas'}
+              </CardDescription>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsExpanded(!isExpanded)}
+            >
+              {isExpanded ? 'Ocultar' : 'Expandir'}
+            </Button>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="text-xs text-gray-600 dark:text-gray-400"
-          >
-            {isExpanded ? 'Ocultar' : 'Expandir'}
-          </Button>
-        </div>
-      </CardHeader>
-      {isExpanded && (
-        <CardContent>
-        {/* Clientes pendentes */}
-        {pendingClients.length > 0 && (
-          <div className="space-y-3">
-            <h4 className="text-sm font-medium text-gray-600 dark:text-gray-300">Pendentes</h4>
-            <ul className="space-y-3">
-              {displayedPendingClients.map(client => (
-                <li
-                  key={client.id}
-                  className={`flex flex-col gap-2 p-3 rounded-lg transition-all ${
-                    ('isRescheduled' in client && client.isRescheduled)
-                      ? 'bg-blue-50 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-500 shadow-sm'
-                      : 'bg-gray-50 dark:bg-gray-800'
-                  }`}
+        </CardHeader>
+
+        {isExpanded && (
+          <CardContent>
+            {/* Clientes pendentes */}
+            {pendingClients.length > 0 && (
+              <div className="space-y-3 mb-6">
+                <h4 className="text-sm font-medium text-gray-600 dark:text-gray-300">Pendentes</h4>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
                 >
-                  {/* Card expansível: clique no nome para expandir */}
-                  <div className="flex items-center gap-2 min-w-0 cursor-pointer group" onClick={() => client.showDetails = !client.showDetails}>
-                    <p className="font-semibold text-base sm:text-lg truncate text-gray-900 dark:text-gray-100 flex-1 group-hover:underline">
-                      {client.name && client.name.trim().length > 0 ? client.name : `Cliente ${client.id}`}
-                    </p>
-                    {('isRescheduled' in client && client.isRescheduled) && (
-                      <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900 rounded-full">
-                        <UserPlus className="h-3 w-3 text-blue-600 dark:text-blue-400" />
-                        <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
-                          Reagendado
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 min-w-0">
-                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 truncate flex-1">
-                      {client.neighborhood}
-                      {('isRescheduled' in client && client.isRescheduled) && (
-                        <span className="ml-2 text-blue-600 dark:text-blue-400">
-                          (movido de {client.originalDay})
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                  {/* Detalhes extras do cliente (expansível) */}
-                  {client.showDetails && (
-                    <>
-                    <div className="mt-2 p-2 rounded bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-xs sm:text-sm">
-                      <div><strong>Telefone:</strong> {client.phone || 'Não informado'}</div>
-                      <div><strong>Endereço:</strong> {client.address || 'Não informado'}</div>
-                      {/* Histórico rápido de visitas */}
-                      <div className="mt-2">
-                        <strong>Últimas visitas:</strong>
-                        <ul className="list-disc ml-4">
-                          {client.visits && client.visits.length > 0 ? (
-                            client.visits.slice(0,3).map((visit: VisitLog) => (
-                              <li key={visit.id}>
-                                {visit.date ? new Date(visit.date).toLocaleDateString('pt-BR') : 'Data desconhecida'}
-                                {' - '}
-                                {visit.notes && visit.notes.length > 0 ? visit.notes : 'Sem observações'}
-                              </li>
-                            ))
-                          ) : (
-                            <li>Nenhuma visita registrada</li>
-                          )}
-                        </ul>
-                      </div>
-                    </div>
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 justify-end mt-2">
-                      <div className="relative group">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => handleCheckout(client.id)}
-                          className="text-xs sm:text-sm w-full sm:w-auto"
-                          disabled={loadingClientId === client.id}
-                        >
-                          {loadingClientId === client.id ? (
-                            <svg className="animate-spin h-4 w-4 mr-2 text-blue-600" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                            </svg>
-                          ) : (
-                            <ListChecks className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                          )}
-                          Registro de Visita
-                        </Button>
-                        <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none z-10 whitespace-nowrap">Registrar visita do cliente</span>
-                      </div>
-                      {/* Tooltip: Mover Dia */}
-                      {!('isRescheduled' in client && client.isRescheduled) && (
-                        <div className="relative group">
-                          <DayReschedule
-                            clientId={client.id}
-                            clientName={client.name}
-                            originalDay={today}
-                          />
-                          <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none z-10 whitespace-nowrap">Mover cliente para outro dia</span>
-                        </div>
-                      )}
-                    </div>
-                    {/* Botões realocados: Finalizar Visita e Enviar WhatsApp */}
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 justify-end mt-2">
-                      <Button
-                        variant="default"
-                        size="sm"
-                        className="text-xs sm:text-sm w-full sm:w-auto"
-                        onClick={() => handleFinalizeVisit(client.id)}
-                        disabled={loadingClientId === client.id}
-                      >
-                        {loadingClientId === client.id ? (
-                          <svg className="animate-spin h-4 w-4 mr-2 text-white" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                          </svg>
-                        ) : (
-                          <CheckCircle className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                        )}
-                        Finalizar Visita
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="w-full sm:w-auto"
-                        onClick={() => {/* TODO: chamar função de envio WhatsApp */}}
-                        // disabled={isSubmitting}
-                      >
-                        <svg viewBox="0 0 24 24" className="h-4 w-4 mr-2 fill-current">
-                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                        </svg>
-                        Enviar Relatório por WhatsApp
-                      </Button>
-                    </div>
-                    </>
-                  )}
-                </li>
-              ))}
-            </ul>
-            
-            {/* Botão mostrar mais para pendentes */}
-            {pendingClients.length > 2 && (
-              <div className="text-center pt-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowAllPending(!showAllPending)}
-                  className="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-                >
-                  {showAllPending 
-                    ? 'Mostrar menos' 
-                    : `Mostrar todos (${pendingClients.length - 2} restantes)`
-                  }
-                </Button>
+                  <SortableContext
+                    items={displayedPendingClients.map(c => c.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <ul className="space-y-3">
+                      {displayedPendingClients.map(client => (
+                        <SortableClientCard
+                          key={client.id}
+                          client={client}
+                          isCompleted={false}
+                          isExpanded={expandedClients.has(client.id)}
+                          onToggleExpand={() => toggleClientExpansion(client.id)}
+                          onCheckout={() => handleCheckout(client.id)}
+                          onFinalize={() => openFinalizeModal(client.id)}
+                          isLoading={loadingClientId === client.id}
+                        />
+                      ))}
+                    </ul>
+                  </SortableContext>
+                </DndContext>
+                {!showAllPending && pendingClients.length > 3 && (
+                  <Button
+                    variant="link"
+                    size="sm"
+                    onClick={() => setShowAllPending(true)}
+                    className="w-full"
+                  >
+                    Mostrar todos ({pendingClients.length - 3} restantes)
+                  </Button>
+                )}
               </div>
             )}
-          </div>
-        )}
 
-        {/* Clientes concluídos */}
-        {completedClients.length > 0 && (
-          <div className={`space-y-3 ${pendingClients.length > 0 ? 'mt-6' : ''}`}>
-            <h4 className="text-sm font-medium text-green-600 dark:text-green-400">Concluídos</h4>
-            <ul className="space-y-2">
-              {displayedCompletedClients.map(client => (
-                <li key={client.id} className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/30 rounded-lg">
-                  <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm text-green-800 dark:text-green-200 truncate">{client.name && client.name.trim().length > 0 ? client.name : `Cliente ${client.id}`}</p>
-                    <p className="text-xs text-green-600 dark:text-green-400 truncate">{client.neighborhood}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-            
-            {/* Botão mostrar mais para concluídos */}
-            {completedClients.length > 2 && (
-              <div className="text-center pt-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowAllCompleted(!showAllCompleted)}
-                  className="text-xs text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-200"
-                >
-                  {showAllCompleted 
-                    ? 'Mostrar menos' 
-                    : `Mostrar todos (${completedClients.length - 2} restantes)`
-                  }
-                </Button>
+            {/* Clientes concluídos */}
+            {completedClients.length > 0 && (
+              <div className="space-y-3">
+                <h4 className="text-sm font-medium text-gray-600 dark:text-gray-300">Concluídos</h4>
+                <ul className="space-y-3">
+                  {displayedCompletedClients.map(client => (
+                    <SortableClientCard
+                      key={client.id}
+                      client={client}
+                      isCompleted={true}
+                      isExpanded={expandedClients.has(client.id)}
+                      onToggleExpand={() => toggleClientExpansion(client.id)}
+                      onCheckout={() => handleCheckout(client.id)}
+                      onFinalize={() => openFinalizeModal(client.id)}
+                      isLoading={loadingClientId === client.id}
+                    />
+                  ))}
+                </ul>
+                {!showAllCompleted && completedClients.length > 3 && (
+                  <Button
+                    variant="link"
+                    size="sm"
+                    onClick={() => setShowAllCompleted(true)}
+                    className="w-full"
+                  >
+                    Mostrar todos ({completedClients.length - 3} restantes)
+                  </Button>
+                )}
               </div>
             )}
-          </div>
+          </CardContent>
         )}
+      </Card>
 
-        {pendingClients.length === 0 && completedClients.length === 0 && (
-          <div className="text-center text-gray-500 dark:text-gray-400 py-4 text-sm">
-            Aproveite o dia de descanso!
+      {/* Modal de finalização */}
+      <Dialog open={finalizeModalOpen} onOpenChange={closeFinalizeModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Finalizar Visita</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Foto da visita (opcional)</label>
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                accept="image/*" 
+                className="w-full"
+              />
+            </div>
+            <Button 
+              variant="outline" 
+              className="w-full" 
+              onClick={handleFinalizeWithPhoto}
+              disabled={uploadingPhoto}
+            >
+              {uploadingPhoto ? 'Enviando...' : 'Finalizar com Foto'}
+            </Button>
+            <Button 
+              variant="default" 
+              className="w-full"
+              onClick={openCheckoutFromFinalize}
+            >
+              Registrar Atividades
+            </Button>
           </div>
-        )}
-        </CardContent>
-      )}
+        </DialogContent>
+      </Dialog>
 
-      {/* Modal de Check-out */}
+      {/* Modal de checkout */}
       <CheckoutModal
-        clientId={selectedClientId}
         isOpen={checkoutModalOpen}
         onClose={() => setCheckoutModalOpen(false)}
+        clientId={selectedClientId}
       />
-    </Card>
+    </>
   );
 }

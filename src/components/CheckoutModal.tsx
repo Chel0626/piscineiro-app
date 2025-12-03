@@ -6,6 +6,7 @@ import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
 import { useClientDetails } from '@/hooks/useClientDetails';
 import { useProductRequests } from '@/hooks/useProductRequests';
+import { useClientStock } from '@/hooks/useClientStock';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,6 +24,7 @@ interface CheckoutModalProps {
 export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps) {
   const { client, isLoading } = useClientDetails(clientId);
   const { createProductRequest } = useProductRequests();
+  const { stock, updateStock } = useClientStock(clientId);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [visitData, setVisitData] = useState<VisitFormData | null>(null);
@@ -35,10 +37,16 @@ export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps)
   });
 
   const [selectedProductsWithQuantity, setSelectedProductsWithQuantity] = useState<ProductWithQuantity[]>([]);
+  const [calculatorProducts, setCalculatorProducts] = useState<Array<{id: string; name: string; quantity: number; unit: string}>>([]);
 
   // Handler para mudanças nos produtos selecionados
   const handleProductsChange = useCallback((products: ProductWithQuantity[]) => {
     setSelectedProductsWithQuantity(products);
+  }, []);
+
+  // Handler para produtos da calculadora
+  const handleCalculatorProductsSelected = useCallback((products: Array<{id: string; name: string; quantity: number; unit: string}>) => {
+    setCalculatorProducts(products);
   }, []);
 
   const toggleSection = (section: string) => {
@@ -64,6 +72,21 @@ export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps)
         ...data,
         timestamp: serverTimestamp(),
       });
+      
+      // Abater produtos utilizados do estoque
+      for (const product of selectedProductsWithQuantity) {
+        if (product.quantity > 0) {
+          // Usar o nome do produto como ID temporariamente
+          // TODO: Refatorar para usar productId apropriado
+          await updateStock(product.name, -product.quantity);
+        }
+      }
+      
+      // Abater produtos da calculadora do estoque
+      for (const product of calculatorProducts) {
+        await updateStock(product.id, -product.quantity);
+      }
+      
       setVisitData(data);
       toast.success('Check-out realizado com sucesso!');
     } catch (error) {
@@ -77,36 +100,73 @@ export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps)
   const handleSendWhatsApp = () => {
     if (!client || !visitData) return;
 
-    const mechanicalStatus = Object.values(mechanicalChecks).filter(Boolean).length;
-    const mechanicalItems = [
-      { key: 'drainOpen', label: 'Ralo aberto' },
-      { key: 'returnOpen', label: 'Retorno aberto' },
-      { key: 'filterValve', label: 'Válvula no filtrar' },
-      { key: 'drainClosed', label: 'Esgoto fechado' },
-      { key: 'timerAutomatic', label: 'Timer no automático' },
-    ];
-    
-    let mechanicalReport = '';
-    if (mechanicalStatus > 0) {
-      mechanicalReport = `\n🔧 *Conferência Mecânica (${mechanicalStatus}/5):*\n`;
-      mechanicalItems.forEach(item => {
-        const status = mechanicalChecks[item.key as keyof typeof mechanicalChecks] ? '✅' : '❌';
-        mechanicalReport += `${status} ${item.label}\n`;
+    let message = `🏊‍♂️ *Relatório de Visita - ${client.name}*\n\n`;
+    message += `📅 Data: ${new Date().toLocaleDateString('pt-BR')}\n`;
+    message += `📍 Endereço: ${client.address}\n\n`;
+
+    // Parâmetros da água
+    const params = [];
+    if (visitData.ph) params.push(`pH: ${visitData.ph}`);
+    if (visitData.cloro) params.push(`Cloro: ${visitData.cloro} ppm`);
+    if (visitData.alcalinidade) params.push(`Alcalinidade: ${visitData.alcalinidade} ppm`);
+    if (params.length > 0) {
+      message += `💧 *Parâmetros:* ${params.join(' | ')}\n`;
+    }
+
+    // Condição da água
+    if (visitData.waterCondition) {
+      message += `🌊 *Condição da Água:* ${visitData.waterCondition}\n`;
+    }
+
+    // Produtos utilizados
+    if (selectedProductsWithQuantity.length > 0) {
+      message += `\n📦 *Produtos Utilizados:*\n`;
+      selectedProductsWithQuantity.forEach(p => {
+        message += `• ${p.name}: ${p.quantity}\n`;
       });
     }
 
-    let photoInfo = '';
-    if (visitData.poolPhoto) {
-      photoInfo = `\n📸 *Foto da Piscina:* ${visitData.poolPhoto}\n`;
+    // Produtos da calculadora
+    if (calculatorProducts.length > 0) {
+      message += `\n🧪 *Produtos Calculados:*\n`;
+      calculatorProducts.forEach(p => {
+        message += `• ${p.name}: ${p.quantity}${p.unit}\n`;
+      });
     }
 
-    const message = `🏊‍♂️ *Relatório de Visita - ${client.name}*\n\n` +
-      `📅 Data: ${new Date().toLocaleDateString('pt-BR')}\n` +
-      `📍 Endereço: ${client.address}\n` +
-      `💧 pH: ${visitData.ph || 'N/A'} | Cloro: ${visitData.cloro || 'N/A'} ppm | Alcalinidade: ${visitData.alcalinidade || 'N/A'} ppm\n` +
-      `⏰ Saída: ${visitData.departureTime || 'N/A'}\n` +
-      `📋 Observações: ${visitData.description || 'Nenhuma observação'}${photoInfo}${mechanicalReport}\n\n` +
-      `✅ Visita concluída com sucesso!`;
+    // Conferência Mecânica/Hidráulica
+    const mechanicalStatus = Object.values(mechanicalChecks).filter(Boolean).length;
+    if (mechanicalStatus > 0) {
+      message += `\n🔧 *Conferência Hidráulica (${mechanicalStatus}/5):*\n`;
+      const mechanicalItems = [
+        { key: 'drainOpen', label: 'Ralo aberto' },
+        { key: 'returnOpen', label: 'Retorno aberto' },
+        { key: 'filterValve', label: 'Válvula no filtrar' },
+        { key: 'drainClosed', label: 'Esgoto fechado' },
+        { key: 'timerAutomatic', label: 'Timer no automático' },
+      ];
+      mechanicalItems.forEach(item => {
+        const status = mechanicalChecks[item.key as keyof typeof mechanicalChecks] ? '✅' : '❌';
+        message += `${status} ${item.label}\n`;
+      });
+    }
+
+    // Horário de saída
+    if (visitData.departureTime) {
+      message += `\n⏰ *Horário de Saída:* ${visitData.departureTime}\n`;
+    }
+
+    // Observações
+    if (visitData.description && visitData.description.trim()) {
+      message += `\n📋 *Observações:* ${visitData.description}\n`;
+    }
+
+    // Foto
+    if (visitData.poolPhoto) {
+      message += `\n📸 *Foto da Piscina:* ${visitData.poolPhoto}\n`;
+    }
+
+    message += `\n✅ *Visita concluída com sucesso!*`;
 
     const phoneNumber = client.phone?.replace(/\D/g, '');
     if (phoneNumber) {
@@ -270,7 +330,10 @@ export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps)
             </CardHeader>
             {openSections.calculator && (
               <CardContent>
-                <ProductCalculator poolVolume={client?.poolVolume} />
+                <ProductCalculator 
+                  poolVolume={client?.poolVolume} 
+                  onProductsSelected={handleCalculatorProductsSelected}
+                />
               </CardContent>
             )}
           </Card>

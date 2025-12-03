@@ -7,12 +7,24 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useState } from 'react';
+
+interface ProductSuggestion {
+  id: string;
+  name: string;
+  quantity: number;
+  unit: string;
+}
 
 interface ProductCalculatorProps {
   poolVolume?: number; // Volume em m³
+  onProductsSelected?: (products: ProductSuggestion[]) => void;
 }
 
-export function ProductCalculator({ poolVolume }: ProductCalculatorProps) {
+export function ProductCalculator({ poolVolume, onProductsSelected }: ProductCalculatorProps) {
+  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
+  
   const form = useForm<CalculatorFormData>({
     resolver: zodResolver(calculatorFormSchema),
     defaultValues: {
@@ -24,9 +36,9 @@ export function ProductCalculator({ poolVolume }: ProductCalculatorProps) {
 
   const watchedValues = useWatch({ control: form.control });
 
-  const calcularProdutos = (data: Partial<CalculatorFormData>) => {
+  const calcularProdutos = (data: Partial<CalculatorFormData>): ProductSuggestion[] => {
     const volume = poolVolume || 0;
-    const acoes = [];
+    const suggestions: ProductSuggestion[] = [];
 
     // NOVOS CÁLCULOS CONFORME ESPECIFICAÇÃO
 
@@ -35,13 +47,23 @@ export function ProductCalculator({ poolVolume }: ProductCalculatorProps) {
     if (cloroAtual < 3.0) {
       const cloroFaltante = 3.0 - cloroAtual;
       const cloroNecessario = 4 * volume * cloroFaltante;
-      acoes.push(`Cloro Granulado: ${cloroNecessario.toFixed(0)}g (meta: 3.0 ppm)`);
+      suggestions.push({
+        id: 'cloro-granulado',
+        name: 'Cloro Granulado',
+        quantity: Math.round(cloroNecessario),
+        unit: 'g'
+      });
     }
 
     // Oxidação de choque se cloro está zerado
     if (cloroAtual === 0) {
       const choqueOxidacao = volume * 20;
-      acoes.push(`Oxidação de Choque: ${choqueOxidacao.toFixed(0)}g de Cloro Granulado`);
+      suggestions.push({
+        id: 'cloro-choque',
+        name: 'Cloro Granulado (Choque)',
+        quantity: Math.round(choqueOxidacao),
+        unit: 'g'
+      });
     }
 
     // 2. ELEVADOR DE ALCALINIDADE - Meta: 12
@@ -50,37 +72,82 @@ export function ProductCalculator({ poolVolume }: ProductCalculatorProps) {
       const alcalinidadeFaltante = 12 - alcalinidadeAtual;
       const elevadorAlcalinidadeGramas = 17 * volume * alcalinidadeFaltante;
       const elevadorAlcalinidadeKg = elevadorAlcalinidadeGramas / 1000;
-      acoes.push(`Elevador de Alcalinidade: ${elevadorAlcalinidadeKg.toFixed(2)}kg (meta: 12)`);
+      suggestions.push({
+        id: 'elevador-alcalinidade',
+        name: 'Elevador de Alcalinidade',
+        quantity: parseFloat(elevadorAlcalinidadeKg.toFixed(2)),
+        unit: 'kg'
+      });
     }
 
     // 3. REDUTOR DE pH
     const phAtual = data.ph ?? 7.4;
     if (phAtual > 7.6) {
       const redutorPh = volume * 10;
-      acoes.push(`Redutor de pH: ${redutorPh.toFixed(0)}ml`);
+      suggestions.push({
+        id: 'redutor-ph',
+        name: 'Redutor de pH',
+        quantity: Math.round(redutorPh),
+        unit: 'ml'
+      });
     }
 
     // 4. PRODUTOS COMPLEMENTARES
     const algicida = volume * 6;
-    acoes.push(`Algicida (manutenção/choque): ${algicida.toFixed(0)}ml`);
+    suggestions.push({
+      id: 'algicida',
+      name: 'Algicida',
+      quantity: Math.round(algicida),
+      unit: 'ml'
+    });
 
     const sulfatoAluminio = volume * 40;
-    acoes.push(`Sulfato de Alumínio: ${sulfatoAluminio.toFixed(0)}g`);
+    suggestions.push({
+      id: 'sulfato-aluminio',
+      name: 'Sulfato de Alumínio',
+      quantity: Math.round(sulfatoAluminio),
+      unit: 'g'
+    });
 
     const clarificanteManutencao = volume * 1.5;
-    acoes.push(`Clarificante (manutenção): ${clarificanteManutencao.toFixed(1)}ml`);
+    suggestions.push({
+      id: 'clarificante-manutencao',
+      name: 'Clarificante (manutenção)',
+      quantity: parseFloat(clarificanteManutencao.toFixed(1)),
+      unit: 'ml'
+    });
 
     const clarificanteDecantacao = volume * 6;
-    acoes.push(`Clarificante (decantação): ${clarificanteDecantacao.toFixed(0)}ml`);
+    suggestions.push({
+      id: 'clarificante-decantacao',
+      name: 'Clarificante (decantação)',
+      quantity: Math.round(clarificanteDecantacao),
+      unit: 'ml'
+    });
 
-    if (acoes.length === 0) {
-      return ["Use as fórmulas de cálculo conforme necessário."];
-    }
-
-    return acoes;
+    return suggestions;
   };
 
   const recomendacoes = calcularProdutos(watchedValues);
+
+  const handleProductToggle = (productId: string) => {
+    setSelectedProducts(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(productId)) {
+        newSet.delete(productId);
+      } else {
+        newSet.add(productId);
+      }
+      
+      // Notificar produtos selecionados
+      if (onProductsSelected) {
+        const selected = recomendacoes.filter(p => newSet.has(p.id));
+        onProductsSelected(selected);
+      }
+      
+      return newSet;
+    });
+  };
 
   return (
     <Card>
@@ -159,11 +226,28 @@ export function ProductCalculator({ poolVolume }: ProductCalculatorProps) {
           </form>
         </Form>
         <div className="mt-6">
-            <h4 className="font-semibold mb-2">Recomendações:</h4>
+            <h4 className="font-semibold mb-3">Recomendações de Produtos:</h4>
             {recomendacoes.length > 0 ? (
-                <ul className="list-disc list-inside space-y-1 text-sm">
-                    {recomendacoes.map((rec, index) => <li key={index}>{rec}</li>)}
-                </ul>
+                <div className="space-y-2">
+                    {recomendacoes.map((produto) => (
+                      <div key={produto.id} className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <Checkbox
+                          id={produto.id}
+                          checked={selectedProducts.has(produto.id)}
+                          onCheckedChange={() => handleProductToggle(produto.id)}
+                          className="h-5 w-5"
+                        />
+                        <label htmlFor={produto.id} className="flex-1 text-sm font-medium cursor-pointer">
+                          {produto.name}: <span className="font-bold text-blue-600">{produto.quantity}{produto.unit}</span>
+                        </label>
+                      </div>
+                    ))}
+                    {selectedProducts.size > 0 && (
+                      <p className="text-xs text-green-600 dark:text-green-400 mt-2">
+                        ✓ {selectedProducts.size} produto(s) selecionado(s) para abater do estoque
+                      </p>
+                    )}
+                </div>
             ) : (
                 <p className="text-sm text-gray-500">Aguardando parâmetros...</p>
             )}
