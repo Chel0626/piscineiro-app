@@ -80,57 +80,74 @@ function SortableClientCard({
     <li
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
-      className={`flex flex-col gap-2 p-3 rounded-lg transition-all cursor-move ${
+      className={`flex flex-col rounded-lg transition-all overflow-hidden border ${
         client.isRescheduled
-          ? 'bg-blue-50 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-500'
+          ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-300 dark:border-blue-500'
           : isCompleted
-          ? 'bg-green-50 dark:bg-green-900/30 border border-green-300 dark:border-green-500'
-          : 'bg-gray-50 dark:bg-gray-800'
+          ? 'bg-green-50 dark:bg-green-900/30 border-green-300 dark:border-green-500'
+          : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
       }`}
     >
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <p className="font-semibold text-base truncate text-gray-900 dark:text-gray-100">
-            {client.name || `Cliente ${client.id}`}
-          </p>
-          {client.isRescheduled && (
-            <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900 rounded-full shrink-0">
-              <UserPlus className="h-3 w-3 text-blue-600 dark:text-blue-400" />
-              <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
-                Reagendado
-              </span>
+      {/* Cabeçalho clicável - toda área é clicável para expandir/recolher */}
+      <div
+        onClick={onToggleExpand}
+        className="flex items-center justify-between gap-3 p-4 cursor-pointer hover:bg-white/50 dark:hover:bg-gray-700/50 active:bg-white/80 dark:active:bg-gray-700/80 transition-colors"
+      >
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          {/* Indicador visual circular com seta */}
+          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-white dark:bg-gray-700 shadow-sm shrink-0">
+            {isExpanded ? (
+              <ChevronUp className="h-6 w-6 text-gray-600 dark:text-gray-300" />
+            ) : (
+              <ChevronDown className="h-6 w-6 text-gray-600 dark:text-gray-300" />
+            )}
+          </div>
+          
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap mb-1">
+              <p className="font-semibold text-base text-gray-900 dark:text-gray-100">
+                {client.name || `Cliente ${client.id}`}
+              </p>
+              {client.isRescheduled && (
+                <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900 rounded-full shrink-0">
+                  <UserPlus className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                  <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                    Reagendado
+                  </span>
+                </div>
+              )}
+              {isCompleted && (
+                <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 shrink-0" />
+              )}
             </div>
-          )}
-          {isCompleted && (
-            <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 shrink-0" />
-          )}
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              {client.neighborhood}
+              {client.isRescheduled && client.originalDay && (
+                <span className="ml-2 text-blue-600 dark:text-blue-400">
+                  (movido de {client.originalDay})
+                </span>
+              )}
+            </p>
+          </div>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleExpand();
-          }}
+        
+        {/* Indicador de arrastar (apenas visual) */}
+        <div 
+          {...attributes}
+          {...listeners}
+          className="flex flex-col gap-1 p-2 cursor-move hover:bg-gray-200 dark:hover:bg-gray-600 rounded shrink-0"
+          onClick={(e) => e.stopPropagation()}
         >
-          {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-        </Button>
+          <div className="w-1 h-1 bg-gray-400 dark:bg-gray-500 rounded-full"></div>
+          <div className="w-1 h-1 bg-gray-400 dark:bg-gray-500 rounded-full"></div>
+          <div className="w-1 h-1 bg-gray-400 dark:bg-gray-500 rounded-full"></div>
+        </div>
       </div>
 
-      <p className="text-sm text-gray-600 dark:text-gray-300">
-        {client.neighborhood}
-        {client.isRescheduled && client.originalDay && (
-          <span className="ml-2 text-blue-600 dark:text-blue-400">
-            (movido de {client.originalDay})
-          </span>
-        )}
-      </p>
-
+      {/* Conteúdo expandido */}
       {isExpanded && (
-        <div className="space-y-2 mt-2">
-          <div className="p-2 rounded bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm">
+        <div className="px-4 pb-4 space-y-3 border-t border-gray-200 dark:border-gray-700 pt-3">
+          <div className="p-3 rounded bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm space-y-1">
             <div><strong>Telefone:</strong> {client.phone || 'Não informado'}</div>
             <div><strong>Endereço:</strong> {client.address || 'Não informado'}</div>
           </div>
@@ -144,6 +161,7 @@ function SortableClientCard({
                 onCheckout();
               }}
               disabled={isLoading}
+              className="flex-1 min-w-[140px]"
             >
               <ListChecks className="mr-2 h-4 w-4" />
               Registro de Visita
@@ -166,6 +184,7 @@ function SortableClientCard({
                   onFinalize();
                 }}
                 disabled={isLoading}
+                className="flex-1 min-w-[140px]"
               >
                 <CheckCircle className="mr-2 h-4 w-4" />
                 Finalizar
