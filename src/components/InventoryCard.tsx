@@ -62,7 +62,7 @@ export const InventoryCard: React.FC<InventoryCardProps> = ({ inventory, onUpdat
     onUpdate(updated);
   }
 
-  function handleToggleProduct(productName: string, unit: string) {
+  function handleToggleProduct(productName: string) {
     setSelectedProducts(prev => ({
       ...prev,
       [productName]: {
@@ -157,7 +157,7 @@ export const InventoryCard: React.FC<InventoryCardProps> = ({ inventory, onUpdat
           <div className="text-center py-8 text-gray-500">
             <Package className="h-12 w-12 mx-auto mb-2 opacity-50" />
             <p className="text-sm">Nenhum produto no estoque</p>
-            <p className="text-xs mt-1">Clique em "Adicionar Produtos" para começar</p>
+            <p className="text-xs mt-1">Clique em &quot;Adicionar Produtos&quot; para começar</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -253,7 +253,7 @@ export const InventoryCard: React.FC<InventoryCardProps> = ({ inventory, onUpdat
                   <div key={product.name} className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50">
                     <Checkbox
                       checked={selectedProducts[product.name]?.selected || false}
-                      onCheckedChange={() => handleToggleProduct(product.name, product.unit)}
+                      onCheckedChange={() => handleToggleProduct(product.name)}
                     />
                     <span className="flex-1 font-medium text-sm">{product.name}</span>
                     <span className="text-xs text-gray-500 min-w-[80px]">({product.unit})</span>

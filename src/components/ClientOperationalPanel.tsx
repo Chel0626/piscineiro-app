@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { CalculatorModal } from './CalculatorModal';
 import { InventoryCard, InventoryItem } from './InventoryCard';
-import { Button } from '@/components/ui/button';
 
 interface ClientOperationalPanelProps {
   poolVolume: number;
