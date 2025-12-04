@@ -1,11 +1,5 @@
-// Importação dinâmica para evitar erro de build
-let adminAuth: any;
-
-// Inicializa apenas em runtime, não durante build
-if (process.env.FIREBASE_PROJECT_ID) {
-  const { auth } = require('@/lib/firebase-admin');
-  adminAuth = auth;
-}
+// Força a rota a ser dinâmica (não fazer prerender durante build)
+export const dynamic = 'force-dynamic';
 
 // Endpoint espera receber { token } (ID token do Firebase) enviado pelo cliente.
 // O cliente faz signIn client-side e envia o idToken para cá.
@@ -13,12 +7,15 @@ export async function POST(request: Request) {
   console.log('[api/login] Recebendo requisição POST');
   
   // Verifica se Firebase Admin está configurado
-  if (!adminAuth) {
+  if (!process.env.FIREBASE_PROJECT_ID) {
     return new Response(
       JSON.stringify({ error: 'Serviço temporariamente indisponível. Firebase Admin não configurado.' }), 
       { status: 503, headers: { 'Content-Type': 'application/json' } }
     );
   }
+
+  // Importação dinâmica apenas em runtime
+  const { auth: adminAuth } = require('@/lib/firebase-admin');
 
   try {
     const body = await request.json();

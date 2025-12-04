@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Força a rota a ser dinâmica (não fazer prerender durante build)
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     // Verificar se as variáveis de ambiente estão configuradas

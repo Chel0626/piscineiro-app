@@ -1,25 +1,21 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
-// Importação dinâmica para evitar erro de build
-let auth: any;
-let db: any;
-
-// Inicializa apenas em runtime, não durante build
-if (process.env.FIREBASE_PROJECT_ID) {
-  const { auth: firebaseAuth } = require('@/lib/firebase-admin');
-  const { getFirestore } = require('firebase-admin/firestore');
-  auth = firebaseAuth;
-  db = getFirestore();
-}
+// Força a rota a ser dinâmica (não fazer prerender durante build)
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   // Verifica se Firebase Admin está configurado
-  if (!auth || !db) {
+  if (!process.env.FIREBASE_PROJECT_ID) {
     return NextResponse.json(
       { error: 'Serviço temporariamente indisponível. Firebase Admin não configurado.' }, 
       { status: 503 }
     );
   }
+
+  // Importação dinâmica apenas em runtime
+  const { auth } = require('@/lib/firebase-admin');
+  const { getFirestore } = require('firebase-admin/firestore');
+  const db = getFirestore();
 
   try {
     const authHeader = request.headers.get('Authorization');

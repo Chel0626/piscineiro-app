@@ -3,6 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { collection, query, orderBy, limit, getDocs, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
+// Força a rota a ser dinâmica (não fazer prerender durante build)
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
