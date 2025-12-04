@@ -11,9 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { VisitForm, VisitFormData } from '@/components/VisitForm';
-import { ProductCalculator } from '@/components/ProductCalculator';
 import { ProductQuantitySelector, ProductWithQuantity } from '@/components/ProductQuantitySelector';
-import { ChevronDown, ChevronRight, ClipboardList, Calculator, ShoppingCart, CheckCircle, MessageCircle, Settings } from 'lucide-react';
+import { ChevronDown, ChevronRight, ClipboardList, ShoppingCart, CheckCircle, MessageCircle, Settings } from 'lucide-react';
 
 interface CheckoutModalProps {
   clientId: string;
@@ -37,16 +36,10 @@ export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps)
   });
 
   const [selectedProductsWithQuantity, setSelectedProductsWithQuantity] = useState<ProductWithQuantity[]>([]);
-  const [calculatorProducts, setCalculatorProducts] = useState<Array<{id: string; name: string; quantity: number; unit: string}>>([]);
 
   // Handler para mudanças nos produtos selecionados
   const handleProductsChange = useCallback((products: ProductWithQuantity[]) => {
     setSelectedProductsWithQuantity(products);
-  }, []);
-
-  // Handler para produtos da calculadora
-  const handleCalculatorProductsSelected = useCallback((products: Array<{id: string; name: string; quantity: number; unit: string}>) => {
-    setCalculatorProducts(products);
   }, []);
 
   const toggleSection = (section: string) => {
@@ -80,11 +73,6 @@ export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps)
           // TODO: Refatorar para usar productId apropriado
           await updateStock(product.name, -product.quantity);
         }
-      }
-      
-      // Abater produtos da calculadora do estoque
-      for (const product of calculatorProducts) {
-        await updateStock(product.id, -product.quantity);
       }
       
       setVisitData(data);
@@ -123,14 +111,6 @@ export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps)
       message += `\n📦 *Produtos Utilizados:*\n`;
       selectedProductsWithQuantity.forEach(p => {
         message += `• ${p.name}: ${p.quantity}\n`;
-      });
-    }
-
-    // Produtos da calculadora
-    if (calculatorProducts.length > 0) {
-      message += `\n🧪 *Produtos Calculados:*\n`;
-      calculatorProducts.forEach(p => {
-        message += `• ${p.name}: ${p.quantity}${p.unit}\n`;
       });
     }
 
@@ -310,35 +290,7 @@ export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps)
             )}
           </Card>
 
-          {/* Seção 2: Calculadora de Produtos */}
-          <Card className="border-green-200 dark:border-green-800">
-            <CardHeader 
-              className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-              onClick={() => toggleSection('calculator')}
-            >
-              <CardTitle className="flex items-center justify-between text-lg">
-                <div className="flex items-center gap-2">
-                  <Calculator className="h-5 w-5 text-green-600" />
-                  Calculadora de Produtos
-                </div>
-                {openSections.calculator ? (
-                  <ChevronDown className="h-5 w-5" />
-                ) : (
-                  <ChevronRight className="h-5 w-5" />
-                )}
-              </CardTitle>
-            </CardHeader>
-            {openSections.calculator && (
-              <CardContent>
-                <ProductCalculator 
-                  poolVolume={client?.poolVolume} 
-                  onProductsSelected={handleCalculatorProductsSelected}
-                />
-              </CardContent>
-            )}
-          </Card>
-
-          {/* Seção 3: Checkout Hidráulico */}
+          {/* Seção 2: Checkout Hidráulico */}
           <Card className="border-orange-200 dark:border-orange-800">
             <CardHeader 
               className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
@@ -425,7 +377,7 @@ export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps)
             )}
           </Card>
 
-          {/* Seção 4: Produtos a Solicitar */}
+          {/* Seção 3: Produtos a Solicitar */}
           <Card className="border-purple-200 dark:border-purple-800">
             <CardHeader 
               className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
