@@ -1,9 +1,25 @@
-import { auth as adminAuth } from '@/lib/firebase-admin';
+// Importação dinâmica para evitar erro de build
+let adminAuth: any;
+
+// Inicializa apenas em runtime, não durante build
+if (process.env.FIREBASE_PROJECT_ID) {
+  const { auth } = require('@/lib/firebase-admin');
+  adminAuth = auth;
+}
 
 // Endpoint espera receber { token } (ID token do Firebase) enviado pelo cliente.
 // O cliente faz signIn client-side e envia o idToken para cá.
 export async function POST(request: Request) {
   console.log('[api/login] Recebendo requisição POST');
+  
+  // Verifica se Firebase Admin está configurado
+  if (!adminAuth) {
+    return new Response(
+      JSON.stringify({ error: 'Serviço temporariamente indisponível. Firebase Admin não configurado.' }), 
+      { status: 503, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
   try {
     const body = await request.json();
     console.log('[api/login] Body recebido:', JSON.stringify(body));

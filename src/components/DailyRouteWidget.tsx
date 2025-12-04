@@ -371,9 +371,18 @@ export function DailyRouteWidget() {
 
     setUploadingPhoto(true);
     try {
+      // Determina a extensão do arquivo baseada no tipo MIME
+      const fileExtension = file.type === 'image/png' ? 'png' : 
+                           file.type === 'image/gif' ? 'gif' :
+                           file.type === 'image/webp' ? 'webp' : 'jpg';
+      
+      // Cria um nome de arquivo seguro usando apenas timestamp e extensão
+      const timestamp = Date.now();
+      const safeFileName = `visit_${timestamp}.${fileExtension}`;
+      
       const photoRef = storageRef(
         storage, 
-        `users/${auth.currentUser.uid}/clients/${selectedClientForFinalize}/visits/${Date.now()}_${file.name}`
+        `users/${auth.currentUser.uid}/clients/${selectedClientForFinalize}/visits/${safeFileName}`
       );
       await uploadBytes(photoRef, file);
       const photoURL = await getDownloadURL(photoRef);

@@ -20,28 +20,44 @@ const firebaseAdminConfig: ServiceAccount = {
   privateKey: privateKey,
 };
 
-// Inicializa o Firebase Admin apenas se ainda não foi inicializado
-if (getApps().length === 0) {
-  try {
-    console.log('[firebase-admin] Iniciando Firebase Admin...');
-    console.log('[firebase-admin] FIREBASE_PROJECT_ID=', firebaseAdminConfig.projectId ? 'OK' : 'MISSING');
-    console.log('[firebase-admin] FIREBASE_CLIENT_EMAIL=', firebaseAdminConfig.clientEmail ? 'OK' : 'MISSING');
-    console.log('[firebase-admin] FIREBASE_PRIVATE_KEY=', privateKey ? `OK (length: ${privateKey.length}, starts: ${privateKey.substring(0, 30)}...)` : 'MISSING');
-    
-    if (!firebaseAdminConfig.projectId || !firebaseAdminConfig.clientEmail || !firebaseAdminConfig.privateKey) {
-      throw new Error('Firebase Admin credentials are incomplete. Check your environment variables.');
+// Função para inicializar Firebase Admin sob demanda
+function initializeFirebaseAdmin() {
+  // Não inicializa durante build time
+  if (process.env.NODE_ENV === 'production' && !firebaseAdminConfig.projectId) {
+    console.log('[firebase-admin] Skipping initialization during build');
+    return;
+  }
+
+  if (getApps().length === 0) {
+    try {
+      console.log('[firebase-admin] Iniciando Firebase Admin...');
+      console.log('[firebase-admin] FIREBASE_PROJECT_ID=', firebaseAdminConfig.projectId ? 'OK' : 'MISSING');
+      console.log('[firebase-admin] FIREBASE_CLIENT_EMAIL=', firebaseAdminConfig.clientEmail ? 'OK' : 'MISSING');
+      console.log('[firebase-admin] FIREBASE_PRIVATE_KEY=', privateKey ? `OK (length: ${privateKey.length})` : 'MISSING');
+      
+      if (!firebaseAdminConfig.projectId || !firebaseAdminConfig.clientEmail || !firebaseAdminConfig.privateKey) {
+        throw new Error('Firebase Admin credentials are incomplete. Check your environment variables.');
+      }
+      
+      initializeApp({
+        credential: cert(firebaseAdminConfig),
+        storageBucket: `${process.env.FIREBASE_PROJECT_ID}.appspot.com`,
+      });
+      console.log('[firebase-admin] Inicialização concluída.');
+    } catch (err) {
+      console.error('[firebase-admin] Erro ao inicializar Firebase Admin:', err);
+      throw err;
     }
-    
-    initializeApp({
-      credential: cert(firebaseAdminConfig),
-      storageBucket: `${process.env.FIREBASE_PROJECT_ID}.appspot.com`,
-    });
-    console.log('[firebase-admin] Inicialização concluída.');
-  } catch (err) {
-    console.error('[firebase-admin] Erro ao inicializar Firebase Admin:', err);
-    throw err;
   }
 }
 
-export const auth = getAuth();
-export const storage = getStorage();
+// Exporta funções que inicializam sob demanda
+export const auth = (() => {
+  initializeFirebaseAdmin();
+  return getAuth();
+})();
+
+export const storage = (() => {
+  initializeFirebaseAdmin();
+  return getStorage();
+})();

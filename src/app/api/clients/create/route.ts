@@ -1,10 +1,26 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { auth } from '@/lib/firebase-admin';
-import { getFirestore } from 'firebase-admin/firestore';
 
-const db = getFirestore();
+// Importação dinâmica para evitar erro de build
+let auth: any;
+let db: any;
+
+// Inicializa apenas em runtime, não durante build
+if (process.env.FIREBASE_PROJECT_ID) {
+  const { auth: firebaseAuth } = require('@/lib/firebase-admin');
+  const { getFirestore } = require('firebase-admin/firestore');
+  auth = firebaseAuth;
+  db = getFirestore();
+}
 
 export async function POST(request: NextRequest) {
+  // Verifica se Firebase Admin está configurado
+  if (!auth || !db) {
+    return NextResponse.json(
+      { error: 'Serviço temporariamente indisponível. Firebase Admin não configurado.' }, 
+      { status: 503 }
+    );
+  }
+
   try {
     const authHeader = request.headers.get('Authorization');
     

@@ -81,7 +81,16 @@ export function ClienteAvulsoModal({ isOpen, onClose }: ClienteAvulsoModalProps)
 
     setIsUploading(true);
     try {
-      const storageRef = ref(storage, `clientes-avulsos/${Date.now()}_${file.name}`);
+      // Determina a extensão do arquivo baseada no tipo MIME
+      const fileExtension = file.type === 'image/png' ? 'png' : 
+                           file.type === 'image/gif' ? 'gif' :
+                           file.type === 'image/webp' ? 'webp' : 'jpg';
+      
+      // Cria um nome de arquivo seguro usando apenas timestamp e extensão
+      const timestamp = Date.now();
+      const safeFileName = `cliente_avulso_${timestamp}.${fileExtension}`;
+      
+      const storageRef = ref(storage, `clientes-avulsos/${safeFileName}`);
       await uploadBytes(storageRef, file);
       const downloadURL = await getDownloadURL(storageRef);
       setRelatorioData(prev => ({ ...prev, fotoUrl: downloadURL }));
