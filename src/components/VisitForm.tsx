@@ -2,7 +2,7 @@
 
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -13,6 +13,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useClientDetails } from '@/hooks/useClientDetails';
 import { toast } from 'sonner';
 import { Send, Camera, Clock, X, Upload } from 'lucide-react';
@@ -20,6 +21,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { storage } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+
+interface ProductSuggestion {
+  id: string;
+  name: string;
+  quantity: number;
+  unit: string;
+}
 
 
 const formSchema = z.object({
@@ -48,6 +56,10 @@ interface VisitFormProps {
 export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitFormProps) {
   const { client } = useClientDetails(clientId);
   
+  // Estado para produtos sugeridos e selecionados
+  const [suggestedProducts, setSuggestedProducts] = useState<ProductSuggestion[]>([]);
+  const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
+  
   // Função para obter horário atual formatado
   const getCurrentTime = () => {
     const now = new Date();
@@ -70,6 +82,135 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
       poolPhoto: initialData?.poolPhoto || '',
     },
   });
+
+  // Função para calcular produtos baseado nos parâmetros
+  const calcularProdutos = (ph: number, cloro: number, alcalinidade: number): ProductSuggestion[] => {
+    const volume = client?.poolVolume || 0;
+    if (volume === 0) return [];
+    
+    const suggestions: ProductSuggestion[] = [];
+
+    // 1. CLORO GRANULADO - Para elevar 1 ppm = 10g por m³
+    const cloroIdeal = 3.0;
+    if (cloro < cloroIdeal) {
+      const cloroFaltante = cloroIdeal - cloro;
+      const cloroNecessario = 10 * volume * cloroFaltante;
+      suggestions.push({
+        id: 'cloro-granulado',
+        name: 'Cloro Granulado',
+        quantity: Math.round(cloroNecessario),
+        unit: 'g'
+      });
+    }
+
+    // Tratamento de choque quando cloro está muito baixo
+    if (cloro <= 0.5) {
+      const choqueOxidacao = 25 * volume;
+      suggestions.push({
+        id: 'cloro-choque',
+        name: 'Cloro Granulado (Choque)',
+        quantity: Math.round(choqueOxidacao),
+        unit: 'g'
+      });
+    }
+
+    // 2. ALCALINIDADE - Para elevar 10 ppm = 170g por m³
+    const alcalinidadeIdeal = 120;
+    if (alcalinidade < alcalinidadeIdeal) {
+      const alcalinidadeFaltante = alcalinidadeIdeal - alcalinidade;
+      const elevadorNecessario = (170 * volume * alcalinidadeFaltante) / 10;
+      suggestions.push({
+        id: 'elevador-alcalinidade',
+        name: 'Elevador de Alcalinidade',
+        quantity: Math.round(elevadorNecessario),
+        unit: 'g'
+      });
+    }
+
+    // 3. REDUTOR DE pH - 100ml por m³ para reduzir 0.2
+    if (ph > 7.6) {
+      const diferencaPh = ph - 7.4;
+      const redutorNecessario = (100 * volume * diferencaPh) / 0.2;
+      suggestions.push({
+        id: 'redutor-ph',
+        name: 'Redutor de pH',
+        quantity: Math.round(redutorNecessario),
+        unit: 'ml'
+      });
+    }
+    
+    // 4. ELEVADOR DE pH - 100g por m³ para elevar 0.2
+    if (ph < 7.2) {
+      const diferencaPh = 7.4 - ph;
+      const barrilhaNecessaria = (100 * volume * diferencaPh) / 0.2;
+      suggestions.push({
+        id: 'elevador-ph',
+        name: 'Barrilha / Elevador de pH',
+        quantity: Math.round(barrilhaNecessaria),
+        unit: 'g'
+      });
+    }
+
+    // 5. ALGICIDA
+    if (cloro < 1.0) {
+      const algicidaChoque = (250 * volume) / 10;
+      suggestions.push({
+        id: 'algicida-choque',
+        name: 'Algicida (Tratamento)',
+        quantity: Math.round(algicidaChoque),
+        unit: 'ml'
+      });
+    } else {
+      const algicidaManutencao = (80 * volume) / 10;
+      suggestions.push({
+        id: 'algicida-manutencao',
+        name: 'Algicida (Manutenção)',
+        quantity: Math.round(algicidaManutencao),
+        unit: 'ml'
+      });
+    }
+
+    // 6. CLARIFICANTE
+    const clarificanteManutencao = 40 * volume;
+    suggestions.push({
+      id: 'clarificante',
+      name: 'Clarificante Líquido',
+      quantity: Math.round(clarificanteManutencao),
+      unit: 'ml'
+    });
+
+    return suggestions;
+  };
+
+  // Recalcular produtos quando parâmetros mudarem
+  useEffect(() => {
+    const subscription = form.watch((value) => {
+      if (value.ph !== undefined && value.cloro !== undefined && value.alcalinidade !== undefined) {
+        const produtos = calcularProdutos(value.ph, value.cloro, value.alcalinidade);
+        setSuggestedProducts(produtos);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form.watch, client?.poolVolume]);
+
+  // Função para alternar seleção de produto
+  const toggleProduct = (productId: string) => {
+    const newSelected = new Set(selectedProductIds);
+    if (newSelected.has(productId)) {
+      newSelected.delete(productId);
+    } else {
+      newSelected.add(productId);
+    }
+    setSelectedProductIds(newSelected);
+    
+    // Atualizar campo de produtos utilizados
+    const selectedProds = suggestedProducts
+      .filter(p => newSelected.has(p.id))
+      .map(p => `${p.name} ${p.quantity}${p.unit}`)
+      .join(', ');
+    
+    form.setValue('productsUsed', selectedProds);
+  };
 
   // Estados para captura de foto
   const [photoPreview, setPhotoPreview] = useState<string>('');
@@ -294,6 +435,47 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
             }}
           />
         </div>
+
+        {/* Sugestões de Produtos Calculadas */}
+        {suggestedProducts.length > 0 && (
+          <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-2 border-green-200 dark:border-green-700 rounded-lg">
+            <h3 className="font-bold text-lg text-green-900 dark:text-green-100 flex items-center gap-2 mb-3">
+              🧪 Produtos Sugeridos (Volume: {client?.poolVolume}m³)
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+              Selecione os produtos que você irá aplicar:
+            </p>
+            <div className="space-y-2">
+              {suggestedProducts.map((product) => (
+                <div
+                  key={product.id}
+                  className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-green-400 transition-colors"
+                >
+                  <Checkbox
+                    id={product.id}
+                    checked={selectedProductIds.has(product.id)}
+                    onCheckedChange={() => toggleProduct(product.id)}
+                    className="h-5 w-5"
+                  />
+                  <label
+                    htmlFor={product.id}
+                    className="flex-1 cursor-pointer select-none"
+                  >
+                    <div className="font-medium text-gray-900 dark:text-gray-100">
+                      {product.name}
+                    </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      Quantidade: <span className="font-semibold text-green-600 dark:text-green-400">{product.quantity}{product.unit}</span>
+                    </div>
+                  </label>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
+              ℹ️ Os produtos selecionados serão adicionados automaticamente ao campo &quot;Produtos Utilizados&quot;
+            </p>
+          </div>
+        )}
 
         <div className="mt-4 space-y-4">
           {/* Produtos Utilizados */}
