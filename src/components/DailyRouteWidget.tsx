@@ -308,30 +308,6 @@ export function DailyRouteWidget() {
   }, [authLoading, clients.length]); // lastLoadTime não deve estar aqui pois causa loop
 
   // Função para forçar atualização manual
-  // Função para adicionar cliente temporário ao roteiro
-  const handleAddTemporaryClient = (clientId: string) => {
-    setTemporaryClients(prev => new Set([...prev, clientId]));
-    setSearchQuery('');
-    setShowSearchDialog(false);
-    toast.success('Cliente adicionado ao roteiro temporário');
-  };
-
-  // Filtrar clientes disponíveis para busca (todos exceto os que já estão no roteiro)
-  const availableClientsForSearch = clients.filter(client => {
-    const isInDailyRoute = allDailyClients.some(c => c.id === client.id);
-    const isTemporary = temporaryClients.has(client.id);
-    return !isInDailyRoute && !isTemporary;
-  });
-
-  // Filtrar clientes pela busca
-  const filteredClients = searchQuery.trim()
-    ? availableClientsForSearch.filter(client =>
-        client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        client.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        client.neighborhood?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : [];
-
   const handleRefresh = async () => {
     setIsRefreshing(true);
     lastLoadTimeRef.current = 0; // Invalida cache
@@ -456,6 +432,30 @@ export function DailyRouteWidget() {
 
     return [...originalClients, ...rescheduledClients, ...temporaryClientsList];
   })();
+
+  // Função para adicionar cliente temporário ao roteiro
+  const handleAddTemporaryClient = (clientId: string) => {
+    setTemporaryClients(prev => new Set([...prev, clientId]));
+    setSearchQuery('');
+    setShowSearchDialog(false);
+    toast.success('Cliente adicionado ao roteiro temporário');
+  };
+
+  // Filtrar clientes disponíveis para busca (todos exceto os que já estão no roteiro)
+  const availableClientsForSearch = clients.filter(client => {
+    const isInDailyRoute = allDailyClients.some(c => c.id === client.id);
+    const isTemporary = temporaryClients.has(client.id);
+    return !isInDailyRoute && !isTemporary;
+  });
+
+  // Filtrar clientes pela busca
+  const filteredClients = searchQuery.trim()
+    ? availableClientsForSearch.filter(client =>
+        client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        client.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        client.neighborhood?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : [];
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
