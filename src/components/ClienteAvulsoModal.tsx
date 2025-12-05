@@ -153,7 +153,8 @@ export function ClienteAvulsoModal({ isOpen, onClose }: ClienteAvulsoModalProps)
       message += `📝 *Descrição do Serviço:*\n${relatorioData.descricaoServico}\n\n`;
     }
     
-    message += `✅ Serviço realizado com sucesso!`;
+    message += `\n\n✅ Serviço realizado com sucesso!`;
+    message += `\n\n🏊 _Relatório enviado automaticamente via PiscineiroAPP_`;
 
     const phoneNumber = clienteData.telefone.replace(/\D/g, '');
     const url = `https://wa.me/55${phoneNumber}?text=${encodeURIComponent(message)}`;

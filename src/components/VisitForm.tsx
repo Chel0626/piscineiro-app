@@ -428,7 +428,8 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
       message += `\n📷 Foto: ${data.poolPhoto}\n`;
     }
 
-    message += `\n✅ Serviço realizado com sucesso!`;
+    message += `\n\n✅ Serviço realizado com sucesso!`;
+    message += `\n\n🏊 _Relatório enviado automaticamente via PiscineiroAPP_`;
 
     // Abrir WhatsApp
     const phoneNumber = client.phone.replace(/\D/g, '');
