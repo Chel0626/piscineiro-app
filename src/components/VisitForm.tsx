@@ -81,16 +81,19 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
   
   // Opções de produtos disponíveis para solicitar
   const productOptions = [
+    'Balde de Cloro Estabilizado',
+    'Balde de Cloro Hipocloríto',
     'Pastilha de Cloro',
-    'Clarificante Líquido',
-    'Clarificante Gel',
-    'Algicída',
-    'Elevador de Alcalinidade',
-    'Redutor de pH',
-    'Limpa Bordas',
     'Peróxido',
     'Tratamento Semanal',
+    'Elevador de Alcalinidade',
+    'Redutor de pH',
+    'Algicida de Manutenção',
+    'Algicida de Choque',
+    'Clarificante Líquido',
+    'Clarificante Gel',
     'Sulfato de Alumínio',
+    'Barrilha',
   ];
   
   // Função para obter horário atual formatado
