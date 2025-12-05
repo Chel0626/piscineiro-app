@@ -46,12 +46,27 @@ export function usePayments() {
     
     // Se tem status manual definido como pago
     if (client.paymentStatus === 'paid' && client.lastPaymentDate) {
-      // Verifica se o pagamento foi neste mês
-      const paymentDate = new Date(client.lastPaymentDate + 'T00:00:00'); // Garante parse correto
-      if (paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear) {
+      const paymentDate = new Date(client.lastPaymentDate + 'T00:00:00');
+      const paymentMonth = paymentDate.getMonth();
+      const paymentYear = paymentDate.getFullYear();
+      
+      // Calcular qual deveria ser o mês de vencimento baseado na última data de pagamento
+      // Se pagou, está pago até o próximo ciclo (próximo mês)
+      let nextDueMonth = paymentMonth + 1;
+      let nextDueYear = paymentYear;
+      
+      if (nextDueMonth > 11) {
+        nextDueMonth = 0;
+        nextDueYear++;
+      }
+      
+      // Se ainda não chegou no próximo mês de vencimento, considera pago
+      if (currentYear < nextDueYear || 
+          (currentYear === nextDueYear && currentMonth < nextDueMonth) ||
+          (currentYear === nextDueYear && currentMonth === nextDueMonth && currentDay < client.paymentDueDate)) {
         return 'paid';
       }
-      // Se foi pago em mês anterior, volta para lógica automática
+      // Se já passou do próximo vencimento, volta para lógica automática
     }
     
     // Lógica automática baseada na data de vencimento
