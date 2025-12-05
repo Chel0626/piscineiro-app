@@ -19,8 +19,6 @@ import { toast } from 'sonner';
 import { Send, Camera, Clock, X, Upload } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { storage } from '@/lib/firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 interface ProductSuggestion {
   id: string;
@@ -298,7 +296,6 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
   const [photoPreview, setPhotoPreview] = useState<string>('');
   const [fullScreenPhoto, setFullScreenPhoto] = useState<string | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
-  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -321,7 +318,7 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
     }
   };
 
-  // Função para tirar foto
+  // Função para tirar foto (salva apenas localmente em base64)
   const capturePhoto = async () => {
     if (videoRef.current && canvasRef.current) {
       const canvas = canvasRef.current;
@@ -334,37 +331,12 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
       context?.drawImage(video, 0, 0);
       const photoDataUrl = canvas.toDataURL('image/jpeg', 0.8);
       
+      // Salvar foto localmente (base64)
       setPhotoPreview(photoDataUrl);
-      setIsUploadingPhoto(true);
+      form.setValue('poolPhoto', photoDataUrl);
       
-      try {
-        // Converter base64 para blob
-        const response = await fetch(photoDataUrl);
-        const blob = await response.blob();
-        
-        // Criar referência no Storage
-        const timestamp = Date.now();
-        const fileName = `pool-photos/${clientId}/visit-${timestamp}.jpg`;
-        const storageRef = ref(storage, fileName);
-        
-        // Fazer upload
-        await uploadBytes(storageRef, blob);
-        
-        // Obter URL de download
-        const downloadURL = await getDownloadURL(storageRef);
-        
-        // Salvar URL no formulário
-        form.setValue('poolPhoto', downloadURL);
-        
-        toast.success('Foto salva com sucesso!');
-      } catch (error) {
-        console.error('Erro ao fazer upload da foto:', error);
-        toast.error('Erro ao salvar foto. Tente novamente.');
-        setPhotoPreview('');
-      } finally {
-        setIsUploadingPhoto(false);
-        stopCamera();
-      }
+      toast.success('Foto capturada! Será incluída no relatório.');
+      stopCamera();
     }
   };
 
@@ -423,19 +395,36 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
       message += `\n📝 Observações:\n${data.description}\n`;
     }
 
-    // Foto
-    if (data.poolPhoto) {
-      message += `\n📷 Foto: ${data.poolPhoto}\n`;
-    }
-
     message += `\n\n✅ Serviço realizado com sucesso!`;
     message += `\n\n🏊 _Relatório enviado automaticamente via PiscineiroAPP_`;
+
+    // Se tem foto, fazer download automático
+    if (data.poolPhoto && data.poolPhoto.startsWith('data:image')) {
+      try {
+        // Criar link de download da foto
+        const link = document.createElement('a');
+        link.href = data.poolPhoto;
+        link.download = `piscina-${client.name.replace(/\s/g, '-')}-${new Date().getTime()}.jpg`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        toast.success('Foto baixada! Envie-a pelo WhatsApp após o texto.', {
+          duration: 6000
+        });
+      } catch (error) {
+        console.error('Erro ao baixar foto:', error);
+      }
+    }
 
     // Abrir WhatsApp
     const phoneNumber = client.phone.replace(/\D/g, '');
     const url = `https://wa.me/55${phoneNumber}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
-    toast.success('WhatsApp aberto com o relatório!');
+    
+    if (!data.poolPhoto) {
+      toast.success('WhatsApp aberto com o relatório!');
+    }
   };
 
   const removePhoto = () => {
@@ -796,7 +785,6 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
                       removePhoto();
                     }}
                     className="absolute top-2 right-2"
-                    disabled={isUploadingPhoto}
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -805,14 +793,7 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
                   </div>
                 </div>
                 <p className="text-sm text-center text-gray-600 dark:text-gray-400">
-                  {isUploadingPhoto ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <Upload className="h-4 w-4 animate-spin" />
-                      Salvando foto...
-                    </span>
-                  ) : (
-                    'Foto capturada e salva com sucesso!'
-                  )}
+                  Foto capturada! Será incluída no relatório do WhatsApp.
                 </p>
               </div>
             )}
