@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useClientDetails } from '@/hooks/useClientDetails';
 import { toast } from 'sonner';
-import { Send, Camera, Clock, X, Upload, CheckSquare } from 'lucide-react';
+import { Send, Camera, Clock, X, Upload, CheckSquare, ShoppingCart, Plus, Minus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
@@ -37,6 +37,7 @@ const formSchema = z.object({
   daysUntilNext: z.coerce.number().min(1).max(30, { message: 'Dias até próxima manutenção deve ser entre 1 e 30.' }),
   productsUsed: z.string().optional(), // Ex: "Cloro 2L, Algicida 100ml"
   checklist: z.string().optional(), // Ex: "Escovação, Aspiração, Retrolavagem"
+  productsToRequest: z.string().optional(), // Ex: "Pastilha de Cloro (5), Algicída (2)"
   description: z.string().optional(),
   departureTime: z.string().optional(),
   poolPhoto: z.string().optional(),
@@ -64,6 +65,10 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
   const [showChecklistDialog, setShowChecklistDialog] = useState(false);
   const [selectedProcesses, setSelectedProcesses] = useState<string[]>([]);
   
+  // Estado para Dialog de produtos a solicitar
+  const [showProductsDialog, setShowProductsDialog] = useState(false);
+  const [selectedProductsToRequest, setSelectedProductsToRequest] = useState<Record<string, number>>({});
+  
   // Opções de processos disponíveis
   const processOptions = [
     'Aspiração',
@@ -72,6 +77,20 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
     'Limpar Borda',
     'Limpeza de Pré-Filtro',
     'Retrolavagem da Areia'
+  ];
+  
+  // Opções de produtos disponíveis para solicitar
+  const productOptions = [
+    'Pastilha de Cloro',
+    'Clarificante Líquido',
+    'Clarificante Gel',
+    'Algicída',
+    'Elevador de Alcalinidade',
+    'Redutor de pH',
+    'Limpa Bordas',
+    'Peróxido',
+    'Tratamento Semanal',
+    'Sulfato de Alumínio',
   ];
   
   // Função para obter horário atual formatado
@@ -93,6 +112,7 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
       daysUntilNext: initialData?.daysUntilNext || 7,
       productsUsed: initialData?.productsUsed || '',
       checklist: initialData?.checklist || '',
+      productsToRequest: initialData?.productsToRequest || '',
       description: initialData?.description || '',
       departureTime: initialData?.departureTime || getCurrentTime(),
       poolPhoto: initialData?.poolPhoto || '',
@@ -110,6 +130,25 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
       setSelectedProcesses(processes);
     }
   }, [initialData?.checklist]);
+
+  // Carregar produtos solicitados iniciais
+  useEffect(() => {
+    if (initialData?.productsToRequest) {
+      // Parsear formato: "• Pastilha de Cloro (5)\n• Algicída (2)"
+      const productsMap: Record<string, number> = {};
+      const lines = initialData.productsToRequest.split('\n');
+      lines.forEach(line => {
+        const match = line.match(/^[•\-]\s*(.+?)\s*\((\d+)\)/);
+        if (match) {
+          const [, productName, quantity] = match;
+          if (productOptions.includes(productName)) {
+            productsMap[productName] = parseInt(quantity, 10);
+          }
+        }
+      });
+      setSelectedProductsToRequest(productsMap);
+    }
+  }, [initialData?.productsToRequest]);
 
   // Função para calcular produtos baseado na condição da água e parâmetros
   const calcularProdutos = (
@@ -409,6 +448,65 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
     setShowChecklistDialog(true);
   };
 
+  // Funções para gerenciar produtos a solicitar
+  const updateProductQuantity = (productName: string, quantity: number) => {
+    setSelectedProductsToRequest(prev => {
+      const updated = { ...prev };
+      if (quantity <= 0) {
+        delete updated[productName];
+      } else {
+        updated[productName] = quantity;
+      }
+      return updated;
+    });
+  };
+
+  const incrementProduct = (productName: string) => {
+    const current = selectedProductsToRequest[productName] || 0;
+    updateProductQuantity(productName, current + 1);
+  };
+
+  const decrementProduct = (productName: string) => {
+    const current = selectedProductsToRequest[productName] || 0;
+    updateProductQuantity(productName, Math.max(0, current - 1));
+  };
+
+  const saveProductsToRequest = () => {
+    // Formatar produtos com quantidades: "• Pastilha de Cloro (5)\n• Algicída (2)"
+    const productsText = Object.entries(selectedProductsToRequest)
+      .filter(([, quantity]) => quantity > 0)
+      .map(([name, quantity]) => `• ${name} (${quantity})`)
+      .join('\n');
+    
+    form.setValue('productsToRequest', productsText);
+    setShowProductsDialog(false);
+    
+    const totalProducts = Object.keys(selectedProductsToRequest).length;
+    if (totalProducts > 0) {
+      toast.success(`${totalProducts} produto(s) adicionado(s) à solicitação`);
+    }
+  };
+
+  const openProductsDialog = () => {
+    // Ao abrir o dialog, carregar os produtos já salvos
+    const currentProducts = form.getValues('productsToRequest') || '';
+    if (currentProducts) {
+      const productsMap: Record<string, number> = {};
+      const lines = currentProducts.split('\n');
+      lines.forEach(line => {
+        const match = line.match(/^[•\-]\s*(.+?)\s*\((\d+)\)/);
+        if (match) {
+          const [, productName, quantity] = match;
+          if (productOptions.includes(productName)) {
+            productsMap[productName] = parseInt(quantity, 10);
+          }
+        }
+      });
+      setSelectedProductsToRequest(productsMap);
+    }
+    setShowProductsDialog(true);
+  };
+
   const handleSendReportWhatsApp = () => {
     if (!client?.phone) {
       toast.error('Cliente não possui telefone cadastrado.');
@@ -448,6 +546,11 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
     // Produtos utilizados
     if (data.productsUsed) {
       message += `\n🧪 Produtos utilizados:\n${data.productsUsed}\n`;
+    }
+
+    // Produtos a solicitar
+    if (data.productsToRequest) {
+      message += `\n📦 Solicitação de Produtos:\n${data.productsToRequest}\n`;
     }
 
     // Descrição/observações
@@ -741,6 +844,37 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
               </FormItem>
             )}
           />
+          
+          {/* Produtos a Solicitar */}
+          <FormField
+            control={form.control}
+            name="productsToRequest"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Produtos a Solicitar (opcional)</FormLabel>
+                <FormControl>
+                  <div className="space-y-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={openProductsDialog}
+                    >
+                      <ShoppingCart className="mr-2 h-4 w-4" />
+                      {field.value ? 'Editar produtos solicitados' : 'Selecionar produtos para solicitar'}
+                    </Button>
+                    {field.value && (
+                      <div className="text-sm text-muted-foreground whitespace-pre-line border rounded-md p-3 bg-muted/30">
+                        {field.value}
+                      </div>
+                    )}
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
           <FormField
             control={form.control}
             name="description"
@@ -953,6 +1087,66 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
             type="button"
             className="flex-1"
             onClick={saveChecklist}
+          >
+            Confirmar
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+
+    {/* Dialog de Produtos a Solicitar com Seletor de Quantidade */}
+    <Dialog open={showProductsDialog} onOpenChange={setShowProductsDialog}>
+      <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Selecione Produtos para Solicitar</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 py-4">
+          {productOptions.map((product) => {
+            const quantity = selectedProductsToRequest[product] || 0;
+            return (
+              <div key={product} className="flex items-center justify-between gap-3 p-2 border rounded-md">
+                <span className="text-sm font-medium flex-1">{product}</span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => decrementProduct(product)}
+                    disabled={quantity === 0}
+                    className="h-8 w-8 p-0"
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <span className="min-w-[30px] text-center font-mono text-sm">
+                    {quantity}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => incrementProduct(product)}
+                    className="h-8 w-8 p-0"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="flex gap-2 pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            className="flex-1"
+            onClick={() => setShowProductsDialog(false)}
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="button"
+            className="flex-1"
+            onClick={saveProductsToRequest}
           >
             Confirmar
           </Button>

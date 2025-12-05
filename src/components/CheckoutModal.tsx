@@ -5,14 +5,12 @@ import { collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/fi
 import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
 import { useClientDetails } from '@/hooks/useClientDetails';
-import { useProductRequests } from '@/hooks/useProductRequests';
 import { useClientStock } from '@/hooks/useClientStock';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { VisitForm, VisitFormData } from '@/components/VisitForm';
-import { ProductQuantitySelector, ProductWithQuantity } from '@/components/ProductQuantitySelector';
-import { ChevronDown, ChevronRight, ClipboardList, ShoppingCart, CheckCircle, MessageCircle, Settings } from 'lucide-react';
+import { ChevronDown, ChevronRight, ClipboardList, CheckCircle, MessageCircle, Settings } from 'lucide-react';
 
 interface CheckoutModalProps {
   clientId: string;
@@ -23,7 +21,6 @@ interface CheckoutModalProps {
 
 export function CheckoutModal({ clientId, isOpen, onClose, onSuccess }: CheckoutModalProps) {
   const { client, isLoading } = useClientDetails(clientId);
-  const { createProductRequest } = useProductRequests();
   const { stock, updateStock } = useClientStock(clientId);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
@@ -35,13 +32,6 @@ export function CheckoutModal({ clientId, isOpen, onClose, onSuccess }: Checkout
     drainClosed: false,
     timerAutomatic: false,
   });
-
-  const [selectedProductsWithQuantity, setSelectedProductsWithQuantity] = useState<ProductWithQuantity[]>([]);
-
-  // Handler para mudanças nos produtos selecionados
-  const handleProductsChange = useCallback((products: ProductWithQuantity[]) => {
-    setSelectedProductsWithQuantity(products);
-  }, []);
 
   const toggleSection = (section: string) => {
     setOpenSections(prev => ({
@@ -74,15 +64,6 @@ export function CheckoutModal({ clientId, isOpen, onClose, onSuccess }: Checkout
         lastVisitDate: today,
         visitStatus: 'completed'
       });
-      
-      // Abater produtos utilizados do estoque
-      for (const product of selectedProductsWithQuantity) {
-        if (product.quantity > 0) {
-          // Usar o nome do produto como ID temporariamente
-          // TODO: Refatorar para usar productId apropriado
-          await updateStock(product.name, -product.quantity);
-        }
-      }
       
       setVisitData(data);
       toast.success('Check-out realizado com sucesso!');
@@ -126,11 +107,8 @@ export function CheckoutModal({ clientId, isOpen, onClose, onSuccess }: Checkout
     }
 
     // Produtos utilizados
-    if (selectedProductsWithQuantity.length > 0) {
-      message += `\n📦 *Produtos Utilizados:*\n`;
-      selectedProductsWithQuantity.forEach(p => {
-        message += `• ${p.name}: ${p.quantity}\n`;
-      });
+    if (visitData.productsUsed && visitData.productsUsed.trim()) {
+      message += `\n📦 *Produtos Utilizados:*\n${visitData.productsUsed}\n`;
     }
 
     // Conferência Mecânica/Hidráulica
@@ -177,57 +155,6 @@ export function CheckoutModal({ clientId, isOpen, onClose, onSuccess }: Checkout
     }
   };
 
-    const handleSendProductsWhatsApp = async () => {
-    if (!client || selectedProductsWithQuantity.length === 0) {
-      toast.error('Selecione pelo menos um produto antes de enviar');
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      // Salvar no banco de dados
-      await createProductRequest({
-        clientId,
-        clientName: client.name,
-        clientPhone: client.phone || '',
-        products: selectedProductsWithQuantity.map(p => `${p.name} (${p.quantity})`)
-      });
-
-      // Criar lista formatada com quantidades
-      const productList = selectedProductsWithQuantity
-        .filter(p => p && p.name && p.quantity > 0)
-        .map(p => `• ${p.name} - Quantidade: ${p.quantity}`)
-        .join('\n');
-
-      if (!productList.trim()) {
-        toast.error('Nenhum produto válido selecionado');
-        return;
-      }
-
-      const message = 
-        `Preciso dos seguintes produtos para a próxima visita:\n\n` +
-        `Cliente: ${client.name}\n` +
-        `Data: ${new Date().toLocaleDateString()}\n\n` +
-        `Produtos:\n${productList}`;
-
-      const encodedMessage = encodeURIComponent(message);
-      const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
-      window.open(whatsappUrl, '_blank');
-
-      toast.success('Solicitação de produtos enviada e salva no histórico!');
-
-      // Limpar produtos selecionados após envio
-      setSelectedProductsWithQuantity([]);
-
-    } catch (error) {
-      console.error('Erro ao salvar solicitação de produtos:', error);
-      toast.error('Erro ao salvar solicitação de produtos');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   const handleClose = () => {
     setVisitData(null);
     setOpenSections({});
@@ -238,7 +165,6 @@ export function CheckoutModal({ clientId, isOpen, onClose, onSuccess }: Checkout
       drainClosed: false,
       timerAutomatic: false,
     });
-    setSelectedProductsWithQuantity([]);
     onClose();
   };
 
@@ -392,62 +318,6 @@ export function CheckoutModal({ clientId, isOpen, onClose, onSuccess }: Checkout
                       <strong>Checados:</strong> {Object.values(mechanicalChecks).filter(Boolean).length}/5 itens
                     </p>
                   </div>
-                </div>
-              </CardContent>
-            )}
-          </Card>
-
-          {/* Seção 3: Produtos a Solicitar */}
-          <Card className="border-purple-200 dark:border-purple-800">
-            <CardHeader 
-              className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-              onClick={() => toggleSection('products')}
-            >
-              <CardTitle className="flex items-center justify-between text-lg">
-                <div className="flex items-center gap-2">
-                  <ShoppingCart className="h-5 w-5 text-purple-600" />
-                  Produtos a Solicitar
-                </div>
-                {openSections.products ? (
-                  <ChevronDown className="h-5 w-5" />
-                ) : (
-                  <ChevronRight className="h-5 w-5" />
-                )}
-              </CardTitle>
-            </CardHeader>
-            {openSections.products && (
-              <CardContent>
-                <div className="space-y-4">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Selecione os produtos e quantidades que deseja solicitar:
-                  </p>
-                  
-                  {/* Novo componente ProductQuantitySelector */}
-                  <ProductQuantitySelector 
-                    onProductsChange={handleProductsChange}
-                    className="w-full"
-                  />
-
-                  {/* Botão WhatsApp para Produtos */}
-                  {selectedProductsWithQuantity && selectedProductsWithQuantity.length > 0 && (
-                    <div className="space-y-3">
-                      <div className="p-3 bg-purple-50 dark:bg-purple-950/30 rounded-lg">
-                        <p className="text-xs text-purple-700 dark:text-purple-300">
-                          <strong>Selecionados:</strong> {selectedProductsWithQuantity.length} produtos, {selectedProductsWithQuantity.reduce((sum, p) => sum + (p?.quantity || 0), 0)} itens no total
-                        </p>
-                      </div>
-                      
-                      <Button 
-                        onClick={handleSendProductsWhatsApp}
-                        disabled={isSubmitting}
-                        className="w-full flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50"
-                        variant="default"
-                      >
-                        <MessageCircle className="h-4 w-4" />
-                        {isSubmitting ? 'Enviando...' : 'Enviar Lista de Produtos via WhatsApp'}
-                      </Button>
-                    </div>
-                  )}
                 </div>
               </CardContent>
             )}
