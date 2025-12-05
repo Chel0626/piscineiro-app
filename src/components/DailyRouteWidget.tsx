@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { ListChecks, CheckCircle, UserPlus, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
-import { collection, query, where, getDocs, addDoc, Timestamp, doc, setDoc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, Timestamp, doc, setDoc, getDoc, limit } from 'firebase/firestore';
 import { db, storage, auth } from '@/lib/firebase';
 import { ClientFormData } from '@/lib/validators/clientSchema';
 import { CheckoutModal } from '@/components/CheckoutModal';
@@ -233,30 +233,34 @@ export function DailyRouteWidget() {
   // Carregar visitas do dia
   useEffect(() => {
     const loadVisitedToday = async () => {
-      if (!auth.currentUser?.uid) return;
+      if (!auth.currentUser?.uid || clients.length === 0) return;
 
-      const visitsRef = collection(db, `users/${auth.currentUser.uid}/visits`);
-      const q = query(
-        visitsRef,
-        where('date', '>=', startOfDay(new Date())),
-        where('date', '<=', endOfDay(new Date()))
-      );
-
-      const snapshot = await getDocs(q);
       const visitedIds = new Set<string>();
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        if (data.clientId) {
-          visitedIds.add(data.clientId);
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+
+      // Verificar cada cliente se tem visita hoje
+      for (const client of clients) {
+        const visitsRef = collection(db, 'clients', client.id, 'visits');
+        const q = query(
+          visitsRef,
+          where('date', '>=', startOfDay(today)),
+          where('date', '<=', endOfDay(today)),
+          limit(1)
+        );
+
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+          visitedIds.add(client.id);
         }
-      });
+      }
       setVisitedToday(visitedIds);
     };
 
     if (!authLoading) {
       loadVisitedToday();
     }
-  }, [authLoading]);
+  }, [authLoading, clients]);
 
   // Carregar ordem salva
   useEffect(() => {
@@ -382,16 +386,16 @@ export function DailyRouteWidget() {
       
       const photoRef = storageRef(
         storage, 
-        `users/${auth.currentUser.uid}/clients/${selectedClientForFinalize}/visits/${safeFileName}`
+        `clients/${selectedClientForFinalize}/visits/${safeFileName}`
       );
       await uploadBytes(photoRef, file);
       const photoURL = await getDownloadURL(photoRef);
 
-      await addDoc(collection(db, `users/${auth.currentUser.uid}/visits`), {
-        clientId: selectedClientForFinalize,
+      await addDoc(collection(db, 'clients', selectedClientForFinalize, 'visits'), {
         date: new Date(),
         photoURL,
         timestamp: Timestamp.now(),
+        registeredBy: auth.currentUser.uid,
       });
 
       setVisitedToday(prev => new Set(prev).add(selectedClientForFinalize));
