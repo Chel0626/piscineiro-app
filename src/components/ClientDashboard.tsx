@@ -5,6 +5,7 @@ import { EquipmentCard } from './EquipmentCard';
 import { FinancialCard } from './FinancialCard';
 import { RegisterMaintenanceModal } from './RegisterMaintenanceModal';
 import { AdjustContractModal } from './AdjustContractModal';
+import { ParametersChart } from './ParametersChart';
 
 // Tipos baseados no JSON sugerido
 export type ClientProfile = {
@@ -56,6 +57,7 @@ export const ClientDashboard: React.FC<{ client: ClientData }> = ({ client }) =>
   const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
   const [showAdjustModal, setShowAdjustModal] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
+  const [showChart, setShowChart] = useState(false);
   const [clientData, setClientData] = useState<ClientData>(client);
 
   // Dados dinâmicos do Firestore
@@ -146,7 +148,12 @@ export const ClientDashboard: React.FC<{ client: ClientData }> = ({ client }) =>
                   <div className="text-xs text-gray-700 mt-1">Obs: {visits[0].description}</div>
                 )}
               </div>
-              <button className="text-blue-600 text-xs underline mb-2">Ver Gráfico de Evolução</button>
+              <button 
+                className="text-blue-600 text-xs underline mb-2"
+                onClick={() => setShowChart(true)}
+              >
+                Ver Gráfico de Evolução
+              </button>
               <hr className="my-2" />
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-lg">📊</span>
@@ -184,6 +191,13 @@ export const ClientDashboard: React.FC<{ client: ClientData }> = ({ client }) =>
           <button className="absolute top-4 right-4 px-3 py-1 bg-gray-300 rounded" onClick={() => setShowEditProfile(false)}>Fechar</button>
         </div>
       )}
+      
+      {/* Gráfico de evolução dos parâmetros */}
+      <ParametersChart
+        clientId={client.id}
+        isOpen={showChart}
+        onClose={() => setShowChart(false)}
+      />
     </div>
   );
 };
