@@ -3,7 +3,9 @@
 import { useClients } from '@/hooks/useClients';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ListChecks, CheckCircle, UserPlus, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { ListChecks, CheckCircle, UserPlus, ChevronDown, ChevronUp, RefreshCw, Search, Plus } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { collection, query, where, getDocs, addDoc, Timestamp, doc, setDoc, getDoc, limit } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
@@ -40,6 +42,7 @@ type DailyClient = ClientFormData & {
   id: string;
   isRescheduled?: boolean;
   originalDay?: string;
+  isTemporary?: boolean;
 };
 
 // Componente interno para item arrastável
@@ -80,7 +83,9 @@ function SortableClientCard({
       ref={setNodeRef}
       style={style}
       className={`flex flex-col rounded-lg transition-all overflow-hidden border ${
-        client.isRescheduled
+        client.isTemporary
+          ? 'bg-purple-50 dark:bg-purple-900/30 border-purple-300 dark:border-purple-500'
+          : client.isRescheduled
           ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-300 dark:border-blue-500'
           : isCompleted
           ? 'bg-green-50 dark:bg-green-900/30 border-green-300 dark:border-green-500'
@@ -107,6 +112,14 @@ function SortableClientCard({
               <p className="font-semibold text-base text-gray-900 dark:text-gray-100">
                 {client.name || `Cliente ${client.id}`}
               </p>
+              {client.isTemporary && (
+                <div className="flex items-center gap-1 px-2 py-1 bg-purple-100 dark:bg-purple-900 rounded-full shrink-0">
+                  <Plus className="h-3 w-3 text-purple-600 dark:text-purple-400" />
+                  <span className="text-xs text-purple-600 dark:text-purple-400 font-medium">
+                    Temporário
+                  </span>
+                </div>
+              )}
               {client.isRescheduled && (
                 <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900 rounded-full shrink-0">
                   <UserPlus className="h-3 w-3 text-blue-600 dark:text-blue-400" />
@@ -121,6 +134,11 @@ function SortableClientCard({
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-300">
               {client.neighborhood}
+              {client.isTemporary && (
+                <span className="ml-2 text-purple-600 dark:text-purple-400">
+                  (roteiro temporário)
+                </span>
+              )}
               {client.isRescheduled && client.originalDay && (
                 <span className="ml-2 text-blue-600 dark:text-blue-400">
                   (movido de {client.originalDay})
@@ -216,6 +234,11 @@ export function DailyRouteWidget() {
   const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState<string>('');
   
+  // Estados para Roteiro Temporário
+  const [showSearchDialog, setShowSearchDialog] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [temporaryClients, setTemporaryClients] = useState<Set<string>>(new Set());
+  
   // Drag & drop
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -285,6 +308,30 @@ export function DailyRouteWidget() {
   }, [authLoading, clients.length]); // lastLoadTime não deve estar aqui pois causa loop
 
   // Função para forçar atualização manual
+  // Função para adicionar cliente temporário ao roteiro
+  const handleAddTemporaryClient = (clientId: string) => {
+    setTemporaryClients(prev => new Set([...prev, clientId]));
+    setSearchQuery('');
+    setShowSearchDialog(false);
+    toast.success('Cliente adicionado ao roteiro temporário');
+  };
+
+  // Filtrar clientes disponíveis para busca (todos exceto os que já estão no roteiro)
+  const availableClientsForSearch = clients.filter(client => {
+    const isInDailyRoute = allDailyClients.some(c => c.id === client.id);
+    const isTemporary = temporaryClients.has(client.id);
+    return !isInDailyRoute && !isTemporary;
+  });
+
+  // Filtrar clientes pela busca
+  const filteredClients = searchQuery.trim()
+    ? availableClientsForSearch.filter(client =>
+        client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        client.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        client.neighborhood?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : [];
+
   const handleRefresh = async () => {
     setIsRefreshing(true);
     lastLoadTimeRef.current = 0; // Invalida cache
@@ -402,7 +449,12 @@ export function DailyRouteWidget() {
       }
     });
 
-    return [...originalClients, ...rescheduledClients];
+    // Adicionar clientes temporários
+    const temporaryClientsList: DailyClient[] = clients
+      .filter(c => temporaryClients.has(c.id))
+      .map(c => ({ ...c, isTemporary: true as const }));
+
+    return [...originalClients, ...rescheduledClients, ...temporaryClientsList];
   })();
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -519,6 +571,19 @@ export function DailyRouteWidget() {
 
         {isExpanded && (
           <CardContent>
+            {/* Botão Roteiro Temporário */}
+            <div className="mb-6">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowSearchDialog(true)}
+                className="w-full flex items-center justify-center gap-2 border-purple-300 dark:border-purple-700 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30"
+              >
+                <Plus className="h-4 w-4" />
+                Adicionar Cliente Temporário
+              </Button>
+            </div>
+
             {/* Clientes pendentes */}
             {pendingClients.length > 0 && (
               <div className="space-y-3 mb-6">
@@ -608,6 +673,57 @@ export function DailyRouteWidget() {
           }
         }}
       />
+
+      {/* Dialog de Busca de Clientes Temporários */}
+      <Dialog open={showSearchDialog} onOpenChange={setShowSearchDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Adicionar Cliente ao Roteiro Temporário</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Digite o nome do cliente..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+                autoFocus
+              />
+            </div>
+
+            {searchQuery.trim() && (
+              <div className="max-h-[300px] overflow-y-auto space-y-2">
+                {filteredClients.length > 0 ? (
+                  filteredClients.map(client => (
+                    <button
+                      key={client.id}
+                      onClick={() => handleAddTemporaryClient(client.id)}
+                      className="w-full p-3 text-left rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-purple-50 dark:hover:bg-purple-900/30 hover:border-purple-300 dark:hover:border-purple-700 transition-colors"
+                    >
+                      <p className="font-medium text-sm">{client.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {client.address} • {client.neighborhood}
+                      </p>
+                    </button>
+                  ))
+                ) : (
+                  <p className="text-sm text-center text-gray-500 dark:text-gray-400 py-4">
+                    Nenhum cliente encontrado
+                  </p>
+                )}
+              </div>
+            )}
+
+            {!searchQuery.trim() && (
+              <p className="text-sm text-center text-gray-500 dark:text-gray-400 py-4">
+                Digite para buscar clientes
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
