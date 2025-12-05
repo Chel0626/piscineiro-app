@@ -31,10 +31,12 @@ interface ProductSuggestion {
 
 
 const formSchema = z.object({
+  waterCondition: z.enum(['cristalina', 'turva', 'verde', 'leitosa', 'decantando'], { message: 'Selecione a condição da água.' }),
   ph: z.coerce.number().min(0, { message: 'pH inválido.' }),
   cloro: z.coerce.number().min(0, { message: 'Cloro inválido.' }),
   alcalinidade: z.coerce.number().min(0, { message: 'Alcalinidade inválida.' }),
-  waterCondition: z.enum(['cristalina', 'turva', 'verde', 'leitosa', 'decantando'], { message: 'Selecione a condição da água.' }),
+  chlorineType: z.enum(['3-em-1', 'estabilizado', 'hipoclorito'], { message: 'Selecione o tipo de cloro.' }),
+  daysUntilNext: z.coerce.number().min(1).max(30, { message: 'Dias até próxima manutenção deve ser entre 1 e 30.' }),
   productsUsed: z.string().optional(), // Ex: "Cloro 2L, Algicida 100ml"
   checklist: z.string().optional(), // Ex: "Escovação, Aspiração, Retrolavagem"
   description: z.string().optional(),
@@ -71,10 +73,12 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
   
   const form = useForm<VisitFormData>({
     defaultValues: {
+      waterCondition: initialData?.waterCondition || 'cristalina',
       ph: initialData?.ph || 7.4,
       cloro: initialData?.cloro || 0,
       alcalinidade: initialData?.alcalinidade || 100,
-      waterCondition: initialData?.waterCondition || 'cristalina',
+      chlorineType: initialData?.chlorineType || '3-em-1',
+      daysUntilNext: initialData?.daysUntilNext || 7,
       productsUsed: initialData?.productsUsed || '',
       checklist: initialData?.checklist || '',
       description: initialData?.description || '',
@@ -83,101 +87,165 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
     },
   });
 
-  // Função para calcular produtos baseado nos parâmetros
-  const calcularProdutos = (ph: number, cloro: number, alcalinidade: number): ProductSuggestion[] => {
+  // Função para calcular produtos baseado na condição da água e parâmetros
+  const calcularProdutos = (
+    waterCondition: string,
+    ph: number,
+    cloro: number,
+    alcalinidade: number,
+    chlorineType: string,
+    daysUntilNext: number
+  ): ProductSuggestion[] => {
     const volume = client?.poolVolume || 0;
     if (volume === 0) return [];
     
     const suggestions: ProductSuggestion[] = [];
 
-    // 1. CLORO GRANULADO - Para elevar 1 ppm = 10g por m³
-    const cloroIdeal = 3.0;
-    if (cloro < cloroIdeal) {
-      const cloroFaltante = cloroIdeal - cloro;
-      const cloroNecessario = 10 * volume * cloroFaltante;
+    // ============================================
+    // ÁGUA CRISTALINA, TURVA OU LEITOSA
+    // ============================================
+    if (waterCondition === 'cristalina' || waterCondition === 'turva' || waterCondition === 'leitosa') {
+      // 1. pH - Redutor de pH se maior que 7.6
+      if (ph > 7.6) {
+        // Dosagem: 15ml por m³ reduz 0.2 de pH (Tabela Cris Água)
+        const diferencaPh = ph - 7.4; // Queremos chegar em 7.4
+        const redutorNecessario = (15 * volume * diferencaPh) / 0.2;
+        suggestions.push({
+          id: 'redutor-ph',
+          name: 'Redutor de pH',
+          quantity: Math.round(redutorNecessario),
+          unit: 'ml'
+        });
+      }
+      // Se pH < 7.2: não sugerir nada (alcalinidade baixa será corrigida)
+
+      // 2. CLORO
+      if (cloro === 0) {
+        // Aplicar dosagem inicial
+        if (chlorineType === '3-em-1') {
+          const cloroNecessario = 30 * volume; // 30g por m³
+          suggestions.push({
+            id: 'cloro-3em1-inicial',
+            name: 'Cloro 3 em 1',
+            quantity: Math.round(cloroNecessario),
+            unit: 'g'
+          });
+        } else if (chlorineType === 'estabilizado' || chlorineType === 'hipoclorito') {
+          const cloroNecessario = 15 * volume; // 15g por m³
+          suggestions.push({
+            id: 'cloro-estabilizado-inicial',
+            name: chlorineType === 'estabilizado' ? 'Cloro Estabilizado' : 'Hipoclorito de Cálcio',
+            quantity: Math.round(cloroNecessario),
+            unit: 'g'
+          });
+        }
+      } else if (cloro >= 1 && cloro <= 2) {
+        // Cloro 1 ou 2: manutenção
+        const cloroFaltante = 3 - cloro; // Quanto falta para chegar em 3 ppm
+        
+        if (chlorineType === '3-em-1') {
+          // volume x 4g x quanto falta x dias até próxima
+          const cloroNecessario = volume * 4 * cloroFaltante * daysUntilNext;
+          suggestions.push({
+            id: 'cloro-3em1-manutencao',
+            name: 'Cloro 3 em 1 (Manutenção)',
+            quantity: Math.round(cloroNecessario),
+            unit: 'g'
+          });
+        } else if (chlorineType === 'estabilizado' || chlorineType === 'hipoclorito') {
+          // volume x 2g x quanto falta x dias até próxima
+          const cloroNecessario = volume * 2 * cloroFaltante * daysUntilNext;
+          suggestions.push({
+            id: 'cloro-estabilizado-manutencao',
+            name: `${chlorineType === 'estabilizado' ? 'Cloro Estabilizado' : 'Hipoclorito de Cálcio'} (Manutenção)`,
+            quantity: Math.round(cloroNecessario),
+            unit: 'g'
+          });
+        }
+      }
+
+      // 3. ALCALINIDADE
+      if (alcalinidade >= 80 && alcalinidade <= 120) {
+        // Não sugerir nada - está ideal
+      } else if (alcalinidade < 60) {
+        // Elevar alcalinidade
+        // Fórmula: (aumento desejado em ppm / 10) x 17 x volume
+        const aumentoDesejado = 100 - alcalinidade; // Queremos chegar em 100 ppm
+        const elevadorNecessario = (aumentoDesejado / 10) * 17 * volume;
+        suggestions.push({
+          id: 'elevador-alcalinidade',
+          name: 'Elevador de Alcalinidade',
+          quantity: Math.round(elevadorNecessario),
+          unit: 'g'
+        });
+      }
+      // Se acima de 120 ppm: não sugerir elevador
+
+      // 4. CLARIFICANTE
+      // Água turva/leitosa usa 6ml/m³, cristalina usa 1.5ml/m³
+      const doseClarificante = (waterCondition === 'turva' || waterCondition === 'leitosa') ? 6 : 1.5;
+      const clarificante = doseClarificante * volume;
       suggestions.push({
-        id: 'cloro-granulado',
-        name: 'Cloro Granulado',
-        quantity: Math.round(cloroNecessario),
-        unit: 'g'
+        id: 'clarificante',
+        name: waterCondition === 'cristalina' ? 'Clarificante' : 'Clarificante (Dosagem Reforçada)',
+        quantity: Math.round(clarificante),
+        unit: 'ml'
       });
+
+      // 5. ALGICIDA - 6ml por m³
+      const algicida = 6 * volume;
+      suggestions.push({
+        id: 'algicida',
+        name: 'Algicida',
+        quantity: Math.round(algicida),
+        unit: 'ml'
+      });
+
+      // 6. PASTILHA DE CLORO - 1 pastilha para cada 25m³
+      const pastilhas = volume / 25;
+      if (pastilhas >= 0.5) { // Só sugere se der pelo menos meia pastilha
+        suggestions.push({
+          id: 'pastilha-cloro',
+          name: 'Pastilha de Cloro',
+          quantity: Math.ceil(pastilhas), // Arredonda para cima
+          unit: pastilhas > 1 ? 'unidades' : 'unidade'
+        });
+      }
     }
 
-    // Tratamento de choque quando cloro está muito baixo
-    if (cloro <= 0.5) {
-      const choqueOxidacao = 25 * volume;
+    // ============================================
+    // ÁGUA VERDE (Tratamento de Choque/Decantação)
+    // ============================================
+    if (waterCondition === 'verde') {
+      // 1. SULFATO DE ALUMÍNIO - Dosagem: 20g por m³ (Cris Água)
+      const sulfatoAluminio = 20 * volume;
+      suggestions.push({
+        id: 'sulfato-aluminio',
+        name: 'Sulfato de Alumínio (Decantação)',
+        quantity: Math.round(sulfatoAluminio),
+        unit: 'g'
+      });
+
+      // 2. BARRILHA - Dosagem: 20g por m³ (Cris Água)
+      const barrilha = 20 * volume;
+      suggestions.push({
+        id: 'barrilha',
+        name: 'Barrilha (Elevador de pH)',
+        quantity: Math.round(barrilha),
+        unit: 'g'
+      });
+
+      // 3. CLORO CHOQUE - Dosagem: 30g por m³
+      const cloroChoque = 30 * volume;
       suggestions.push({
         id: 'cloro-choque',
         name: 'Cloro Granulado (Choque)',
-        quantity: Math.round(choqueOxidacao),
+        quantity: Math.round(cloroChoque),
         unit: 'g'
       });
-    }
 
-    // 2. ALCALINIDADE - Para elevar 10 ppm = 170g por m³
-    const alcalinidadeIdeal = 120;
-    if (alcalinidade < alcalinidadeIdeal) {
-      const alcalinidadeFaltante = alcalinidadeIdeal - alcalinidade;
-      const elevadorNecessario = (170 * volume * alcalinidadeFaltante) / 10;
-      suggestions.push({
-        id: 'elevador-alcalinidade',
-        name: 'Elevador de Alcalinidade',
-        quantity: Math.round(elevadorNecessario),
-        unit: 'g'
-      });
+      // NÃO aplicar algicida em tratamento de decantação
     }
-
-    // 3. REDUTOR DE pH - 100ml por m³ para reduzir 0.2
-    if (ph > 7.6) {
-      const diferencaPh = ph - 7.4;
-      const redutorNecessario = (100 * volume * diferencaPh) / 0.2;
-      suggestions.push({
-        id: 'redutor-ph',
-        name: 'Redutor de pH',
-        quantity: Math.round(redutorNecessario),
-        unit: 'ml'
-      });
-    }
-    
-    // 4. ELEVADOR DE pH - 100g por m³ para elevar 0.2
-    if (ph < 7.2) {
-      const diferencaPh = 7.4 - ph;
-      const barrilhaNecessaria = (100 * volume * diferencaPh) / 0.2;
-      suggestions.push({
-        id: 'elevador-ph',
-        name: 'Barrilha / Elevador de pH',
-        quantity: Math.round(barrilhaNecessaria),
-        unit: 'g'
-      });
-    }
-
-    // 5. ALGICIDA
-    if (cloro < 1.0) {
-      const algicidaChoque = (250 * volume) / 10;
-      suggestions.push({
-        id: 'algicida-choque',
-        name: 'Algicida (Tratamento)',
-        quantity: Math.round(algicidaChoque),
-        unit: 'ml'
-      });
-    } else {
-      const algicidaManutencao = (80 * volume) / 10;
-      suggestions.push({
-        id: 'algicida-manutencao',
-        name: 'Algicida (Manutenção)',
-        quantity: Math.round(algicidaManutencao),
-        unit: 'ml'
-      });
-    }
-
-    // 6. CLARIFICANTE
-    const clarificanteManutencao = 40 * volume;
-    suggestions.push({
-      id: 'clarificante',
-      name: 'Clarificante Líquido',
-      quantity: Math.round(clarificanteManutencao),
-      unit: 'ml'
-    });
 
     return suggestions;
   };
@@ -185,8 +253,22 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
   // Recalcular produtos quando parâmetros mudarem
   useEffect(() => {
     const subscription = form.watch((value) => {
-      if (value.ph !== undefined && value.cloro !== undefined && value.alcalinidade !== undefined) {
-        const produtos = calcularProdutos(value.ph, value.cloro, value.alcalinidade);
+      if (
+        value.waterCondition !== undefined &&
+        value.ph !== undefined &&
+        value.cloro !== undefined &&
+        value.alcalinidade !== undefined &&
+        value.chlorineType !== undefined &&
+        value.daysUntilNext !== undefined
+      ) {
+        const produtos = calcularProdutos(
+          value.waterCondition,
+          value.ph,
+          value.cloro,
+          value.alcalinidade,
+          value.chlorineType,
+          value.daysUntilNext
+        );
         setSuggestedProducts(produtos);
       }
     });
@@ -369,6 +451,90 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
     <>
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
+        {/* Seção 1: Condição da Água e Tipo de Cloro */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border-2 border-blue-200 dark:border-blue-700">
+          <FormField
+            control={form.control}
+            name="waterCondition"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-base font-bold">💧 Condição da Água</FormLabel>
+                <FormControl>
+                  <select
+                    className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    {...field}
+                  >
+                    <option value="cristalina">✨ Cristalina</option>
+                    <option value="turva">🌫️ Turva</option>
+                    <option value="verde">🟢 Verde</option>
+                    <option value="leitosa">🥛 Leitosa</option>
+                    <option value="decantando">⏳ Decantando</option>
+                  </select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="chlorineType"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-base font-bold">🧪 Tipo de Cloro</FormLabel>
+                <FormControl>
+                  <select
+                    className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    {...field}
+                  >
+                    <option value="3-em-1">Cloro 3 em 1</option>
+                    <option value="estabilizado">Cloro Estabilizado</option>
+                    <option value="hipoclorito">Hipoclorito de Cálcio</option>
+                  </select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Seção 2: Dias até próxima manutenção */}
+        <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border-2 border-amber-200 dark:border-amber-700">
+          <FormField
+            control={form.control}
+            name="daysUntilNext"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-base font-bold">📅 Dias até a Próxima Manutenção</FormLabel>
+                <FormControl>
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => field.onChange(Math.max(1, Number(field.value) - 1))}
+                      disabled={Number(field.value) <= 1}
+                    >
+                      -
+                    </Button>
+                    <span className="min-w-[50px] text-center font-mono text-xl font-bold">{field.value} dias</span>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => field.onChange(Math.min(30, Number(field.value) + 1))}
+                      disabled={Number(field.value) >= 30}
+                    >
+                      +
+                    </Button>
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Seção 3: Parâmetros Químicos */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <FormField
             control={form.control}
@@ -418,7 +584,7 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
             render={({ field }) => {
               // Permitir alcalinidade de 0 até 200, de 10 em 10
               const alcalinidadeValues = Array.from({ length: 21 }, (_, i) => i * 10); // [0, 10, ..., 200]
-              const currentIndex = alcalinidadeValues.indexOf(Number(field.value)) >= 0 ? alcalinidadeValues.indexOf(Number(field.value)) : 8; // default 80
+              const currentIndex = alcalinidadeValues.indexOf(Number(field.value)) >= 0 ? alcalinidadeValues.indexOf(Number(field.value)) : 10; // default 100
               return (
                 <FormItem>
                   <FormLabel>Alcalinidade (ppm)</FormLabel>
@@ -511,28 +677,6 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
                     placeholder="Ex: Escovação, Aspiração, Retrolavagem"
                     {...field}
                   />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="waterCondition"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Condição da Água</FormLabel>
-                <FormControl>
-                  <select
-                    className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    {...field}
-                  >
-                    <option value="cristalina">Cristalina</option>
-                    <option value="turva">Turva</option>
-                    <option value="verde">Verde</option>
-                    <option value="leitosa">Leitosa</option>
-                    <option value="decantando">Decantando</option>
-                  </select>
                 </FormControl>
                 <FormMessage />
               </FormItem>
