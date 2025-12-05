@@ -170,7 +170,7 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
             name="filterModel"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-sm font-medium">Modelo do filtro</FormLabel>
+                <FormLabel className="text-sm font-medium">Modelo do filtro <span className="text-gray-500">(Opcional)</span></FormLabel>
                 <FormControl>
                   <Input placeholder="Ex: Jacuzzi, Nautilus..." {...field} className="text-sm" />
                 </FormControl>
@@ -183,7 +183,7 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
             name="filterSandKg"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-sm font-medium">Carga de areia (kg)</FormLabel>
+                <FormLabel className="text-sm font-medium">Carga de areia (kg) <span className="text-gray-500">(Opcional)</span></FormLabel>
                 <FormControl>
                   <Input type="number" placeholder="Ex: 50" {...field} onChange={e => field.onChange(Number(e.target.value))} className="text-sm" />
                 </FormControl>

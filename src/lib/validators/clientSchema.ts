@@ -30,9 +30,9 @@ export const clientFormSchema = z.object({
     inflationIndex: z.number().nullable().optional(),
   })).optional(),
 
-  // Campos do filtro
-  filterModel: z.string().min(2, { message: 'Informe o modelo do filtro.' }).optional(),
-  filterSandKg: z.number().min(0, { message: 'A carga de areia deve ser positiva.' }).optional(),
+  // Campos do filtro (opcionais - nem toda piscina tem filtro)
+  filterModel: z.string().optional(),
+  filterSandKg: z.number().optional(),
   lastSandChange: z.string().optional(),
   nextSandChange: z.string().optional(),
 });
