@@ -140,12 +140,12 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
           });
         }
       } else if (cloro >= 1 && cloro <= 2) {
-        // Cloro 1 ou 2: manutenção
-        const cloroFaltante = 3 - cloro; // Quanto falta para chegar em 3 ppm
+        // Cloro entre 1 e 2 ppm: manutenção (usa mesma fórmula para ambos)
+        // Como cloro está baixo mas presente, aplicar dose de manutenção padrão
         
         if (chlorineType === '3-em-1') {
-          // volume x 4g x quanto falta x dias até próxima
-          const cloroNecessario = volume * 4 * cloroFaltante * daysUntilNext;
+          // volume x 2g x dias até próxima (dosagem reduzida)
+          const cloroNecessario = volume * 2 * daysUntilNext;
           suggestions.push({
             id: 'cloro-3em1-manutencao',
             name: 'Cloro 3 em 1 (Manutenção)',
@@ -153,8 +153,8 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
             unit: 'g'
           });
         } else if (chlorineType === 'estabilizado' || chlorineType === 'hipoclorito') {
-          // volume x 2g x quanto falta x dias até próxima
-          const cloroNecessario = volume * 2 * cloroFaltante * daysUntilNext;
+          // volume x 1g x dias até próxima (dosagem reduzida)
+          const cloroNecessario = volume * 1 * daysUntilNext;
           suggestions.push({
             id: 'cloro-estabilizado-manutencao',
             name: `${chlorineType === 'estabilizado' ? 'Cloro Estabilizado' : 'Hipoclorito de Cálcio'} (Manutenção)`,
@@ -167,7 +167,7 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
       // 3. ALCALINIDADE
       if (alcalinidade >= 80 && alcalinidade <= 120) {
         // Não sugerir nada - está ideal
-      } else if (alcalinidade < 60) {
+      } else if (alcalinidade <= 70) {
         // Elevar alcalinidade
         // Fórmula: (aumento desejado em ppm / 10) x 17 x volume
         const aumentoDesejado = 100 - alcalinidade; // Queremos chegar em 100 ppm
