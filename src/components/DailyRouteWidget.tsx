@@ -589,6 +589,12 @@ export function DailyRouteWidget() {
         isOpen={checkoutModalOpen}
         onClose={() => setCheckoutModalOpen(false)}
         clientId={selectedClientId}
+        onSuccess={() => {
+          // Adicionar cliente à lista de visitados quando finalizar com sucesso
+          if (selectedClientId) {
+            setVisitedToday(prev => new Set(prev).add(selectedClientId));
+          }
+        }}
       />
     </>
   );

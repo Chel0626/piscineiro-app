@@ -443,8 +443,7 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
   };
 
   const handleFormSubmit = async (data: VisitFormData) => {
-    // TODO: Implementar lógica de submit
-    toast.success('Dados salvos com sucesso!');
+    await onSubmit(data);
   };
 
   return (

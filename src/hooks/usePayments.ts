@@ -44,15 +44,14 @@ export function usePayments() {
     const currentMonth = today.getMonth();
     const currentYear = today.getFullYear();
     
-    // Se tem status manual definido
-    if (client.paymentStatus === 'paid') {
+    // Se tem status manual definido como pago
+    if (client.paymentStatus === 'paid' && client.lastPaymentDate) {
       // Verifica se o pagamento foi neste mês
-      if (client.lastPaymentDate) {
-        const paymentDate = new Date(client.lastPaymentDate);
-        if (paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear) {
-          return 'paid';
-        }
+      const paymentDate = new Date(client.lastPaymentDate + 'T00:00:00'); // Garante parse correto
+      if (paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear) {
+        return 'paid';
       }
+      // Se foi pago em mês anterior, volta para lógica automática
     }
     
     // Lógica automática baseada na data de vencimento

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
 import { useClientDetails } from '@/hooks/useClientDetails';
@@ -18,9 +18,10 @@ interface CheckoutModalProps {
   clientId: string;
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void; // Callback para quando finalizar com sucesso
 }
 
-export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps) {
+export function CheckoutModal({ clientId, isOpen, onClose, onSuccess }: CheckoutModalProps) {
   const { client, isLoading } = useClientDetails(clientId);
   const { createProductRequest } = useProductRequests();
   const { stock, updateStock } = useClientStock(clientId);
@@ -66,6 +67,14 @@ export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps)
         timestamp: serverTimestamp(),
       });
       
+      // Marcar cliente como finalizado no dia de hoje
+      const clientRef = doc(db, 'clients', clientId);
+      const today = new Date().toISOString().split('T')[0];
+      await updateDoc(clientRef, {
+        lastVisitDate: today,
+        visitStatus: 'completed'
+      });
+      
       // Abater produtos utilizados do estoque
       for (const product of selectedProductsWithQuantity) {
         if (product.quantity > 0) {
@@ -77,6 +86,16 @@ export function CheckoutModal({ clientId, isOpen, onClose }: CheckoutModalProps)
       
       setVisitData(data);
       toast.success('Check-out realizado com sucesso!');
+      
+      // Notificar componente pai do sucesso
+      if (onSuccess) {
+        onSuccess();
+      }
+      
+      // Fechar modal após sucesso
+      setTimeout(() => {
+        onClose();
+      }, 1500);
     } catch (error) {
       console.error('Erro ao salvar visita:', error);
       toast.error('Não foi possível realizar o check-out.');
