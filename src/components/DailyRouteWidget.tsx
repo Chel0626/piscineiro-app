@@ -209,6 +209,7 @@ export function DailyRouteWidget() {
   const [isExpanded, setIsExpanded] = useState(true);
   const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set());
   const [items, setItems] = useState<string[]>([]);
+  const [lastLoadTime, setLastLoadTime] = useState<number>(0); // Cache timestamp
   
   // Modal de checkout
   const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
@@ -230,37 +231,54 @@ export function DailyRouteWidget() {
 
   const today = getCurrentDayName();
 
-  // Carregar visitas do dia
+  // Carregar visitas do dia com cache de 5 minutos
   useEffect(() => {
     const loadVisitedToday = async () => {
       if (!auth.currentUser?.uid || clients.length === 0) return;
 
+      // Cache: só recarrega se passou 5 minutos desde última carga
+      const now = Date.now();
+      const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+      if (now - lastLoadTime < CACHE_DURATION) {
+        return; // Usa dados em cache
+      }
+
       const visitedIds = new Set<string>();
       const today = new Date();
-      const todayStr = today.toISOString().split('T')[0];
+      const todayStart = startOfDay(today);
+      const todayEnd = endOfDay(today);
 
-      // Verificar cada cliente se tem visita hoje
-      for (const client of clients) {
+      // Criar array de promises para executar em paralelo
+      const checkPromises = clients.map(async (client) => {
         const visitsRef = collection(db, 'clients', client.id, 'visits');
         const q = query(
           visitsRef,
-          where('date', '>=', startOfDay(today)),
-          where('date', '<=', endOfDay(today)),
+          where('date', '>=', todayStart),
+          where('date', '<=', todayEnd),
           limit(1)
         );
 
         const snapshot = await getDocs(q);
         if (!snapshot.empty) {
-          visitedIds.add(client.id);
+          return client.id;
         }
-      }
+        return null;
+      });
+
+      // Executar todas as queries em paralelo
+      const results = await Promise.all(checkPromises);
+      results.forEach(clientId => {
+        if (clientId) visitedIds.add(clientId);
+      });
+
       setVisitedToday(visitedIds);
+      setLastLoadTime(now); // Atualiza timestamp do cache
     };
 
-    if (!authLoading) {
+    if (!authLoading && clients.length > 0) {
       loadVisitedToday();
     }
-  }, [authLoading, clients]);
+  }, [authLoading, clients.length, lastLoadTime]); // Usa apenas o LENGTH, não o array inteiro
 
   // Carregar ordem salva
   useEffect(() => {
@@ -399,6 +417,7 @@ export function DailyRouteWidget() {
       });
 
       setVisitedToday(prev => new Set(prev).add(selectedClientForFinalize));
+      setLastLoadTime(0); // Invalida cache
       closeFinalizeModal();
     } catch (error) {
       console.error('Erro ao finalizar com foto:', error);
@@ -597,6 +616,7 @@ export function DailyRouteWidget() {
           // Adicionar cliente à lista de visitados quando finalizar com sucesso
           if (selectedClientId) {
             setVisitedToday(prev => new Set(prev).add(selectedClientId));
+            setLastLoadTime(0); // Invalida cache para próxima carga
           }
         }}
       />
