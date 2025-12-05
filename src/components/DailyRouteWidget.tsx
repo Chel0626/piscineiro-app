@@ -6,12 +6,13 @@ import { Button } from '@/components/ui/button';
 import { ListChecks, CheckCircle, UserPlus, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { collection, query, where, getDocs, addDoc, Timestamp, doc, setDoc, getDoc, limit } from 'firebase/firestore';
-import { db, storage, auth } from '@/lib/firebase';
+import { db, auth } from '@/lib/firebase';
 import { ClientFormData } from '@/lib/validators/clientSchema';
 import { CheckoutModal } from '@/components/CheckoutModal';
 import { DayReschedule } from '@/components/DayReschedule';
 import { useTemporaryReschedule } from '@/hooks/useTemporaryReschedule';
 import { format, startOfDay, endOfDay } from 'date-fns';
+import { toast } from 'sonner';
 import {
   DndContext,
   closestCenter,
@@ -29,8 +30,6 @@ import {
   useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const getCurrentDayName = () => {
   const days = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
@@ -216,12 +215,6 @@ export function DailyRouteWidget() {
   // Modal de checkout
   const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState<string>('');
-  
-  // Modal de finalização
-  const [finalizeModalOpen, setFinalizeModalOpen] = useState(false);
-  const [selectedClientForFinalize, setSelectedClientForFinalize] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   
   // Drag & drop
   const sensors = useSensors(
@@ -428,60 +421,28 @@ export function DailyRouteWidget() {
     setCheckoutModalOpen(true);
   };
 
-  const openFinalizeModal = (clientId: string) => {
-    setSelectedClientForFinalize(clientId);
-    setFinalizeModalOpen(true);
-  };
-
-  const closeFinalizeModal = () => {
-    setFinalizeModalOpen(false);
-    setSelectedClientForFinalize(null);
-  };
-
-  const handleFinalizeWithPhoto = async () => {
-    if (!selectedClientForFinalize || !auth.currentUser?.uid) return;
-    const file = fileInputRef.current?.files?.[0];
-    if (!file) return;
-
-    setUploadingPhoto(true);
+  const handleFinalize = async (clientId: string) => {
+    console.log('🔥 Finalizando visita para cliente:', clientId);
+    setLoadingClientId(clientId); // Mostrar loading
     try {
-      // Determina a extensão do arquivo baseada no tipo MIME
-      const fileExtension = file.type === 'image/png' ? 'png' : 
-                           file.type === 'image/gif' ? 'gif' :
-                           file.type === 'image/webp' ? 'webp' : 'jpg';
-      
-      // Cria um nome de arquivo seguro usando apenas timestamp e extensão
-      const timestamp = Date.now();
-      const safeFileName = `visit_${timestamp}.${fileExtension}`;
-      
-      const photoRef = storageRef(
-        storage, 
-        `clients/${selectedClientForFinalize}/visits/${safeFileName}`
-      );
-      await uploadBytes(photoRef, file);
-      const photoURL = await getDownloadURL(photoRef);
-
-      await addDoc(collection(db, 'clients', selectedClientForFinalize, 'visits'), {
+      // Adiciona visita simples sem dados detalhados
+      await addDoc(collection(db, 'clients', clientId, 'visits'), {
         date: new Date(),
-        photoURL,
         timestamp: Timestamp.now(),
-        registeredBy: auth.currentUser.uid,
+        registeredBy: auth.currentUser?.uid,
+        type: 'quick-finalize'
       });
 
-      setVisitedToday(prev => new Set(prev).add(selectedClientForFinalize));
+      // Adicionar cliente à lista de visitados
+      setVisitedToday(prev => new Set(prev).add(clientId));
       lastLoadTimeRef.current = 0; // Invalida cache
-      closeFinalizeModal();
+      
+      toast.success('Visita finalizada com sucesso!');
     } catch (error) {
-      console.error('Erro ao finalizar com foto:', error);
+      console.error('Erro ao finalizar visita:', error);
+      toast.error('Erro ao finalizar visita');
     } finally {
-      setUploadingPhoto(false);
-    }
-  };
-
-  const openCheckoutFromFinalize = () => {
-    if (selectedClientForFinalize) {
-      handleCheckout(selectedClientForFinalize);
-      closeFinalizeModal();
+      setLoadingClientId(null); // Remover loading
     }
   };
 
@@ -580,7 +541,7 @@ export function DailyRouteWidget() {
                           isExpanded={expandedClients.has(client.id)}
                           onToggleExpand={() => toggleClientExpansion(client.id)}
                           onCheckout={() => handleCheckout(client.id)}
-                          onFinalize={() => openFinalizeModal(client.id)}
+                          onFinalize={() => handleFinalize(client.id)}
                           isLoading={loadingClientId === client.id}
                         />
                       ))}
@@ -613,7 +574,7 @@ export function DailyRouteWidget() {
                       isExpanded={expandedClients.has(client.id)}
                       onToggleExpand={() => toggleClientExpansion(client.id)}
                       onCheckout={() => handleCheckout(client.id)}
-                      onFinalize={() => openFinalizeModal(client.id)}
+                      onFinalize={() => handleFinalize(client.id)}
                       isLoading={loadingClientId === client.id}
                     />
                   ))}
@@ -633,41 +594,6 @@ export function DailyRouteWidget() {
           </CardContent>
         )}
       </Card>
-
-      {/* Modal de finalização */}
-      <Dialog open={finalizeModalOpen} onOpenChange={closeFinalizeModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Finalizar Visita</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Foto da visita (opcional)</label>
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                accept="image/*" 
-                className="w-full"
-              />
-            </div>
-            <Button 
-              variant="outline" 
-              className="w-full" 
-              onClick={handleFinalizeWithPhoto}
-              disabled={uploadingPhoto}
-            >
-              {uploadingPhoto ? 'Enviando...' : 'Finalizar com Foto'}
-            </Button>
-            <Button 
-              variant="default" 
-              className="w-full"
-              onClick={openCheckoutFromFinalize}
-            >
-              Registrar Atividades
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Modal de checkout */}
       <CheckoutModal

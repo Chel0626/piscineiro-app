@@ -92,8 +92,7 @@ export function WeatherWidget() {
       <CardHeader className="pb-3">
         {/* Joguinho do Mario em loop */}
         <div className="flex flex-col items-center mb-2">
-          {/* Substitua mario-loop.mp4 por mario-loop.gif se preferir gif */}
-          <video src="/mario-loop.mp4" autoPlay loop muted playsInline style={{ width: '120px', height: 'auto' }} />
+          {/* Animação Mario removida */}
         </div>
         <div className="flex items-center justify-between">
           <CardTitle className="text-base sm:text-lg dark:text-white">
