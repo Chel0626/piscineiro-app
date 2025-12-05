@@ -15,9 +15,24 @@ const PRECACHE_URLS = [
 self.addEventListener('install', (event) => {
   console.log('[SW] Installing service worker...');
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
+    caches.open(CACHE_NAME).then(async (cache) => {
       console.log('[SW] Precaching app shell');
-      return cache.addAll(PRECACHE_URLS);
+      // Cachear recursos individualmente para evitar falhas totais
+      const cachePromises = PRECACHE_URLS.map(async (url) => {
+        try {
+          const response = await fetch(url);
+          if (response.ok) {
+            await cache.put(url, response);
+            console.log('[SW] Cached:', url);
+          } else {
+            console.warn('[SW] Failed to cache (not ok):', url, response.status);
+          }
+        } catch (error) {
+          console.warn('[SW] Failed to cache:', url, error.message);
+        }
+      });
+      await Promise.allSettled(cachePromises);
+      console.log('[SW] Precaching completed');
     })
   );
   self.skipWaiting();
