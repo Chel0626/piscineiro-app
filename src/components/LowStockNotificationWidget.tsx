@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useClients } from '@/hooks/useClients';
 import { AlertTriangle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 
@@ -19,24 +19,35 @@ type LowStockAlert = {
 export function LowStockNotificationWidget() {
   const { clients } = useClients();
   const [lowStockAlerts, setLowStockAlerts] = useState<LowStockAlert[]>([]);
+  const lastLoadTimeRef = useRef<number>(0);
 
   useEffect(() => {
     const fetchLowStock = async () => {
       if (!auth.currentUser?.uid || clients.length === 0) return;
 
+      // Cache: só recarrega se passou 5 minutos desde última carga
+      const now = Date.now();
+      const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+      if (now - lastLoadTimeRef.current < CACHE_DURATION) {
+        return; // Usa dados em cache
+      }
+
       const alerts: LowStockAlert[] = [];
 
-      for (const client of clients) {
+      // Executar queries em paralelo
+      const uid = auth.currentUser.uid; // Garantir que não é null
+      const stockPromises = clients.map(async (client) => {
         try {
-          const stockRef = collection(db, `users/${auth.currentUser.uid}/clients/${client.id}/stock`);
+          const stockRef = collection(db, `users/${uid}/clients/${client.id}/stock`);
           const snapshot = await getDocs(stockRef);
           
+          const clientAlerts: LowStockAlert[] = [];
           snapshot.forEach(doc => {
             const data = doc.data();
             const minQuantity = data.minQuantity || 5;
             
             if (data.quantity <= minQuantity) {
-              alerts.push({
+              clientAlerts.push({
                 clientId: client.id,
                 clientName: client.name,
                 productName: data.productName || doc.id,
@@ -45,16 +56,22 @@ export function LowStockNotificationWidget() {
               });
             }
           });
+          return clientAlerts;
         } catch (error) {
           console.error(`Erro ao buscar estoque do cliente ${client.id}:`, error);
+          return [];
         }
-      }
+      });
 
-      setLowStockAlerts(alerts);
+      const results = await Promise.all(stockPromises);
+      const allAlerts = results.flat();
+      
+      setLowStockAlerts(allAlerts);
+      lastLoadTimeRef.current = now;
     };
 
     fetchLowStock();
-  }, [clients]);
+  }, [clients.length]); // lastLoadTime não deve estar nas dependências
 
   if (lowStockAlerts.length === 0) {
     return null;

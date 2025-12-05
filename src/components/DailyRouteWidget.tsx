@@ -209,7 +209,7 @@ export function DailyRouteWidget() {
   const [isExpanded, setIsExpanded] = useState(true);
   const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set());
   const [items, setItems] = useState<string[]>([]);
-  const [lastLoadTime, setLastLoadTime] = useState<number>(0); // Cache timestamp
+  const lastLoadTimeRef = useRef<number>(0); // Cache timestamp usando ref
   
   // Modal de checkout
   const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
@@ -239,7 +239,7 @@ export function DailyRouteWidget() {
       // Cache: só recarrega se passou 5 minutos desde última carga
       const now = Date.now();
       const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
-      if (now - lastLoadTime < CACHE_DURATION) {
+      if (now - lastLoadTimeRef.current < CACHE_DURATION) {
         return; // Usa dados em cache
       }
 
@@ -272,13 +272,13 @@ export function DailyRouteWidget() {
       });
 
       setVisitedToday(visitedIds);
-      setLastLoadTime(now); // Atualiza timestamp do cache
+      lastLoadTimeRef.current = now; // Atualiza timestamp do cache
     };
 
     if (!authLoading && clients.length > 0) {
       loadVisitedToday();
     }
-  }, [authLoading, clients.length, lastLoadTime]); // Usa apenas o LENGTH, não o array inteiro
+  }, [authLoading, clients.length]); // lastLoadTime não deve estar aqui pois causa loop
 
   // Carregar ordem salva
   useEffect(() => {
@@ -417,7 +417,7 @@ export function DailyRouteWidget() {
       });
 
       setVisitedToday(prev => new Set(prev).add(selectedClientForFinalize));
-      setLastLoadTime(0); // Invalida cache
+      lastLoadTimeRef.current = 0; // Invalida cache
       closeFinalizeModal();
     } catch (error) {
       console.error('Erro ao finalizar com foto:', error);
@@ -616,7 +616,7 @@ export function DailyRouteWidget() {
           // Adicionar cliente à lista de visitados quando finalizar com sucesso
           if (selectedClientId) {
             setVisitedToday(prev => new Set(prev).add(selectedClientId));
-            setLastLoadTime(0); // Invalida cache para próxima carga
+            lastLoadTimeRef.current = 0; // Invalida cache para próxima carga
           }
         }}
       />
