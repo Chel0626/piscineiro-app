@@ -3,7 +3,7 @@
 import { useClients } from '@/hooks/useClients';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ListChecks, CheckCircle, UserPlus, ChevronDown, ChevronUp } from 'lucide-react';
+import { ListChecks, CheckCircle, UserPlus, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { collection, query, where, getDocs, addDoc, Timestamp, doc, setDoc, getDoc, limit } from 'firebase/firestore';
 import { db, storage, auth } from '@/lib/firebase';
@@ -209,7 +209,9 @@ export function DailyRouteWidget() {
   const [isExpanded, setIsExpanded] = useState(true);
   const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set());
   const [items, setItems] = useState<string[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const lastLoadTimeRef = useRef<number>(0); // Cache timestamp usando ref
+  const lastLoadDateRef = useRef<string>(''); // Data da última carga
   
   // Modal de checkout
   const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
@@ -231,15 +233,23 @@ export function DailyRouteWidget() {
 
   const today = getCurrentDayName();
 
-  // Carregar visitas do dia com cache de 5 minutos
+  // Carregar visitas do dia com cache inteligente
   useEffect(() => {
-    const loadVisitedToday = async () => {
+    const loadVisitedToday = async (forceReload = false) => {
       if (!auth.currentUser?.uid || clients.length === 0) return;
 
-      // Cache: só recarrega se passou 5 minutos desde última carga
       const now = Date.now();
+      const currentDate = new Date().toISOString().split('T')[0];
       const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
-      if (now - lastLoadTimeRef.current < CACHE_DURATION) {
+      
+      // Verifica se mudou de dia - se sim, força reload
+      const dayChanged = lastLoadDateRef.current !== currentDate;
+      
+      // Só recarrega se:
+      // 1. Forçado manualmente (forceReload)
+      // 2. Mudou de dia
+      // 3. Passou o tempo de cache
+      if (!forceReload && !dayChanged && (now - lastLoadTimeRef.current < CACHE_DURATION)) {
         return; // Usa dados em cache
       }
 
@@ -273,12 +283,54 @@ export function DailyRouteWidget() {
 
       setVisitedToday(visitedIds);
       lastLoadTimeRef.current = now; // Atualiza timestamp do cache
+      lastLoadDateRef.current = currentDate; // Atualiza data do cache
     };
 
     if (!authLoading && clients.length > 0) {
       loadVisitedToday();
     }
   }, [authLoading, clients.length]); // lastLoadTime não deve estar aqui pois causa loop
+
+  // Função para forçar atualização manual
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    lastLoadTimeRef.current = 0; // Invalida cache
+    
+    // Recarregar dados
+    if (auth.currentUser?.uid && clients.length > 0) {
+      const visitedIds = new Set<string>();
+      const today = new Date();
+      const todayStart = startOfDay(today);
+      const todayEnd = endOfDay(today);
+
+      const checkPromises = clients.map(async (client) => {
+        const visitsRef = collection(db, 'clients', client.id, 'visits');
+        const q = query(
+          visitsRef,
+          where('date', '>=', todayStart),
+          where('date', '<=', todayEnd),
+          limit(1)
+        );
+
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+          return client.id;
+        }
+        return null;
+      });
+
+      const results = await Promise.all(checkPromises);
+      results.forEach(clientId => {
+        if (clientId) visitedIds.add(clientId);
+      });
+
+      setVisitedToday(visitedIds);
+      lastLoadTimeRef.current = Date.now();
+      lastLoadDateRef.current = new Date().toISOString().split('T')[0];
+    }
+    
+    setIsRefreshing(false);
+  };
 
   // Carregar ordem salva
   useEffect(() => {
@@ -484,13 +536,23 @@ export function DailyRouteWidget() {
                     : 'Sem visitas agendadas'}
               </CardDescription>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsExpanded(!isExpanded)}
-            >
-              {isExpanded ? 'Ocultar' : 'Expandir'}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsExpanded(!isExpanded)}
+              >
+                {isExpanded ? 'Ocultar' : 'Expandir'}
+              </Button>
+            </div>
           </div>
         </CardHeader>
 

@@ -20,15 +20,21 @@ export function LowStockNotificationWidget() {
   const { clients } = useClients();
   const [lowStockAlerts, setLowStockAlerts] = useState<LowStockAlert[]>([]);
   const lastLoadTimeRef = useRef<number>(0);
+  const lastLoadDateRef = useRef<string>('');
 
   useEffect(() => {
     const fetchLowStock = async () => {
       if (!auth.currentUser?.uid || clients.length === 0) return;
 
-      // Cache: só recarrega se passou 5 minutos desde última carga
       const now = Date.now();
+      const currentDate = new Date().toISOString().split('T')[0];
       const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
-      if (now - lastLoadTimeRef.current < CACHE_DURATION) {
+      
+      // Verifica se mudou de dia
+      const dayChanged = lastLoadDateRef.current !== currentDate;
+      
+      // Só recarrega se mudou de dia OU passou o tempo de cache
+      if (!dayChanged && (now - lastLoadTimeRef.current < CACHE_DURATION)) {
         return; // Usa dados em cache
       }
 
@@ -68,6 +74,7 @@ export function LowStockNotificationWidget() {
       
       setLowStockAlerts(allAlerts);
       lastLoadTimeRef.current = now;
+      lastLoadDateRef.current = currentDate;
     };
 
     fetchLowStock();
