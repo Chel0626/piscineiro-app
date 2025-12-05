@@ -16,9 +16,9 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useClientDetails } from '@/hooks/useClientDetails';
 import { toast } from 'sonner';
-import { Send, Camera, Clock, X, Upload } from 'lucide-react';
+import { Send, Camera, Clock, X, Upload, CheckSquare } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface ProductSuggestion {
   id: string;
@@ -60,6 +60,20 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
   const [suggestedProducts, setSuggestedProducts] = useState<ProductSuggestion[]>([]);
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
   
+  // Estado para Dialog de checklist
+  const [showChecklistDialog, setShowChecklistDialog] = useState(false);
+  const [selectedProcesses, setSelectedProcesses] = useState<string[]>([]);
+  
+  // Opções de processos disponíveis
+  const processOptions = [
+    'Aspiração',
+    'Peneirar',
+    'Escovar Paredes e Fundo',
+    'Limpar Borda',
+    'Limpeza de Pré-Filtro',
+    'Retrolavagem da Areia'
+  ];
+  
   // Função para obter horário atual formatado
   const getCurrentTime = () => {
     const now = new Date();
@@ -84,6 +98,18 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
       poolPhoto: initialData?.poolPhoto || '',
     },
   });
+
+  // Carregar processos selecionados do checklist inicial
+  useEffect(() => {
+    if (initialData?.checklist) {
+      // Parsear o checklist inicial para extrair os processos
+      const processes = initialData.checklist
+        .split('\n')
+        .map(line => line.replace(/^[•\-]\s*/, '').trim())
+        .filter(line => line.length > 0 && processOptions.includes(line));
+      setSelectedProcesses(processes);
+    }
+  }, [initialData?.checklist]);
 
   // Função para calcular produtos baseado na condição da água e parâmetros
   const calcularProdutos = (
@@ -349,6 +375,40 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
     setIsCapturing(false);
   };
 
+  // Funções para gerenciar checklist
+  const toggleProcess = (process: string) => {
+    setSelectedProcesses(prev => {
+      if (prev.includes(process)) {
+        return prev.filter(p => p !== process);
+      } else {
+        return [...prev, process];
+      }
+    });
+  };
+
+  const saveChecklist = () => {
+    // Formatar processos selecionados como lista com bullet points
+    const checklistText = selectedProcesses.map(p => `• ${p}`).join('\n');
+    form.setValue('checklist', checklistText);
+    setShowChecklistDialog(false);
+    if (selectedProcesses.length > 0) {
+      toast.success(`${selectedProcesses.length} processo(s) selecionado(s)`);
+    }
+  };
+
+  const openChecklistDialog = () => {
+    // Ao abrir o dialog, carregar os processos já salvos
+    const currentChecklist = form.getValues('checklist') || '';
+    if (currentChecklist) {
+      const processes = currentChecklist
+        .split('\n')
+        .map(line => line.replace(/^[•\-]\s*/, '').trim())
+        .filter(line => line.length > 0 && processOptions.includes(line));
+      setSelectedProcesses(processes);
+    }
+    setShowChecklistDialog(true);
+  };
+
   const handleSendReportWhatsApp = () => {
     if (!client?.phone) {
       toast.error('Cliente não possui telefone cadastrado.');
@@ -375,9 +435,9 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
 
     // Parâmetros da água
     message += `💧 Parâmetros da Água:\n`;
-    if (data.ph) message += `• pH: ${data.ph}\n`;
-    if (data.cloro) message += `• Cloro: ${data.cloro} ppm\n`;
-    if (data.alcalinidade) message += `• Alcalinidade: ${data.alcalinidade} ppm\n`;
+    if (data.ph) message += `• pH: ${data.ph} (Ideal: 7.2 - 7.6)\n`;
+    if (data.cloro) message += `• Cloro: ${data.cloro} ppm (Ideal: 1 - 3 ppm)\n`;
+    if (data.alcalinidade) message += `• Alcalinidade: ${data.alcalinidade} ppm (Ideal: 80 - 120 ppm)\n`;
     if (data.waterCondition) message += `• Condição: ${data.waterCondition.charAt(0).toUpperCase() + data.waterCondition.slice(1)}\n`;
 
     // Checklist/processos
@@ -660,12 +720,22 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
               <FormItem>
                 <FormLabel>Checklist/Processos (opcional)</FormLabel>
                 <FormControl>
-                  <input
-                    type="text"
-                    className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    placeholder="Ex: Escovação, Aspiração, Retrolavagem"
-                    {...field}
-                  />
+                  <div className="space-y-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={openChecklistDialog}
+                    >
+                      <CheckSquare className="mr-2 h-4 w-4" />
+                      {field.value ? 'Editar processos selecionados' : 'Selecionar processos realizados'}
+                    </Button>
+                    {field.value && (
+                      <div className="text-sm text-muted-foreground whitespace-pre-line border rounded-md p-3 bg-muted/30">
+                        {field.value}
+                      </div>
+                    )}
+                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -842,6 +912,49 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
             className="absolute top-4 right-4 text-white hover:bg-white/20"
           >
             <X className="h-8 w-8" />
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+
+    {/* Dialog de Checklist com Checkboxes */}
+    <Dialog open={showChecklistDialog} onOpenChange={setShowChecklistDialog}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Selecione os Processos Realizados</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 py-4">
+          {processOptions.map((process) => (
+            <div key={process} className="flex items-center space-x-3">
+              <Checkbox
+                id={process}
+                checked={selectedProcesses.includes(process)}
+                onCheckedChange={() => toggleProcess(process)}
+              />
+              <label
+                htmlFor={process}
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+              >
+                {process}
+              </label>
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-2 pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            className="flex-1"
+            onClick={() => setShowChecklistDialog(false)}
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="button"
+            className="flex-1"
+            onClick={saveChecklist}
+          >
+            Confirmar
           </Button>
         </div>
       </DialogContent>
