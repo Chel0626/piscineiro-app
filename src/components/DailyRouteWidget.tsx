@@ -443,7 +443,8 @@ export function DailyRouteWidget() {
 
   // Filtrar clientes disponíveis para busca (todos exceto os que já estão no roteiro)
   const availableClientsForSearch = clients.filter(client => {
-    const isInDailyRoute = allDailyClients.some(c => c.id === client.id);
+    if (!client || !client.id) return false;
+    const isInDailyRoute = allDailyClients.some(c => c && c.id === client.id);
     const isTemporary = temporaryClients.has(client.id);
     return !isInDailyRoute && !isTemporary;
   });
@@ -451,9 +452,11 @@ export function DailyRouteWidget() {
   // Filtrar clientes pela busca
   const filteredClients = searchQuery.trim()
     ? availableClientsForSearch.filter(client =>
-        client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        client.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        client.neighborhood?.toLowerCase().includes(searchQuery.toLowerCase())
+        client && (
+          (client.name && client.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          (client.address && client.address.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          (client.neighborhood && client.neighborhood.toLowerCase().includes(searchQuery.toLowerCase()))
+        )
       )
     : [];
 
@@ -525,11 +528,11 @@ export function DailyRouteWidget() {
 
   // Ordenar clientes conforme ordem salva
   const orderedClients = items
-    .map(id => allDailyClients.find(c => c.id === id))
-    .filter((c): c is DailyClient => c !== null);
+    .map(id => allDailyClients.find(c => c && c.id === id))
+    .filter((c): c is DailyClient => !!c);
 
-  const pendingClients = orderedClients.filter(c => !visitedToday.has(c.id));
-  const completedClients = orderedClients.filter(c => visitedToday.has(c.id));
+  const pendingClients = orderedClients.filter(c => c && !visitedToday.has(c.id));
+  const completedClients = orderedClients.filter(c => c && visitedToday.has(c.id));
 
   const displayedPendingClients = showAllPending ? pendingClients : pendingClients.slice(0, 3);
   const displayedCompletedClients = showAllCompleted ? completedClients : completedClients.slice(0, 3);
