@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { DollarSign, TrendingUp, Calendar, Eye, EyeOff, FileText, ArrowLeft, CheckCircle, AlertCircle, Clock, Users } from 'lucide-react';
+import { DollarSign, TrendingUp, Calendar, Eye, EyeOff, FileText, ArrowLeft, CheckCircle, AlertCircle, Clock, Users, Settings } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Separator } from './ui/separator';
+import { Checkbox } from './ui/checkbox';
+import { Label } from './ui/label';
 import { useBilling } from '@/hooks/useBilling';
 import { useClients } from '@/hooks/useClients';
 import { usePayments } from '@/hooks/usePayments';
@@ -13,6 +15,8 @@ import { usePayments } from '@/hooks/usePayments';
 export function BillingWidget() {
   const [showValues, setShowValues] = useState(false);
   const [showDetailedReport, setShowDetailedReport] = useState(false);
+  const [showExclusionSettings, setShowExclusionSettings] = useState(false);
+  const [excludedClients, setExcludedClients] = useState<Set<string>>(new Set());
   const billingData = useBilling();
   const { clients } = useClients();
   const { getPaymentStatus } = usePayments();
@@ -30,6 +34,30 @@ export function BillingWidget() {
     e.stopPropagation();
     setShowValues(!showValues);
   };
+
+  const toggleClientExclusion = (clientId: string) => {
+    setExcludedClients(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(clientId)) {
+        newSet.delete(clientId);
+      } else {
+        newSet.add(clientId);
+      }
+      return newSet;
+    });
+  };
+
+  // Calculate average excluding specific clients
+  const calculateAdjustedAverage = () => {
+    const activeClients = clients.filter(c => !excludedClients.has(c.id));
+    if (activeClients.length === 0) return 0;
+    
+    const totalValue = activeClients.reduce((acc, client) => acc + (client.serviceValue || 0), 0);
+    return totalValue / activeClients.length;
+  };
+
+  const adjustedAverage = calculateAdjustedAverage();
+  const activeClientsCount = clients.length - excludedClients.size;
 
   // Calcular relatório detalhado
   const getDetailedReport = () => {
@@ -179,18 +207,27 @@ export function BillingWidget() {
 
           {/* Média Valor/Cliente */}
           <Card>
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
               <CardTitle className="text-lg flex items-center gap-2">
                 <Users className="h-4 w-4" />
                 Média Valor/Cliente
               </CardTitle>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8" 
+                onClick={() => setShowExclusionSettings(true)}
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-purple-600">
-                {formatCurrency(billingData.clientesAtivos > 0 ? billingData.totalMensal / billingData.clientesAtivos : 0)}
+                {formatCurrency(adjustedAverage)}
               </div>
               <p className="text-sm text-muted-foreground">
-                Baseado em {billingData.clientesAtivos} clientes
+                Baseado em {activeClientsCount} clientes
+                {excludedClients.size > 0 && ` (${excludedClients.size} excluídos)`}
               </p>
             </CardContent>
           </Card>
@@ -228,6 +265,43 @@ export function BillingWidget() {
             </Button>
           </div>
         </div>
+
+        {/* Configuração de Exclusão de Clientes */}
+        {showExclusionSettings && (
+          <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col">
+              <div className="p-4 border-b flex items-center justify-between">
+                <h3 className="font-semibold">Excluir Clientes do Cálculo</h3>
+                <Button variant="ghost" size="sm" onClick={() => setShowExclusionSettings(false)}>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Voltar
+                </Button>
+              </div>
+              <div className="p-4 overflow-y-auto flex-1 space-y-2">
+                <p className="text-sm text-muted-foreground mb-4">
+                  Selecione os clientes que deseja remover do cálculo da média.
+                </p>
+                {clients.map(client => (
+                  <div key={client.id} className="flex items-center justify-between p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                    <div className="flex items-center gap-2">
+                      <Checkbox 
+                        id={`exclude-${client.id}`}
+                        checked={excludedClients.has(client.id)}
+                        onCheckedChange={() => toggleClientExclusion(client.id)}
+                      />
+                      <Label htmlFor={`exclude-${client.id}`} className="cursor-pointer">
+                        {client.name}
+                      </Label>
+                    </div>
+                    <span className="text-sm font-medium text-muted-foreground">
+                      {formatCurrency(client.serviceValue)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Relatório Detalhado */}
         {showDetailedReport && (
