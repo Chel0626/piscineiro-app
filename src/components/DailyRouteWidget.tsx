@@ -436,6 +436,7 @@ export function DailyRouteWidget() {
   // Função para adicionar cliente temporário ao roteiro
   const handleAddTemporaryClient = (clientId: string) => {
     setTemporaryClients(prev => new Set([...prev, clientId]));
+    setItems(prev => [...prev, clientId]); // Adiciona ao final da lista ordenada
     setSearchQuery('');
     setShowSearchDialog(false);
     toast.success('Cliente adicionado ao roteiro temporário');

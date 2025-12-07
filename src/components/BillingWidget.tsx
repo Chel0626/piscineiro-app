@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { DollarSign, TrendingUp, Calendar, Eye, EyeOff, FileText, ArrowLeft, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import { DollarSign, TrendingUp, Calendar, Eye, EyeOff, FileText, ArrowLeft, CheckCircle, AlertCircle, Clock, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
@@ -177,6 +177,24 @@ export function BillingWidget() {
             </CardContent>
           </Card>
 
+          {/* Média Valor/Cliente */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Média Valor/Cliente
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-purple-600">
+                {formatCurrency(billingData.clientesAtivos > 0 ? billingData.totalMensal / billingData.clientesAtivos : 0)}
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Baseado em {billingData.clientesAtivos} clientes
+              </p>
+            </CardContent>
+          </Card>
+
           <Separator />
 
           {/* Informações Adicionais */}
@@ -274,12 +292,43 @@ export function BillingWidget() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                        {detailedReport.percentualRecebido.toFixed(1)}%
+                      <div className="flex flex-col items-center justify-center py-2">
+                        <div className="relative h-32 w-32">
+                          <svg className="h-full w-full transform -rotate-90" viewBox="0 0 100 100">
+                            {/* Background circle */}
+                            <circle
+                              className="text-gray-200 dark:text-gray-700"
+                              strokeWidth="10"
+                              stroke="currentColor"
+                              fill="transparent"
+                              r="40"
+                              cx="50"
+                              cy="50"
+                            />
+                            {/* Progress circle */}
+                            <circle
+                              className="text-blue-600 dark:text-blue-400 transition-all duration-1000 ease-out"
+                              strokeWidth="10"
+                              strokeDasharray={251.2}
+                              strokeDashoffset={251.2 - (251.2 * detailedReport.percentualRecebido) / 100}
+                              strokeLinecap="round"
+                              stroke="currentColor"
+                              fill="transparent"
+                              r="40"
+                              cx="50"
+                              cy="50"
+                            />
+                          </svg>
+                          <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <span className="text-xl font-bold text-blue-600 dark:text-blue-400">
+                              {detailedReport.percentualRecebido.toFixed(1)}%
+                            </span>
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Do total mensal
+                        </p>
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        Do total mensal
-                      </p>
                     </CardContent>
                   </Card>
                 </div>
