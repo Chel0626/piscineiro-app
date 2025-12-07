@@ -35,6 +35,9 @@ export const clientFormSchema = z.object({
   filterSandKg: z.number().optional(),
   lastSandChange: z.string().optional(),
   nextSandChange: z.string().optional(),
+  
+  // Data de início do contrato
+  contractStartDate: z.string().optional(),
 });
 
 // Schema para compatibilidade com dados antigos (migração)

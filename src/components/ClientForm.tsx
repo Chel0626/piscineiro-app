@@ -71,15 +71,33 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
   const ultimoReajuste = reajusteHistory.length > 0 ? reajusteHistory[reajusteHistory.length - 1] : null;
   const valorAntigo = ultimoReajuste ? ultimoReajuste.newValue : form.getValues().serviceValue;
   const dataUltimoReajuste = ultimoReajuste ? ultimoReajuste.date : null;
+  const dataInicioContrato = form.watch('contractStartDate'); // Watch para atualizar se mudar
 
   async function buscarInflacaoOnline() {
-    if (!dataUltimoReajuste) return;
+    const dataBase = dataUltimoReajuste || dataInicioContrato;
+    
+    if (!dataBase) {
+      alert("Para calcular a inflação, defina a Data de Início do Contrato.");
+      return;
+    }
+
     setLoadingInflacao(true);
-    const startDate = format(new Date(dataUltimoReajuste), 'yyyy-MM-dd');
-    const endDate = format(new Date(), 'yyyy-MM-dd');
-    const indice = await fetchInflationIndex(startDate, endDate);
-    if (indice !== null) setIndiceInflacao(Number(indice.toFixed(2)));
-    setLoadingInflacao(false);
+    try {
+      // Garante que a data seja interpretada corretamente (evita problemas de fuso horário)
+      const [ano, mes, dia] = dataBase.split('-').map(Number);
+      const startDate = new Date(ano, mes - 1, dia);
+      const endDate = new Date();
+      
+      const startDateStr = format(startDate, 'yyyy-MM-dd');
+      const endDateStr = format(endDate, 'yyyy-MM-dd');
+      
+      const indice = await fetchInflationIndex(startDateStr, endDateStr);
+      if (indice !== null) setIndiceInflacao(Number(indice.toFixed(2)));
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingInflacao(false);
+    }
   }
 
   function calcularInflacaoReal(valorAntigo: number, indice: number) {
@@ -239,6 +257,19 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
           />
           <FormField
             control={form.control}
+            name="contractStartDate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium">Início do Contrato</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} className="text-sm" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
             name="serviceValue"
             render={({ field }) => (
               <FormItem>
@@ -281,9 +312,18 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
                           className="w-32"
                         />
                         <Button type="button" size="sm" variant="outline" onClick={buscarInflacaoOnline} disabled={loadingInflacao}>
-                          {loadingInflacao ? 'Buscando...' : 'Buscar online'}
+                          {loadingInflacao ? 'Buscando...' : 'Buscar online (IPCA)'}
                         </Button>
                       </div>
+                      {dataUltimoReajuste ? (
+                        <p className="text-[10px] text-gray-500 mb-2">
+                          Desde o último reajuste: {format(new Date(dataUltimoReajuste), 'dd/MM/yyyy')}
+                        </p>
+                      ) : dataInicioContrato ? (
+                        <p className="text-[10px] text-gray-500 mb-2">
+                          Desde o início do contrato: {format(new Date(dataInicioContrato + 'T12:00:00'), 'dd/MM/yyyy')}
+                        </p>
+                      ) : null}
                       <Input
                         type="number"
                         placeholder="Sugestão pelo índice informado"
