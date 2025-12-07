@@ -15,9 +15,10 @@ export async function POST(request: Request) {
   }
 
   // Importação dinâmica apenas em runtime
-  const { auth: adminAuth } = require('@/lib/firebase-admin');
-
+  
   try {
+    const { auth: adminAuth } = require('@/lib/firebase-admin');
+    
     const body = await request.json();
     console.log('[api/login] Body recebido:', JSON.stringify(body));
     const token = body?.token as string | undefined;
@@ -33,8 +34,14 @@ export async function POST(request: Request) {
 
     console.log('[api/login] Token válido para uid=', decoded.uid);
     return new Response(JSON.stringify({ success: true, user: { uid: decoded.uid, email: decoded.email ?? null } }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-  } catch (err) {
-    console.error('[api/login] Erro ao verificar token:', err);
+  } catch (err: any) {
+    console.error('[api/login] Erro ao processar login:', err);
+    
+    // Retorna erro detalhado se for problema de inicialização do Firebase Admin
+    if (err.message && (err.message.includes('Firebase Admin credentials') || err.message.includes('credential'))) {
+       return new Response(JSON.stringify({ error: 'Erro de configuração do servidor: ' + err.message }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+    }
+
     return new Response(JSON.stringify({ error: 'Token inválido ou expirado.' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
   }
 }

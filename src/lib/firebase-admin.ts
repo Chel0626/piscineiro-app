@@ -38,6 +38,11 @@ function initializeFirebaseAdmin() {
       if (!firebaseAdminConfig.projectId || !firebaseAdminConfig.clientEmail || !firebaseAdminConfig.privateKey) {
         throw new Error('Firebase Admin credentials are incomplete. Check your environment variables.');
       }
+
+      // Validação básica da chave privada para evitar erros de "illegal path"
+      if (!firebaseAdminConfig.privateKey.includes('-----BEGIN PRIVATE KEY-----')) {
+        throw new Error('FIREBASE_PRIVATE_KEY inválida. A chave deve começar com "-----BEGIN PRIVATE KEY-----". Verifique se o valor está correto.');
+      }
       
       initializeApp({
         credential: cert(firebaseAdminConfig),
