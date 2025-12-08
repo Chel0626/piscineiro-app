@@ -52,8 +52,13 @@ export default function ClienteDetailPage() {
           current_value: client.serviceValue || 0,
           frequency: client.visitFrequency || 'weekly',
           visit_day: client.visitDays?.[0] || '',
-          active_since: '',
-          price_history: [],
+          active_since: (client.reajusteHistory && client.reajusteHistory.length > 0) 
+            ? client.reajusteHistory[client.reajusteHistory.length - 1].date 
+            : (client.contractStartDate || ''),
+          price_history: client.reajusteHistory?.map(h => ({
+            date_start: h.date,
+            value: h.newValue
+          })) || [],
         },
       }} />
       <ClientOperationalPanel
