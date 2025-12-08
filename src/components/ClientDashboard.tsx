@@ -182,6 +182,7 @@ export const ClientDashboard: React.FC<{ client: ClientData }> = ({ client }) =>
       <AdjustContractModal
         open={showAdjustModal}
         currentValue={clientData.financial.current_value}
+        lastAdjustmentDate={clientData.financial.active_since}
         onClose={() => setShowAdjustModal(false)}
         onAdjust={handleAdjustContract}
       />
