@@ -15,14 +15,17 @@ export const AdjustContractModal: React.FC<AdjustContractModalProps> = ({ open, 
   const [reason, setReason] = React.useState('');
   const [inflationRate, setInflationRate] = React.useState<number | null>(null);
   const [loadingInflation, setLoadingInflation] = React.useState(false);
+  const [referenceDate, setReferenceDate] = React.useState('');
 
   React.useEffect(() => {
     if (open) {
       setNewValue(currentValue);
       setInflationRate(null);
       setReason('');
+      const isValidDate = !isNaN(new Date(lastAdjustmentDate).getTime());
+      setReferenceDate(isValidDate ? lastAdjustmentDate : '');
     }
-  }, [open, currentValue]);
+  }, [open, currentValue, lastAdjustmentDate]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -31,9 +34,13 @@ export const AdjustContractModal: React.FC<AdjustContractModalProps> = ({ open, 
   }
 
   async function handleCalculateInflation() {
+    if (!referenceDate) {
+      alert('Por favor, informe a data do último reajuste para calcular a inflação.');
+      return;
+    }
     setLoadingInflation(true);
     const today = new Date().toISOString().slice(0, 10);
-    const rate = await fetchInflationIndex(lastAdjustmentDate, today);
+    const rate = await fetchInflationIndex(referenceDate, today);
     setInflationRate(rate);
     setLoadingInflation(false);
   }
@@ -58,8 +65,13 @@ export const AdjustContractModal: React.FC<AdjustContractModalProps> = ({ open, 
             <div className="font-semibold text-lg">R$ {currentValue.toFixed(2)}</div>
           </div>
           <div>
-            <div className="text-gray-500">Último Reajuste</div>
-            <div className="font-medium">{new Date(lastAdjustmentDate).toLocaleDateString('pt-BR')}</div>
+            <div className="text-gray-500">Data Base (Último Reajuste)</div>
+            <input 
+              type="date" 
+              value={referenceDate} 
+              onChange={e => setReferenceDate(e.target.value)}
+              className="font-medium border rounded px-2 py-1 w-full text-xs mt-1"
+            />
           </div>
         </div>
 
