@@ -28,6 +28,7 @@ export const clientFormSchema = z.object({
     diffValue: z.number(),
     diffPercent: z.number(),
     inflationIndex: z.number().nullable().optional(),
+    reason: z.string().optional(),
   })).optional(),
 
   // Campos do filtro (opcionais - nem toda piscina tem filtro)

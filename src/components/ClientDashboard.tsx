@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { toast } from 'sonner';
 import { useClientDetails } from '@/hooks/useClientDetails';
 import { ClientProfileForm } from './ClientProfileForm';
 import { EquipmentCard } from './EquipmentCard';
@@ -75,8 +78,53 @@ export const ClientDashboard: React.FC<{ client: ClientData }> = ({ client }) =>
   }
 
   // Reajustar contrato
-  function handleAdjustContract(newValue: number, dateStart: string, reason: string) {
-    // ...existing code...
+  async function handleAdjustContract(newValue: number, dateStart: string, reason: string) {
+    if (!client.id) return;
+
+    const oldValue = clientData.financial.current_value;
+    const diffValue = newValue - oldValue;
+    const diffPercent = oldValue !== 0 ? (diffValue / oldValue) * 100 : 0;
+
+    // Extrair o índice de inflação do motivo se possível
+    const inflationMatch = reason.match(/IPCA: ([\d.]+)%/);
+    const inflationIndex = inflationMatch ? parseFloat(inflationMatch[1]) : null;
+
+    const newHistoryItem = {
+      date: dateStart,
+      oldValue,
+      newValue,
+      diffValue,
+      diffPercent,
+      inflationIndex,
+      reason
+    };
+
+    try {
+      const clientRef = doc(db, 'clients', client.id);
+      await updateDoc(clientRef, {
+        serviceValue: newValue,
+        reajusteHistory: arrayUnion(newHistoryItem)
+      });
+
+      // Atualizar estado local
+      setClientData(prev => ({
+        ...prev,
+        financial: {
+          ...prev.financial,
+          current_value: newValue,
+          active_since: dateStart,
+          price_history: [
+            { date_start: dateStart, value: newValue },
+            ...prev.financial.price_history
+          ]
+        }
+      }));
+
+      toast.success('Contrato reajustado com sucesso!');
+    } catch (error) {
+      console.error("Erro ao reajustar contrato:", error);
+      toast.error('Erro ao salvar reajuste.');
+    }
   }
 
   return (
