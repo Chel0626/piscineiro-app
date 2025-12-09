@@ -59,6 +59,7 @@ export default function ClienteDetailPage() {
             date_start: h.date,
             value: h.newValue
           })) || [],
+          reajusteHistory: client.reajusteHistory || [],
         },
       }} />
       <ClientOperationalPanel

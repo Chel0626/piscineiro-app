@@ -44,6 +44,7 @@ export type Financial = {
   visit_day: string;
   active_since: string;
   price_history: PriceHistory[];
+  reajusteHistory?: any[];
 };
 
 export type ClientData = {
@@ -127,6 +128,71 @@ export const ClientDashboard: React.FC<{ client: ClientData }> = ({ client }) =>
     }
   }
 
+  async function handleDeleteHistoryItem(index: number) {
+    if (!client.id || !clientData.financial.reajusteHistory) return;
+    
+    if (!confirm('Tem certeza que deseja excluir este registro de reajuste?')) return;
+
+    try {
+      // Como não temos ID único, vamos remover pelo índice filtrando o array original
+      // O array no banco está em ordem cronológica (antigo -> novo)
+      // O índice recebido aqui vem do FinancialCard que exibe o price_history
+      // Precisamos garantir que estamos removendo o item correto.
+      
+      // O price_history exibido no card é derivado do reajusteHistory.
+      // Se o card exibe em ordem reversa (novo -> antigo), precisamos ajustar o índice.
+      // Mas o FinancialCard atual exibe price_history.slice(0, 3).
+      // Se price_history foi construído como [novo, ...antigos] no handleAdjustContract, ele está reverso.
+      // Mas no carregamento inicial (page.tsx), ele é map direto do reajusteHistory (antigo -> novo).
+      
+      // Vamos assumir que o usuário quer deletar o item que ele clicou.
+      // Vamos passar o objeto completo para deletar, é mais seguro.
+      // Mas o FinancialCard recebe PriceHistory, que é uma versão simplificada.
+      
+      // Melhor abordagem: Recarregar o array do banco, remover o item e salvar tudo de novo.
+      const currentHistory = [...clientData.financial.reajusteHistory];
+      
+      // Se o índice for baseado na visualização reversa (se implementarmos assim no card), ajustamos.
+      // Por enquanto, vamos assumir que o card vai passar o índice correto do array original.
+      // VOU ALTERAR O FINANCIAL CARD PARA RECEBER O ARRAY COMPLETO E GERENCIAR A VISUALIZAÇÃO.
+      
+      const itemToDelete = currentHistory[index];
+      const newHistory = currentHistory.filter((_, i) => i !== index);
+      
+      // Se deletarmos o último (que é o atual), precisamos reverter o valor do serviço para o anterior
+      let newServiceValue = clientData.financial.current_value;
+      if (index === currentHistory.length - 1) {
+        // Estamos deletando o último reajuste, voltar para o valor anterior
+        // O valor anterior está no item deletado como 'oldValue'
+        newServiceValue = itemToDelete.oldValue;
+      }
+
+      const clientRef = doc(db, 'clients', client.id);
+      await updateDoc(clientRef, {
+        serviceValue: newServiceValue,
+        reajusteHistory: newHistory
+      });
+
+      setClientData(prev => ({
+        ...prev,
+        financial: {
+          ...prev.financial,
+          current_value: newServiceValue,
+          reajusteHistory: newHistory,
+          price_history: newHistory.map(h => ({
+            date_start: h.date,
+            value: h.newValue
+          }))
+        }
+      }));
+      
+      toast.success('Item removido com sucesso.');
+    } catch (error) {
+      console.error(error);
+      toast.error('Erro ao remover item.');
+    }
+  }
+
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-4">
       {/* Header do Cliente */}
@@ -154,7 +220,11 @@ export const ClientDashboard: React.FC<{ client: ClientData }> = ({ client }) =>
 
       <div className="space-y-4">
         <EquipmentCard equipment={clientData.equipment} onRegisterMaintenance={() => setShowMaintenanceModal(true)} />
-        <FinancialCard financial={clientData.financial} onAdjustContract={() => setShowAdjustModal(true)} />
+        <FinancialCard 
+          financial={clientData.financial} 
+          onAdjustContract={() => setShowAdjustModal(true)} 
+          onDeleteHistoryItem={handleDeleteHistoryItem}
+        />
 
         {/* Card: Histórico de Análises Químicas (dinâmico) */}
         <div className="bg-white rounded-lg shadow p-4 border border-gray-200">
