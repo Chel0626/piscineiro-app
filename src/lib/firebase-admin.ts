@@ -36,7 +36,11 @@ function initializeFirebaseAdmin() {
       console.log('[firebase-admin] FIREBASE_PRIVATE_KEY=', privateKey ? `OK (length: ${privateKey.length})` : 'MISSING');
       
       if (!firebaseAdminConfig.projectId || !firebaseAdminConfig.clientEmail || !firebaseAdminConfig.privateKey) {
-        throw new Error('Firebase Admin credentials are incomplete. Check your environment variables.');
+        const missing = [];
+        if (!firebaseAdminConfig.projectId) missing.push('FIREBASE_PROJECT_ID');
+        if (!firebaseAdminConfig.clientEmail) missing.push('FIREBASE_CLIENT_EMAIL');
+        if (!firebaseAdminConfig.privateKey) missing.push('FIREBASE_PRIVATE_KEY');
+        throw new Error(`Firebase Admin credentials are incomplete. Missing: ${missing.join(', ')}. Check your environment variables.`);
       }
 
       // Validação básica da chave privada para evitar erros de "illegal path"

@@ -154,8 +154,8 @@ export default function ClientesPage() {
                                                             </Button>
                                                         </DropdownMenuTrigger>
                                                         <DropdownMenuContent align="end">
-                                                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openFormToEdit(client); }}>Editar</DropdownMenuItem>
-                                                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openAlert(client.id); }}>Excluir</DropdownMenuItem>
+                                                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleRowClick(client.id); }}>Ver Detalhes</DropdownMenuItem>
+                                                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openAlert(client.id); }} className="text-red-600">Excluir</DropdownMenuItem>
                                                         </DropdownMenuContent>
                                                     </DropdownMenu>
                                                 </TableCell>
@@ -171,7 +171,7 @@ export default function ClientesPage() {
                                     <Card key={client.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleCardClick(client.id)}>
                                         <CardContent className="p-3 sm:p-4">
                                             <div className="flex items-start justify-between gap-3">
-                                                <div className="flex-1 min-w-0 space-y-2">
+                                                <div className="flex-1 min-w-0 space-y-2 group-hover:opacity-80 transition-opacity">
                                                     <div className="flex items-center gap-2">
                                                         <User className="h-4 w-4 text-blue-500 flex-shrink-0" />
                                                         <p className="font-semibold text-sm truncate">{client.name}</p>
@@ -187,6 +187,9 @@ export default function ClientesPage() {
                                                            (client as typeof client & { visitDay?: string }).visitDay || 'Não definido'}
                                                         </p>
                                                     </div>
+                                                    <div className="pt-1">
+                                                        <span className="text-xs text-blue-600 font-medium">Toque para ver detalhes</span>
+                                                    </div>
                                                 </div>
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
@@ -196,10 +199,10 @@ export default function ClientesPage() {
                                                         </Button>
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end">
-                                                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openFormToEdit(client); }}>
-                                                            Editar
+                                                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleCardClick(client.id); }}>
+                                                            Ver Detalhes
                                                         </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openAlert(client.id); }}>
+                                                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openAlert(client.id); }} className="text-red-600">
                                                             Excluir
                                                         </DropdownMenuItem>
                                                     </DropdownMenuContent>
@@ -287,10 +290,10 @@ export default function ClientesPage() {
                 <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto mx-2 sm:mx-auto">
                     <DialogHeader className="pb-3">
                         <DialogTitle className="text-base sm:text-lg">
-                            {editingClient ? 'Editar Cliente' : 'Adicionar Novo Cliente'}
+                            Adicionar Novo Cliente
                         </DialogTitle>
                         <DialogDescription className="text-sm">
-                            Preencha ou edite as informações do cliente abaixo. Clique em salvar quando terminar.
+                            Preencha as informações do novo cliente abaixo.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="max-h-[60vh] overflow-y-auto">

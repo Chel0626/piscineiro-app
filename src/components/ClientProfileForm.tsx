@@ -31,6 +31,10 @@ export const ClientProfileForm: React.FC<ClientProfileFormProps> = ({ profile, o
         <input name="address" value={form.address} onChange={handleChange} className="w-full border rounded px-2 py-1" />
       </div>
       <div>
+        <label className="block text-sm font-medium mb-1">Bairro/Condomínio</label>
+        <input name="neighborhood" value={form.neighborhood || ''} onChange={handleChange} className="w-full border rounded px-2 py-1" />
+      </div>
+      <div>
         <label className="block text-sm font-medium mb-1">Telefone</label>
         <input name="phone" value={form.phone} onChange={handleChange} className="w-full border rounded px-2 py-1" />
       </div>

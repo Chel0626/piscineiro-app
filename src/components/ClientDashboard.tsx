@@ -15,6 +15,7 @@ import { ChemicalAnalysisChart } from './ChemicalAnalysisChart';
 export type ClientProfile = {
   name: string;
   address: string;
+  neighborhood?: string;
   phone: string;
   coordinates?: { lat: number; lng: number };
 };
@@ -28,6 +29,7 @@ export type MaintenanceEvent = {
 export type Equipment = {
   filter_model: string;
   sand_capacity_kg: number;
+  pool_volume: number;
   last_sand_change: string;
   next_change_forecast: string;
   maintenance_history: MaintenanceEvent[];
@@ -69,9 +71,23 @@ export const ClientDashboard: React.FC<{ client: ClientData }> = ({ client }) =>
   const { client: clientDetails, visits, isLoading } = useClientDetails(client.id);
 
   // Atualização do perfil
-  function handleSaveProfile(newProfile: ClientProfile) {
-    setClientData(prev => ({ ...prev, profile: newProfile }));
-    setShowEditProfile(false);
+  async function handleSaveProfile(newProfile: ClientProfile) {
+    try {
+      const clientRef = doc(db, 'clients', client.id);
+      await updateDoc(clientRef, {
+        name: newProfile.name,
+        address: newProfile.address,
+        neighborhood: newProfile.neighborhood,
+        phone: newProfile.phone
+      });
+      
+      setClientData(prev => ({ ...prev, profile: newProfile }));
+      setShowEditProfile(false);
+      toast.success('Perfil atualizado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao atualizar perfil:', error);
+      toast.error('Erro ao salvar alterações.');
+    }
   }
 
   // Registrar manutenção
@@ -126,6 +142,49 @@ export const ClientDashboard: React.FC<{ client: ClientData }> = ({ client }) =>
     } catch (error) {
       console.error("Erro ao reajustar contrato:", error);
       toast.error('Erro ao salvar reajuste.');
+    }
+  }
+
+  async function handleSaveEquipment(updatedEquipment: Equipment) {
+    if (!client.id) return;
+    try {
+      const clientRef = doc(db, 'clients', client.id);
+      await updateDoc(clientRef, {
+        filterModel: updatedEquipment.filter_model,
+        filterSandKg: updatedEquipment.sand_capacity_kg,
+        poolVolume: updatedEquipment.pool_volume,
+        lastSandChange: updatedEquipment.last_sand_change,
+        nextSandChange: updatedEquipment.next_change_forecast
+      });
+
+      setClientData(prev => ({
+        ...prev,
+        equipment: updatedEquipment
+      }));
+      toast.success('Equipamento atualizado com sucesso!');
+    } catch (error) {
+      console.error("Erro ao atualizar equipamento:", error);
+      toast.error('Erro ao salvar equipamento.');
+    }
+  }
+
+  async function handleSaveFinancial(updatedFinancial: Financial) {
+    if (!client.id) return;
+    try {
+      const clientRef = doc(db, 'clients', client.id);
+      await updateDoc(clientRef, {
+        visitFrequency: updatedFinancial.frequency,
+        visitDays: [updatedFinancial.visit_day]
+      });
+
+      setClientData(prev => ({
+        ...prev,
+        financial: updatedFinancial
+      }));
+      toast.success('Financeiro atualizado com sucesso!');
+    } catch (error) {
+      console.error("Erro ao atualizar financeiro:", error);
+      toast.error('Erro ao salvar financeiro.');
     }
   }
 
@@ -215,11 +274,16 @@ export const ClientDashboard: React.FC<{ client: ClientData }> = ({ client }) =>
       {/* Cards principais */}
 
       <div className="space-y-4">
-        <EquipmentCard equipment={clientData.equipment} onRegisterMaintenance={() => setShowMaintenanceModal(true)} />
+        <EquipmentCard 
+          equipment={clientData.equipment} 
+          onRegisterMaintenance={() => setShowMaintenanceModal(true)} 
+          onSave={handleSaveEquipment}
+        />
         <FinancialCard 
           financial={clientData.financial} 
           onAdjustContract={() => setShowAdjustModal(true)} 
           onDeleteHistoryItem={handleDeleteHistoryItem}
+          onSave={handleSaveFinancial}
         />
 
         {/* Card: Histórico de Análises Químicas (dinâmico) */}

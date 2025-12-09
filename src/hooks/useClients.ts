@@ -78,27 +78,23 @@ export function useClients(): UseClientsReturn {
     const handleFormSubmit = async (data: ClientFormData) => {
         setIsSubmitting(true);
         try {
-            if (editingClient) {
-                const clientDoc = doc(db, 'clients', editingClient.id);
-                await updateDoc(clientDoc, data);
-                toast.success("Cliente atualizado com sucesso!");
-            } else {
-                const currentUser = auth.currentUser;
-                if (!currentUser) throw new Error("Usuário não autenticado.");
-                const idToken = await currentUser.getIdToken();
+            // A edição agora é feita diretamente no dashboard, então aqui só criamos novos clientes
+            const currentUser = auth.currentUser;
+            if (!currentUser) throw new Error("Usuário não autenticado.");
+            const idToken = await currentUser.getIdToken();
 
-                const response = await fetch('/api/clients/create', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
-                    body: JSON.stringify(data),
-                });
+            const response = await fetch('/api/clients/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+                body: JSON.stringify(data),
+            });
 
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Falha ao criar cliente.');
-                }
-                toast.success("Cliente adicionado com sucesso!");
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Falha ao criar cliente.');
             }
+            toast.success("Cliente adicionado com sucesso!");
+            
             closeForm();
         } catch (error) {
             const errorMessage = (error instanceof Error) ? error.message : "Não foi possível salvar o cliente.";
@@ -121,7 +117,10 @@ export function useClients(): UseClientsReturn {
         }
     };
 
-    const openFormToEdit = (client: ClientFormData & { id: string; }) => { setEditingClient(client); setIsFormOpen(true); };
+    const openFormToEdit = (client: ClientFormData & { id: string; }) => { 
+        // Deprecated: Edição agora é via dashboard
+        console.warn("openFormToEdit is deprecated. Use dashboard for editing.");
+    };
     const openFormToCreate = () => { setEditingClient(null); setIsFormOpen(true); };
     const closeForm = () => { setIsFormOpen(false); setEditingClient(null); form.reset(defaultFormValues); };
     const openAlert = (clientId: string) => { setDeletingClientId(clientId); setIsAlertOpen(true); };

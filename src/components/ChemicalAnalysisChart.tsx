@@ -55,7 +55,7 @@ export function ChemicalAnalysisChart({ visits }: ChemicalAnalysisChartProps) {
         <CardDescription>Evolução dos parâmetros (Últimas visitas)</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="h-[300px] w-full">
+        <div className="h-[300px] w-full min-w-0">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />

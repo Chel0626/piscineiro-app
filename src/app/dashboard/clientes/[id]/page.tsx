@@ -38,12 +38,14 @@ export default function ClienteDetailPage() {
         profile: {
           name: client.name,
           address: client.address,
+          neighborhood: client.neighborhood,
           phone: client.phone || '',
           coordinates: undefined,
         },
         equipment: {
           filter_model: client.filterModel || '',
           sand_capacity_kg: client.filterSandKg || 0,
+          pool_volume: client.poolVolume || 0,
           last_sand_change: client.lastSandChange || '',
           next_change_forecast: client.nextSandChange || '',
           maintenance_history: [],
