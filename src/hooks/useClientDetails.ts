@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { doc, onSnapshot, collection, query, orderBy, Timestamp } from 'firebase/firestore';
+import { doc, onSnapshot, collection, query, orderBy, Timestamp, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
 import { ClientFormData } from '@/lib/validators/clientSchema';
@@ -45,9 +45,9 @@ export function useClientDetails(clientId: string | null) {
       setIsLoading(false);
     });
 
-    // Listener para o histórico de visitas
+    // Listener para o histórico de visitas (Limitado aos últimos 20 para economizar leituras)
     const visitsCollectionRef = collection(db, 'clients', clientId, 'visits');
-    const q = query(visitsCollectionRef, orderBy('timestamp', 'desc'));
+    const q = query(visitsCollectionRef, orderBy('timestamp', 'desc'), limit(20));
     const unsubscribeVisits = onSnapshot(q, (querySnapshot) => {
       const visitsData: Visit[] = [];
       querySnapshot.forEach((doc) => {
