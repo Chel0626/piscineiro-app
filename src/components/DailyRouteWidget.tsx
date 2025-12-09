@@ -3,7 +3,7 @@
 import { useClients } from '@/hooks/useClients';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ListChecks, CheckCircle, UserPlus, ChevronDown, ChevronUp, RefreshCw, Search, Plus } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
@@ -691,6 +691,9 @@ export function DailyRouteWidget() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Adicionar Cliente ao Roteiro Temporário</DialogTitle>
+            <DialogDescription>
+              Busque por um cliente para adicionar ao roteiro de hoje.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="relative">

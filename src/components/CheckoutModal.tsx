@@ -7,7 +7,7 @@ import { db, storage } from '@/lib/firebase';
 import { toast } from 'sonner';
 import { useClientDetails } from '@/hooks/useClientDetails';
 import { useClientStock } from '@/hooks/useClientStock';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { VisitForm, VisitFormData } from '@/components/VisitForm';
@@ -209,6 +209,7 @@ export function CheckoutModal({ clientId, isOpen, onClose, onSuccess }: Checkout
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Carregando...</DialogTitle>
+            <DialogDescription>Aguarde enquanto carregamos os dados.</DialogDescription>
           </DialogHeader>
           <div className="p-6">Carregando dados do cliente...</div>
         </DialogContent>
@@ -222,6 +223,7 @@ export function CheckoutModal({ clientId, isOpen, onClose, onSuccess }: Checkout
         <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle>Cliente não encontrado</DialogTitle>
+            <DialogDescription>O cliente solicitado não foi encontrado.</DialogDescription>
           </DialogHeader>
           <div className="p-6">Não foi possível carregar os dados do cliente.</div>
         </DialogContent>
@@ -236,9 +238,9 @@ export function CheckoutModal({ clientId, isOpen, onClose, onSuccess }: Checkout
           <DialogTitle className="text-xl font-bold text-blue-700 dark:text-blue-300">
             Check-out - {client.name}
           </DialogTitle>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <DialogDescription className="text-sm text-gray-600 dark:text-gray-400">
             {client.address} • {client.neighborhood}
-          </p>
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 p-1">

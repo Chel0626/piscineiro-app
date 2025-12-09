@@ -18,7 +18,7 @@ import { useClientDetails } from '@/hooks/useClientDetails';
 import { toast } from 'sonner';
 import { Send, Camera, Clock, X, Upload, CheckSquare, ShoppingCart, Plus, Minus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 interface ProductSuggestion {
   id: string;
@@ -1037,6 +1037,10 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
     {/* Modal de foto em tela cheia */}
     <Dialog open={!!fullScreenPhoto} onOpenChange={() => setFullScreenPhoto(null)}>
       <DialogContent className="max-w-full max-h-full w-screen h-screen p-0 bg-black/95">
+        <DialogTitle className="sr-only">Visualização da Foto</DialogTitle>
+        <DialogDescription className="sr-only">
+          Visualização em tela cheia da foto da piscina
+        </DialogDescription>
         <div className="relative w-full h-full flex items-center justify-center">
           <img
             src={fullScreenPhoto || ''}
@@ -1060,6 +1064,9 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Selecione os Processos Realizados</DialogTitle>
+          <DialogDescription>
+            Marque os processos que foram realizados nesta visita.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-3 py-4">
           {processOptions.map((process) => (
@@ -1103,6 +1110,9 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
       <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Selecione Produtos para Solicitar</DialogTitle>
+          <DialogDescription>
+            Escolha os produtos e quantidades que precisam ser solicitados.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-3 py-4">
           {productOptions.map((product) => {

@@ -5,7 +5,7 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '@/lib/firebase';
 import { toast } from 'sonner';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -189,6 +189,9 @@ export function ClienteAvulsoModal({ isOpen, onClose }: ClienteAvulsoModalProps)
             <User className="h-5 w-5" />
             Cliente Avulso
           </DialogTitle>
+          <DialogDescription>
+            Registre os detalhes do atendimento avulso realizado.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
