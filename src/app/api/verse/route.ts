@@ -3,43 +3,43 @@ import { NextResponse, type NextRequest } from 'next/server';
 const verses = [
   {
     text: "Tudo posso naquele que me fortalece.",
-    reference: "Filipenses 4:13"
+    reference: "Filipenses 4:13 (NAA)"
   },
   {
-    text: "O Senhor é o meu pastor, nada me faltará.",
-    reference: "Salmos 23:1"
+    text: "O Senhor é o meu pastor; nada me faltará.",
+    reference: "Salmos 23:1 (NAA)"
   },
   {
-    text: "Confie no Senhor de todo o seu coração e não se apoie em seu próprio entendimento.",
-    reference: "Provérbios 3:5"
+    text: "Confie no Senhor de todo o seu coração e não se apoie no seu próprio entendimento.",
+    reference: "Provérbios 3:5 (NAA)"
   },
   {
-    text: "Porque Deus amou o mundo de tal maneira que deu o seu Filho unigênito.",
-    reference: "João 3:16"
+    text: "Porque Deus amou o mundo de tal maneira que deu o seu Filho unigênito, para que todo o que nele crê não pereça, mas tenha a vida eterna.",
+    reference: "João 3:16 (NAA)"
   },
   {
-    text: "Entregue o seu caminho ao Senhor; confie nele, e ele agirá.",
-    reference: "Salmos 37:5"
+    text: "Entregue o seu caminho ao Senhor, confie nele, e o mais ele fará.",
+    reference: "Salmos 37:5 (NAA)"
   },
   {
-    text: "Alegrem-se sempre no Senhor. Novamente direi: alegrem-se!",
-    reference: "Filipenses 4:4"
+    text: "Alegrem-se sempre no Senhor; outra vez digo: alegrem-se!",
+    reference: "Filipenses 4:4 (NAA)"
   },
   {
-    text: "Não temas, porque eu sou contigo; não te assombres, porque eu sou o teu Deus.",
-    reference: "Isaías 41:10"
+    text: "Não tema, porque eu estou com você; não fique com medo, porque eu sou o seu Deus. Eu lhe dou forças; sim, eu o ajudo; sim, eu o seguro com a mão direita da minha justiça.",
+    reference: "Isaías 41:10 (NAA)"
   },
   {
-    text: "Porque sou eu que conheço os planos que tenho para vocês, diz o Senhor, planos de fazê-los prosperar.",
-    reference: "Jeremias 29:11"
+    text: "Eu é que sei que pensamentos tenho a vosso respeito, diz o Senhor; pensamentos de paz e não de mal, para dar-lhes um futuro e uma esperança.",
+    reference: "Jeremias 29:11 (NAA)"
   },
   {
-    text: "Busquem, pois, em primeiro lugar o Reino de Deus e a sua justiça, e todas essas coisas serão acrescentadas a vocês.",
-    reference: "Mateus 6:33"
+    text: "Busquem, pois, em primeiro lugar o Reino de Deus e a sua justiça, e todas essas coisas lhes serão acrescentadas.",
+    reference: "Mateus 6:33 (NAA)"
   },
   {
-    text: "O Senhor é a minha luz e a minha salvação; de quem terei temor?",
-    reference: "Salmos 27:1"
+    text: "O Senhor é a minha luz e a minha salvação; de quem terei medo? O Senhor é a fortaleza da minha vida; a quem temerei?",
+    reference: "Salmos 27:1 (NAA)"
   }
 ];
 
