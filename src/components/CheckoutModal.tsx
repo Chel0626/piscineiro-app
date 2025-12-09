@@ -82,6 +82,8 @@ export function CheckoutModal({ clientId, isOpen, onClose, onSuccess }: Checkout
       
       // Fechar modal após sucesso
       setTimeout(() => {
+        // Enviar WhatsApp automaticamente se configurado
+        handleSendWhatsApp(data);
         onClose();
       }, 1500);
     } catch (error) {
@@ -92,8 +94,11 @@ export function CheckoutModal({ clientId, isOpen, onClose, onSuccess }: Checkout
     }
   };
 
-  const handleSendWhatsApp = () => {
-    if (!client || !visitData) return;
+  const handleSendWhatsApp = (data?: VisitFormData) => {
+    if (!client || (!visitData && !data)) return;
+    
+    const currentData = data || visitData;
+    if (!currentData) return;
 
     let message = `🏊‍♂️ *Relatório de Visita - ${client.name}*\n\n`;
     message += `📅 Data: ${new Date().toLocaleDateString('pt-BR')}\n`;
@@ -101,21 +106,21 @@ export function CheckoutModal({ clientId, isOpen, onClose, onSuccess }: Checkout
 
     // Parâmetros da água
     const params = [];
-    if (visitData.ph) params.push(`pH: ${visitData.ph}`);
-    if (visitData.cloro) params.push(`Cloro: ${visitData.cloro} ppm`);
-    if (visitData.alcalinidade) params.push(`Alcalinidade: ${visitData.alcalinidade} ppm`);
+    if (currentData.ph) params.push(`pH: ${currentData.ph}`);
+    if (currentData.cloro) params.push(`Cloro: ${currentData.cloro} ppm`);
+    if (currentData.alcalinidade) params.push(`Alcalinidade: ${currentData.alcalinidade} ppm`);
     if (params.length > 0) {
       message += `💧 *Parâmetros:* ${params.join(' | ')}\n`;
     }
 
     // Condição da água
-    if (visitData.waterCondition) {
-      message += `🌊 *Condição da Água:* ${visitData.waterCondition}\n`;
+    if (currentData.waterCondition) {
+      message += `🌊 *Condição da Água:* ${currentData.waterCondition}\n`;
     }
 
     // Produtos utilizados
-    if (visitData.productsUsed && visitData.productsUsed.trim()) {
-      message += `\n📦 *Produtos Utilizados:*\n${visitData.productsUsed}\n`;
+    if (currentData.productsUsed && currentData.productsUsed.trim()) {
+      message += `\n📦 *Produtos Utilizados:*\n${currentData.productsUsed}\n`;
     }
 
     // Conferência Mecânica/Hidráulica
@@ -136,18 +141,23 @@ export function CheckoutModal({ clientId, isOpen, onClose, onSuccess }: Checkout
     }
 
     // Horário de saída
-    if (visitData.departureTime) {
-      message += `\n⏰ *Horário de Saída:* ${visitData.departureTime}\n`;
+    if (currentData.departureTime) {
+      message += `\n⏰ *Horário de Saída:* ${currentData.departureTime}\n`;
     }
 
     // Observações
-    if (visitData.description && visitData.description.trim()) {
-      message += `\n📋 *Observações:* ${visitData.description}\n`;
+    if (currentData.description && currentData.description.trim()) {
+      message += `\n📋 *Observações:* ${currentData.description}\n`;
     }
 
     // Foto
-    if (visitData.poolPhoto) {
-      message += `\n📸 *Foto da Piscina:* ${visitData.poolPhoto}\n`;
+    if (currentData.poolPhoto) {
+      // Se for base64, não enviamos no texto pois é muito grande
+      if (currentData.poolPhoto.startsWith('data:image')) {
+        message += `\n📸 *Foto:* (Enviada separadamente)\n`;
+      } else {
+        message += `\n📸 *Foto da Piscina:* ${currentData.poolPhoto}\n`;
+      }
     }
 
     message += `\n\n✅ *Visita concluída com sucesso!*`;
@@ -157,6 +167,24 @@ export function CheckoutModal({ clientId, isOpen, onClose, onSuccess }: Checkout
     if (phoneNumber) {
       const whatsappUrl = `https://wa.me/55${phoneNumber}?text=${encodeURIComponent(message)}`;
       window.open(whatsappUrl, '_blank');
+      
+      // Se tiver foto base64, faz o download para o usuário enviar
+      if (currentData.poolPhoto && currentData.poolPhoto.startsWith('data:image')) {
+        try {
+          const link = document.createElement('a');
+          link.href = currentData.poolPhoto;
+          link.download = `piscina-${client.name.replace(/\s/g, '-')}-${new Date().getTime()}.jpg`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          toast.success('Foto baixada! Anexe-a na conversa do WhatsApp.', {
+            duration: 5000
+          });
+        } catch (error) {
+          console.error('Erro ao baixar foto:', error);
+        }
+      }
     } else {
       toast.error('Número de telefone não encontrado');
     }
@@ -345,7 +373,7 @@ export function CheckoutModal({ clientId, isOpen, onClose, onSuccess }: Checkout
                 </p>
                 <div className="flex gap-3">
                   <Button 
-                    onClick={handleSendWhatsApp}
+                    onClick={() => handleSendWhatsApp()}
                     className="flex items-center gap-2"
                     variant="default"
                   >
