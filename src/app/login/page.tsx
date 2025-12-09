@@ -48,8 +48,11 @@ export default function LoginPage() {
     return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100 dark:bg-gray-900">
       <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
+        <CardHeader className="text-center">
+          <div className="flex justify-center mb-4">
+            <img src="/logo.png" alt="Logo" className="w-20 h-20 object-contain" />
+          </div>
+          <CardTitle className="text-2xl">Piscineiro Mestre APP</CardTitle>
           <CardDescription>Entre com seu e-mail e senha para acessar o painel.</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>

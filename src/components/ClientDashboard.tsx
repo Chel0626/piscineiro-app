@@ -9,6 +9,7 @@ import { FinancialCard } from './FinancialCard';
 import { RegisterMaintenanceModal } from './RegisterMaintenanceModal';
 import { AdjustContractModal } from './AdjustContractModal';
 import { ParametersChart } from './ParametersChart';
+import { ChemicalAnalysisChart } from './ChemicalAnalysisChart';
 
 // Tipos baseados no JSON sugerido
 export type ClientProfile = {
@@ -205,13 +206,8 @@ export const ClientDashboard: React.FC<{ client: ClientData }> = ({ client }) =>
           <div className="font-semibold text-lg">{clientData.profile.name}</div>
           <div className="text-sm text-gray-600">{clientData.profile.address}</div>
         </div>
-        {/* Ações rápidas */}
-        <div className="ml-auto flex gap-2">
-          <button title="WhatsApp" className="p-2 rounded bg-green-100 text-green-700">W</button>
-          <button title="Ligar" className="p-2 rounded bg-blue-100 text-blue-700">L</button>
-          <button title="Navegar" className="p-2 rounded bg-orange-100 text-orange-700">N</button>
-        </div>
-        <button className="ml-2 p-2 rounded bg-gray-100" title="Editar Perfil" onClick={() => setShowEditProfile(true)}>
+        {/* Ações rápidas removidas conforme solicitado */}
+        <button className="ml-auto p-2 rounded bg-gray-100" title="Editar Perfil" onClick={() => setShowEditProfile(true)}>
           ✏️
         </button>
       </div>
@@ -227,68 +223,11 @@ export const ClientDashboard: React.FC<{ client: ClientData }> = ({ client }) =>
         />
 
         {/* Card: Histórico de Análises Químicas (dinâmico) */}
-        <div className="bg-white rounded-lg shadow p-4 border border-gray-200">
-          <div className="font-semibold text-base mb-1">
-            {clientDetails?.name || clientData.profile.name} - {clientDetails?.address || clientData.profile.address}
-          </div>
-          <div className="text-sm text-gray-600 mb-2">Análise da Água</div>
-          <hr className="mb-2" />
-          {isLoading ? (
-            <div className="text-xs text-gray-500">Carregando análises...</div>
-          ) : visits.length === 0 ? (
-            <div className="text-xs text-gray-500">Nenhuma análise registrada.</div>
-          ) : (
-            <>
-              {/* Última análise */}
-              <div className="mb-2">
-                <div className="text-xs text-gray-500">
-                  Última análise: {visits[0].timestamp && typeof visits[0].timestamp.toDate === 'function' ? visits[0].timestamp.toDate().toLocaleString('pt-BR') : '---'}
-                </div>
-                {visits[0].poolPhoto && (
-                  <img src={visits[0].poolPhoto} alt="Foto da piscina" className="w-full max-w-xs rounded border my-2" />
-                )}
-                <div className="flex items-center justify-between text-sm">
-                  <span>pH: <span className="font-semibold">{visits[0].ph ?? '--'}</span></span>
-                  <span className="text-green-600 font-medium">{visits[0].ph >= 7.2 && visits[0].ph <= 7.6 ? '✓ Ideal (7.2-7.6)' : 'Fora do ideal'}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span>Cloro Livre: <span className="font-semibold">{visits[0].cloro ?? '--'} ppm</span></span>
-                  <span className="text-green-600 font-medium">{visits[0].cloro >= 1 && visits[0].cloro <= 3 ? '✓ Bom (1.0-3.0)' : 'Fora do ideal'}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span>Alcalinidade: <span className="font-semibold">{visits[0].alcalinidade ?? '--'} ppm</span></span>
-                  <span className="text-green-600 font-medium">{visits[0].alcalinidade >= 80 && visits[0].alcalinidade <= 120 ? '✓ Ideal (80-120)' : 'Fora do ideal'}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span>Condição da Água: <span className="font-semibold capitalize">{visits[0].waterCondition ?? '--'}</span></span>
-                </div>
-                {visits[0].description && (
-                  <div className="text-xs text-gray-700 mt-1">Obs: {visits[0].description}</div>
-                )}
-              </div>
-              <button 
-                className="text-blue-600 text-xs underline mb-2"
-                onClick={() => setShowChart(true)}
-              >
-                Ver Gráfico de Evolução
-              </button>
-              <hr className="my-2" />
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-lg">📊</span>
-                <span className="text-xs text-gray-700 font-medium">Últimos 30 dias</span>
-              </div>
-              {/* Histórico simplificado */}
-              <ul className="text-xs text-gray-600 space-y-1">
-                {visits.slice(0, 5).map((v, idx) => (
-                  <li key={v.id}>
-                    • {v.timestamp && typeof v.timestamp.toDate === 'function' ? v.timestamp.toDate().toLocaleDateString('pt-BR') : '--'} - pH {v.ph ?? '--'}, Cloro {v.cloro ?? '--'}, Condição: <span className="capitalize">{v.waterCondition ?? '--'}</span>{v.poolPhoto ? ' 📷' : ''}
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-          <button className="w-full bg-blue-100 hover:bg-blue-200 text-blue-800 font-semibold py-1 px-2 rounded text-xs mt-3">Registrar Nova Análise</button>
-        </div>
+        {isLoading ? (
+          <div className="text-center p-4 text-gray-500">Carregando análises...</div>
+        ) : (
+          <ChemicalAnalysisChart visits={visits} />
+        )}
       </div>
 
       {/* Modais de ação */}
