@@ -18,9 +18,9 @@ export const metadata: Metadata = {
     { name: 'Piscineiro Team' },
   ],
   icons: {
-    icon: '/logo-icon.svg',
-    shortcut: '/logo-icon.svg',
-    apple: '/logo-icon.svg',
+    icon: '/icon-192x192.png',
+    shortcut: '/icon-192x192.png',
+    apple: '/icon-192x192.png',
   },
   metadataBase: new URL('https://piscineiro-app.vercel.app'),
   openGraph: {

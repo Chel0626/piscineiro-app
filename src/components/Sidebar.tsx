@@ -59,7 +59,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       >
         <div className="flex items-center justify-between p-6">
           <div className="flex items-center gap-3">
-            <img src="/logo-icon.svg" alt="PiscineiroApp" className="w-8 h-8" />
+            <img src="/icon-192x192.png" alt="PiscineiroApp" className="w-8 h-8" />
             <h2 className="text-xl font-semibold text-white">PiscineiroApp</h2>
           </div>
           <Button variant="ghost" size="icon" className="md:hidden text-white hover:bg-gray-700" onClick={onClose}>

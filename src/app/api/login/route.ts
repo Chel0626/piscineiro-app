@@ -7,7 +7,7 @@ export async function POST(request: Request) {
   console.log('[api/login] Recebendo requisição POST');
   
   // Verifica se Firebase Admin está configurado
-  if (!process.env.FIREBASE_PROJECT_ID) {
+  if (!process.env.FIREBASE_PROJECT_ID && !process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID) {
     return new Response(
       JSON.stringify({ error: 'Serviço temporariamente indisponível. Firebase Admin não configurado.' }), 
       { status: 503, headers: { 'Content-Type': 'application/json' } }
@@ -42,6 +42,6 @@ export async function POST(request: Request) {
        return new Response(JSON.stringify({ error: 'Erro de configuração do servidor: ' + err.message }), { status: 500, headers: { 'Content-Type': 'application/json' } });
     }
 
-    return new Response(JSON.stringify({ error: 'Token inválido ou expirado.' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ error: 'Token inválido ou expirado.', details: err.message }), { status: 400, headers: { 'Content-Type': 'application/json' } });
   }
 }

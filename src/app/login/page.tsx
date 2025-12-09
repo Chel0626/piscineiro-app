@@ -25,15 +25,21 @@ export default function LoginPage() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       const idToken = await user.getIdToken();
-      await fetch('/api/login', {
+      const response = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: idToken }),
       });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.details || data.error || 'Erro na validação do login');
+      }
+
       router.push('/dashboard');
-    } catch (err) { // Corrigido
+    } catch (err: any) {
       console.error(err);
-      setError('Falha ao fazer login. Verifique seu e-mail e senha.');
+      setError(err.message || 'Falha ao fazer login. Verifique seu e-mail e senha.');
     } finally {
       setIsLoading(false);
     }
