@@ -13,7 +13,8 @@ export async function POST(request: NextRequest) {
   }
 
   // Importação dinâmica apenas em runtime
-  const { auth } = require('@/lib/firebase-admin');
+  const { getAdminAuth } = await import('@/lib/firebase-admin');
+  const auth = getAdminAuth();
   const { getFirestore } = require('firebase-admin/firestore');
   const db = getFirestore();
 

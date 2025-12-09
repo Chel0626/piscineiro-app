@@ -17,7 +17,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Importar Firebase Admin dinamicamente para evitar problemas de inicialização
-    const { auth, storage } = await import('@/lib/firebase-admin');
+    const { getAdminAuth, getAdminStorage } = await import('@/lib/firebase-admin');
+    const auth = getAdminAuth();
+    const storage = getAdminStorage();
     
     const token = authHeader.split('Bearer ')[1];
     const decodedToken = await auth.verifyIdToken(token);

@@ -17,7 +17,8 @@ export async function POST(request: Request) {
   // Importação dinâmica apenas em runtime
   
   try {
-    const { auth: adminAuth } = require('@/lib/firebase-admin');
+    const { getAdminAuth } = await import('@/lib/firebase-admin');
+    const adminAuth = getAdminAuth();
     
     const body = await request.json();
     console.log('[api/login] Body recebido:', JSON.stringify(body));

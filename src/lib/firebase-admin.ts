@@ -56,13 +56,41 @@ function initializeFirebaseAdmin() {
   }
 }
 
-// Exporta funções que inicializam sob demanda
-export const auth = (() => {
-  initializeFirebaseAdmin();
+// Helper para garantir inicialização
+function ensureInitialized() {
+  if (getApps().length === 0) {
+    initializeFirebaseAdmin();
+  }
+}
+
+export function getAdminAuth() {
+  ensureInitialized();
   return getAuth();
+}
+
+export function getAdminStorage() {
+  ensureInitialized();
+  return getStorage();
+}
+
+// Exporta funções que inicializam sob demanda (Mantido para compatibilidade, mas prefira getAdminAuth)
+export const auth = (() => {
+  try {
+    // Tenta inicializar, mas não falha se for build time
+    if (getApps().length === 0) initializeFirebaseAdmin();
+    return getAuth();
+  } catch (e) {
+    console.warn('[firebase-admin] Falha ao exportar auth (pode ser build time):', e);
+    return {} as any;
+  }
 })();
 
 export const storage = (() => {
-  initializeFirebaseAdmin();
-  return getStorage();
+  try {
+    if (getApps().length === 0) initializeFirebaseAdmin();
+    return getStorage();
+  } catch (e) {
+    console.warn('[firebase-admin] Falha ao exportar storage (pode ser build time):', e);
+    return {} as any;
+  }
 })();

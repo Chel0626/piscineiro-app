@@ -113,6 +113,11 @@ self.addEventListener('fetch', (event) => {
           return response;
         }
 
+        // Fix: Evita erro "response served by service worker has redirections"
+        if (response.redirected) {
+          return Response.redirect(response.url, 307);
+        }
+
         const responseClone = response.clone();
         caches.open(CACHE_NAME).then((cache) => {
           cache.put(request, responseClone);
