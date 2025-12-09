@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Quote } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 
 type TimeOfDay = 'morning' | 'afternoon' | 'night';
@@ -53,7 +53,7 @@ export function TimeBasedWidget() {
   return (
     <Card className="w-full max-w-md mx-auto overflow-hidden border-none shadow-md bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
       <CardContent className="p-4 relative flex flex-col gap-2">
-        <Quote className="absolute top-2 right-2 w-8 h-8 text-white/10 rotate-180" />
+        <BookOpen className="absolute top-2 right-2 w-8 h-8 text-white/10" />
         
         <div className="relative z-10">
           <h2 className="text-lg font-bold flex items-center gap-2">
