@@ -65,6 +65,43 @@ export function useClientStock(clientId: string | null) {
     }
   };
 
+  const deductProductByName = async (productName: string, quantityToDeduct: number, unit: string) => {
+    if (!clientId) return;
+
+    try {
+      const stockDocRef = doc(db, 'clients', clientId, 'stock', 'inventory');
+      let productFound = false;
+      
+      let updatedStock = stock.map(item => {
+        // Normaliza nomes para comparação (remove acentos, lowercase)
+        const normalize = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        
+        if (normalize(item.productName) === normalize(productName)) {
+          productFound = true;
+          // Permite negativo conforme solicitado
+          return { ...item, quantity: item.quantity - quantityToDeduct };
+        }
+        return item;
+      });
+
+      if (!productFound) {
+        // Adiciona novo item com quantidade negativa
+        updatedStock.push({
+          productId: `auto_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+          productName: productName,
+          quantity: -quantityToDeduct,
+          unit: unit,
+          minQuantity: 0
+        });
+      }
+
+      await updateDoc(stockDocRef, { items: updatedStock });
+    } catch (err) {
+      console.error('Erro ao debitar do estoque:', err);
+      throw err;
+    }
+  };
+
   const getLowStockItems = () => {
     return stock.filter(item => {
       const min = item.minQuantity || 0;
@@ -77,6 +114,7 @@ export function useClientStock(clientId: string | null) {
     isLoading,
     error,
     updateStock,
+    deductProductByName,
     getLowStockItems
   };
 }

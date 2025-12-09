@@ -21,7 +21,7 @@ interface CheckoutModalProps {
 
 export function CheckoutModal({ clientId, isOpen, onClose, onSuccess }: CheckoutModalProps) {
   const { client, isLoading } = useClientDetails(clientId);
-  const { stock, updateStock } = useClientStock(clientId);
+  const { stock, updateStock, deductProductByName } = useClientStock(clientId);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [visitData, setVisitData] = useState<VisitFormData | null>(null);
@@ -47,7 +47,7 @@ export function CheckoutModal({ clientId, isOpen, onClose, onSuccess }: Checkout
     }));
   };
 
-  const handleVisitSubmit = async (data: VisitFormData) => {
+  const handleVisitSubmit = async (data: VisitFormData, structuredProducts?: any[]) => {
     if (!clientId) return;
     setIsSubmitting(true);
     try {
@@ -56,6 +56,13 @@ export function CheckoutModal({ clientId, isOpen, onClose, onSuccess }: Checkout
         ...data,
         timestamp: serverTimestamp(),
       });
+      
+      // Atualizar estoque com produtos utilizados
+      if (structuredProducts && structuredProducts.length > 0) {
+        for (const product of structuredProducts) {
+          await deductProductByName(product.name, product.quantity, product.unit);
+        }
+      }
       
       // Marcar cliente como finalizado no dia de hoje
       const clientRef = doc(db, 'clients', clientId);

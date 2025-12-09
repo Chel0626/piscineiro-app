@@ -48,7 +48,7 @@ type VisitFormData = z.infer<typeof formSchema>;
 export type { VisitFormData };
 
 interface VisitFormProps {
-  onSubmit: (data: VisitFormData) => void;
+  onSubmit: (data: VisitFormData, structuredProducts?: ProductSuggestion[]) => void;
   isLoading: boolean;
   clientId: string;
   initialData?: Partial<VisitFormData>;
@@ -599,7 +599,8 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
   };
 
   const handleFormSubmit = async (data: VisitFormData) => {
-    await onSubmit(data);
+    const structuredProducts = suggestedProducts.filter(p => selectedProductIds.has(p.id));
+    await onSubmit(data, structuredProducts);
   };
 
   return (

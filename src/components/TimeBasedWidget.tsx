@@ -51,30 +51,30 @@ export function TimeBasedWidget() {
   }, []);
 
   return (
-    <Card className="w-full max-w-xl mx-auto overflow-hidden border-none shadow-lg bg-gradient-to-br from-blue-600 to-indigo-700 text-white">
-      <CardContent className="p-6 relative">
-        <Quote className="absolute top-4 right-4 w-16 h-16 text-white/10 rotate-180" />
+    <Card className="w-full max-w-md mx-auto overflow-hidden border-none shadow-md bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+      <CardContent className="p-4 relative flex flex-col gap-2">
+        <Quote className="absolute top-2 right-2 w-8 h-8 text-white/10 rotate-180" />
         
         <div className="relative z-10">
-          <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+          <h2 className="text-lg font-bold flex items-center gap-2">
             {timeOfDay === 'morning' && 'Bom dia!'}
             {timeOfDay === 'afternoon' && 'Boa tarde!'}
             {timeOfDay === 'night' && 'Boa noite!'}
           </h2>
           
           {verse ? (
-            <div className="space-y-3">
-              <p className="text-lg font-medium leading-relaxed italic opacity-95">
+            <div className="mt-1">
+              <p className="text-sm font-medium italic opacity-95 leading-snug">
                 "{verse.text}"
               </p>
-              <p className="text-sm font-semibold text-white/80 text-right uppercase tracking-wide">
+              <p className="text-xs font-semibold text-white/80 text-right mt-1">
                 — {verse.reference}
               </p>
             </div>
           ) : (
-            <div className="animate-pulse space-y-3">
-              <div className="h-4 bg-white/20 rounded w-3/4"></div>
-              <div className="h-4 bg-white/20 rounded w-1/2"></div>
+            <div className="animate-pulse space-y-2 mt-2">
+              <div className="h-3 bg-white/20 rounded w-3/4"></div>
+              <div className="h-3 bg-white/20 rounded w-1/2"></div>
             </div>
           )}
         </div>
