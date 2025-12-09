@@ -28,8 +28,12 @@ export const FinancialCard: React.FC<FinancialCardProps> = ({ financial, onAdjus
           {historyWithIndex.map((h, idx) => (
             <li key={idx} className="mb-2 p-2 bg-gray-50 rounded flex justify-between items-start">
               <div>
-                <div className="font-medium">{new Date(h.date).toLocaleDateString('pt-BR')}</div>
-                <div>R$ {h.oldValue.toFixed(2)} ➝ <strong>R$ {h.newValue.toFixed(2)}</strong></div>
+                <div className="font-medium">
+                  {h.date ? new Date(h.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '--/--/----'}
+                </div>
+                <div>
+                  R$ {(h.oldValue ?? 0).toFixed(2)} ➝ <strong>R$ {(h.newValue ?? 0).toFixed(2)}</strong>
+                </div>
                 {h.reason && <div className="text-xs text-gray-500">{h.reason}</div>}
               </div>
               {onDeleteHistoryItem && (
