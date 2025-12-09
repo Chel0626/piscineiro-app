@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
+import { withSafety } from '@/lib/api-safety';
 
-export async function GET() {
+async function handler(req: NextRequest) {
   try {
     // Coordenadas de Indaiatuba, SP
     const lat = -23.0903;
@@ -42,3 +43,5 @@ export async function GET() {
     return NextResponse.json({ error: 'Erro ao carregar dados do clima.' }, { status: 500 });
   }
 }
+
+export const GET = withSafety(handler, { route: 'weather', timeoutMs: 5000 });
