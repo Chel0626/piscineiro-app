@@ -562,7 +562,7 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
     }
 
     message += `\n\n✅ Serviço realizado com sucesso!`;
-    message += `\n\n🏊 _Relatório enviado automaticamente via PiscineiroAPP_`;
+    message += `\n\n🏊 _Relatório enviado automaticamente via Piscineiro Mestre APP_`;
 
     // Se tem foto, fazer download automático
     if (data.poolPhoto && data.poolPhoto.startsWith('data:image')) {

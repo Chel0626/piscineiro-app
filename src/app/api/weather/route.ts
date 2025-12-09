@@ -1,31 +1,38 @@
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    // Simulando dados de clima no formato esperado pelo WeatherWidget
-    const currentTemp = Math.round(20 + Math.random() * 15); // 20-35°C
-    const weatherCodes = [0, 1, 2, 3, 61, 80]; // Céu limpo, parcialmente nublado, nublado, chuva, etc.
-    const currentWeatherCode = weatherCodes[Math.floor(Math.random() * weatherCodes.length)];
+    // Coordenadas de Indaiatuba, SP
+    const lat = -23.0903;
+    const lon = -47.2181;
     
-    // Gerar dados horários simulados
-    const hourly = [];
-    const currentHour = new Date().getHours();
-    
-    for (let i = 1; i <= 8; i++) {
-      const hour = (currentHour + i) % 24;
-      hourly.push({
-        time: hour,
-        temp: Math.round(currentTemp + (Math.random() - 0.5) * 6), // ±3°C variação
-        weather_code: weatherCodes[Math.floor(Math.random() * weatherCodes.length)]
-      });
+    const response = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&hourly=temperature_2m,weather_code&timezone=America%2FSao_Paulo&forecast_days=1`
+    );
+
+    if (!response.ok) {
+      throw new Error('Falha ao buscar dados do Open-Meteo');
     }
 
+    const data = await response.json();
+
+    // Mapear os dados para o formato esperado pelo widget
     const weatherData = {
       current: {
-        temp: currentTemp,
-        weather_code: currentWeatherCode
+        temp: Math.round(data.current.temperature_2m),
+        weather_code: data.current.weather_code
       },
-      hourly: hourly,
+      hourly: data.hourly.time.map((time: string, index: number) => ({
+        time: new Date(time).getHours(),
+        temp: Math.round(data.hourly.temperature_2m[index]),
+        weather_code: data.hourly.weather_code[index]
+      })).filter((_: any, index: number) => {
+        // Filtrar apenas as próximas horas a partir de agora
+        const hour = new Date(data.hourly.time[index]).getHours();
+        const currentHour = new Date().getHours();
+        // Pegar as próximas 8 horas (considerando virada do dia se necessário, mas forecast_days=1 simplifica)
+        return index >= currentHour && index < currentHour + 8;
+      }),
       city: 'Indaiatuba, SP'
     };
 

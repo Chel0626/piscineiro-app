@@ -179,7 +179,7 @@ export function CheckoutModal({ clientId, isOpen, onClose, onSuccess }: Checkout
     }
 
     message += `\n\n✅ *Visita concluída com sucesso!*`;
-    message += `\n\n🏊 _Relatório enviado automaticamente via PiscineiroAPP_`;
+    message += `\n\n🏊 _Relatório enviado automaticamente via Piscineiro Mestre APP_`;
 
     const phoneNumber = client.phone?.replace(/\D/g, '');
     if (phoneNumber) {

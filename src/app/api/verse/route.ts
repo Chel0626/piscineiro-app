@@ -40,15 +40,40 @@ const verses = [
   {
     text: "O Senhor é a minha luz e a minha salvação; de quem terei medo? O Senhor é a fortaleza da minha vida; a quem temerei?",
     reference: "Salmos 27:1 (NAA)"
+  },
+  {
+    text: "Mas os que esperam no Senhor renovam as suas forças. Sobem com asas como águias; correm e não se cansam, caminham e não se fatigam.",
+    reference: "Isaías 40:31 (NAA)"
+  },
+  {
+    text: "Sejam fortes e corajosos. Não tenham medo nem fiquem apavorados por causa delas, pois o Senhor, o seu Deus, vai com vocês; nunca os deixará, nunca os abandonará.",
+    reference: "Deuteronômio 31:6 (NAA)"
+  },
+  {
+    text: "Lancem sobre ele toda a sua ansiedade, porque ele tem cuidado de vocês.",
+    reference: "1 Pedro 5:7 (NAA)"
+  },
+  {
+    text: "O Senhor te abençoe e te guarde; o Senhor faça resplandecer o seu rosto sobre ti e tenha misericórdia de ti; o Senhor sobre ti levante o seu rosto e te dê a paz.",
+    reference: "Números 6:24-26 (NAA)"
   }
 ];
 
 export async function GET() {
   try {
-    const randomVerse = verses[Math.floor(Math.random() * verses.length)];
+    // Seleção determinística baseada no dia do ano
+    const now = new Date();
+    const start = new Date(now.getFullYear(), 0, 0);
+    const diff = (now.getTime() - start.getTime()) + ((start.getTimezoneOffset() - now.getTimezoneOffset()) * 60 * 1000);
+    const oneDay = 1000 * 60 * 60 * 24;
+    const dayOfYear = Math.floor(diff / oneDay);
+    
+    const verseIndex = dayOfYear % verses.length;
+    const dailyVerse = verses[verseIndex];
+
     return NextResponse.json({ 
       success: true,
-      verse: randomVerse 
+      verse: dailyVerse 
     });
   } catch (error) {
     console.error('Erro ao buscar verso:', error);
