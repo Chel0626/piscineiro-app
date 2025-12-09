@@ -52,19 +52,6 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
           
           {/* Conteúdo principal */}
           <main className="flex-1 p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-gray-900 transition-all duration-300 ease-in-out md:ml-64 pb-20 md:pb-8 overflow-x-hidden w-full">
-            {/* Header com botão hambúrguer (sem abastecimento) */}
-            <div className="md:hidden mb-4 flex items-center justify-between">
-              <div className="flex items-center">
-                <Button variant="outline" size="icon" onClick={() => setIsSidebarOpen(true)}>
-                  <Menu className="h-6 w-6" />
-                </Button>
-                <div className="flex items-center gap-2 ml-4">
-                  <img src="/logo.png" alt="Piscineiro Mestre APP" className="w-8 h-8 object-contain" />
-                  <h2 className="text-lg font-bold dark:text-white">Piscineiro Mestre APP</h2>
-                </div>
-              </div>
-            </div>
-
             {/* Header para desktop (sem abastecimento) */}
             <div className="hidden md:flex justify-end mb-4"></div>
             
@@ -72,7 +59,7 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
           </main>
           
           {/* Bottom Tab Bar - SEMPRE visível em mobile */}
-          <BottomTabBar />
+          <BottomTabBar onMenuClick={() => setIsSidebarOpen(true)} />
         </div>
       </FillReminderProvider>
     );

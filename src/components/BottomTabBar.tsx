@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, Route } from 'lucide-react';
+import { Home, Users, Route, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navigationItems = [
@@ -26,12 +26,16 @@ const navigationItems = [
   },
 ];
 
-export function BottomTabBar() {
+interface BottomTabBarProps {
+  onMenuClick?: () => void;
+}
+
+export function BottomTabBar({ onMenuClick }: BottomTabBarProps) {
   const pathname = usePathname();
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 md:hidden">
-      <div className="grid grid-cols-3 h-16">
+      <div className="grid grid-cols-4 h-16">
         {navigationItems.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -58,6 +62,14 @@ export function BottomTabBar() {
             </Link>
           );
         })}
+        
+        <button
+          onClick={onMenuClick}
+          className="flex flex-col items-center justify-center px-1 py-2 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+        >
+          <Menu className="h-5 w-5 mb-1" />
+          <span className="font-medium">Menu</span>
+        </button>
       </div>
     </div>
   );
