@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { IMaskInput } from 'react-imask';
 import { Camera, User, Wrench, DollarSign, FileText, CheckCircle, MessageCircle } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 interface ClienteAvulsoModalProps {
   isOpen: boolean;
@@ -46,6 +47,7 @@ const tiposServico = [
 ];
 
 export function ClienteAvulsoModal({ isOpen, onClose }: ClienteAvulsoModalProps) {
+  const { user } = useAuth();
   const [clienteData, setClienteData] = useState<ClienteAvulsoData>({
     nome: '',
     endereco: '',
@@ -111,11 +113,17 @@ export function ClienteAvulsoModal({ isOpen, onClose }: ClienteAvulsoModalProps)
 
     setIsSubmitting(true);
     try {
+      if (!user) {
+        toast.error('Usuário não autenticado');
+        return;
+      }
+
       // Salvar no Firebase
       const clienteAvulsoRef = collection(db, 'clientes-avulsos');
       await addDoc(clienteAvulsoRef, {
         ...clienteData,
         ...relatorioData,
+        userId: user.uid,
         timestamp: serverTimestamp(),
         mes: new Date().toISOString().slice(0, 7) // YYYY-MM para faturamento
       });

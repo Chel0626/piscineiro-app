@@ -57,5 +57,11 @@ service cloud.firestore {
       allow create: if isOwner(request.resource.data.userId);
       allow read, update, delete: if isOwner(resource.data.userId);
     }
+
+    // Clientes Avulsos
+    match /clientes-avulsos/{clienteId} {
+      allow create: if isOwner(request.resource.data.userId);
+      allow read, update, delete: if isOwner(resource.data.userId);
+    }
   }
 }

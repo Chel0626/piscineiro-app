@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { collection, onSnapshot, orderBy, query, where, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { useAuth } from '@/context/AuthContext';
 
 export interface ClienteAvulso {
   id: string;
@@ -19,12 +20,23 @@ export interface ClienteAvulso {
 }
 
 export function useClientesAvulsos() {
+  const { user } = useAuth();
   const [clientesAvulsos, setClientesAvulsos] = useState<ClienteAvulso[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (!user) {
+      setClientesAvulsos([]);
+      setIsLoading(false);
+      return;
+    }
+
     const clientesAvulsosRef = collection(db, 'clientes-avulsos');
-    const q = query(clientesAvulsosRef, orderBy('timestamp', 'desc'));
+    const q = query(
+      clientesAvulsosRef, 
+      where('userId', '==', user.uid),
+      orderBy('timestamp', 'desc')
+    );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const clientesData: ClienteAvulso[] = [];
