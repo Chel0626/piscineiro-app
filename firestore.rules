@@ -22,6 +22,11 @@ service cloud.firestore {
       }
     }
 
+    // Piscineiro Profiles collection: Users can only access their own profile
+    match /piscineiroProfiles/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
     // Clients collection: Users can only access clients they created (userId field)
     match /clients/{clientId} {
       // Allow create if the new document's userId matches the authenticated user
