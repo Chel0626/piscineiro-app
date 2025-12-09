@@ -1,5 +1,5 @@
-const CACHE_NAME = 'piscineiro-app-v2';
-const RUNTIME_CACHE = 'piscineiro-runtime-v2';
+const CACHE_NAME = 'piscineiro-app-v3';
+const RUNTIME_CACHE = 'piscineiro-runtime-v3';
 
 // Assets que queremos cachear imediatamente (quando o SW instala)
 const PRECACHE_URLS = [
@@ -63,6 +63,16 @@ self.addEventListener('fetch', (event) => {
 
   // Ignora requisições de outras origens (exceto Firebase)
   if (url.origin !== location.origin && !url.origin.includes('firebase')) {
+    return;
+  }
+
+  // Ignora requisições que não são GET
+  if (request.method !== 'GET') {
+    return;
+  }
+
+  // Se o modo de redirect não for 'follow', não interceptamos/cacheamos para evitar erros
+  if (request.redirect && request.redirect !== 'follow') {
     return;
   }
 
