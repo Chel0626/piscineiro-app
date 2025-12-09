@@ -1,5 +1,5 @@
-const CACHE_NAME = 'piscineiro-app-v1';
-const RUNTIME_CACHE = 'piscineiro-runtime-v1';
+const CACHE_NAME = 'piscineiro-app-v2';
+const RUNTIME_CACHE = 'piscineiro-runtime-v2';
 
 // Assets que queremos cachear imediatamente (quando o SW instala)
 const PRECACHE_URLS = [
@@ -115,7 +115,13 @@ self.addEventListener('fetch', (event) => {
 
         // Fix: Evita erro "response served by service worker has redirections"
         if (response.redirected) {
-          return Response.redirect(response.url, 307);
+          // Retorna uma nova resposta "limpa" (redirected: false) com o conteúdo do destino
+          // Não cacheamos redirects para evitar inconsistências
+          return new Response(response.body, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: response.headers,
+          });
         }
 
         const responseClone = response.clone();
