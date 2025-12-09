@@ -1,7 +1,10 @@
 // CORREÇÃO: Importa o logger diretamente do pacote principal.
 import { logger } from "firebase-functions";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { initializeApp } from "firebase-admin/app";
 import { VertexAI, HarmCategory, HarmBlockThreshold, GenerateContentRequest } from "@google-cloud/vertexai";
+
+initializeApp();
 
 // Inicialize o Vertex AI
 const vertex_ai = new VertexAI({
@@ -96,3 +99,5 @@ export const gerarPlanoDeAcao = onCall(async (request) => {
     throw new HttpsError("internal", "Falha ao se comunicar com o serviço de IA.");
   }
 });
+
+export * from './cleanup';

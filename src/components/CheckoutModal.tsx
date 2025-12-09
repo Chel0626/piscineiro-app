@@ -2,7 +2,8 @@
 
 import { useState, useCallback } from 'react';
 import { collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { ref, uploadString, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '@/lib/firebase';
 import { toast } from 'sonner';
 import { useClientDetails } from '@/hooks/useClientDetails';
 import { useClientStock } from '@/hooks/useClientStock';
@@ -94,7 +95,7 @@ export function CheckoutModal({ clientId, isOpen, onClose, onSuccess }: Checkout
     }
   };
 
-  const handleSendWhatsApp = (data?: VisitFormData) => {
+  const handleSendWhatsApp = async (data?: VisitFormData) => {
     if (!client || (!visitData && !data)) return;
     
     const currentData = data || visitData;
@@ -152,9 +153,26 @@ export function CheckoutModal({ clientId, isOpen, onClose, onSuccess }: Checkout
 
     // Foto
     if (currentData.poolPhoto) {
-      // Se for base64, não enviamos no texto pois é muito grande
+      // Se for base64, fazemos upload para o Storage temporário
       if (currentData.poolPhoto.startsWith('data:image')) {
-        message += `\n📸 *Foto:* (Enviada separadamente)\n`;
+        try {
+          toast.info('Enviando foto para a nuvem...');
+          // Nome único para o arquivo
+          const fileName = `temp_reports/${Date.now()}_${client.id}.jpg`;
+          const storageRef = ref(storage, fileName);
+          
+          // Upload da string base64
+          await uploadString(storageRef, currentData.poolPhoto, 'data_url');
+          
+          // Obter URL pública
+          const photoUrl = await getDownloadURL(storageRef);
+          
+          message += `\n📸 *Foto:* ${photoUrl}\n`;
+          message += `_(Link válido por 24 horas)_`;
+        } catch (error) {
+          console.error('Erro upload:', error);
+          message += `\n📸 *Foto:* (Erro ao gerar link, envie manualmente)\n`;
+        }
       } else {
         message += `\n📸 *Foto da Piscina:* ${currentData.poolPhoto}\n`;
       }
@@ -167,24 +185,6 @@ export function CheckoutModal({ clientId, isOpen, onClose, onSuccess }: Checkout
     if (phoneNumber) {
       const whatsappUrl = `https://wa.me/55${phoneNumber}?text=${encodeURIComponent(message)}`;
       window.open(whatsappUrl, '_blank');
-      
-      // Se tiver foto base64, faz o download para o usuário enviar
-      if (currentData.poolPhoto && currentData.poolPhoto.startsWith('data:image')) {
-        try {
-          const link = document.createElement('a');
-          link.href = currentData.poolPhoto;
-          link.download = `piscina-${client.name.replace(/\s/g, '-')}-${new Date().getTime()}.jpg`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          
-          toast.success('Foto baixada! Anexe-a na conversa do WhatsApp.', {
-            duration: 5000
-          });
-        } catch (error) {
-          console.error('Erro ao baixar foto:', error);
-        }
-      }
     } else {
       toast.error('Número de telefone não encontrado');
     }

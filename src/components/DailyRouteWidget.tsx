@@ -226,6 +226,7 @@ export function DailyRouteWidget() {
   const [isExpanded, setIsExpanded] = useState(true);
   const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set());
   const [items, setItems] = useState<string[]>([]);
+  const isFirstLoad = useRef(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const lastLoadTimeRef = useRef<number>(0); // Cache timestamp usando ref
   const lastLoadDateRef = useRef<string>(''); // Data da última carga
@@ -358,8 +359,10 @@ export function DailyRouteWidget() {
       const orderDoc = await getDoc(orderRef);
 
       if (orderDoc.exists()) {
+        isFirstLoad.current = true;
         setItems(orderDoc.data().order);
       } else {
+        isFirstLoad.current = false;
         // Inicializar com ordem padrão
         const originalClients = clients.filter(client => {
           if (client.visitDays) {
@@ -386,6 +389,11 @@ export function DailyRouteWidget() {
   // Salvar ordem quando mudar
   useEffect(() => {
     const saveOrder = async () => {
+      if (isFirstLoad.current) {
+        isFirstLoad.current = false;
+        return;
+      }
+
       if (!auth.currentUser?.uid || items.length === 0) return;
 
       const today = format(new Date(), 'yyyy-MM-dd');

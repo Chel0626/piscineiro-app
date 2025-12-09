@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { collection, doc, setDoc, deleteDoc, onSnapshot, query, where, Timestamp } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -105,20 +105,20 @@ export function useTemporaryReschedule() {
   };
 
   // Verificar se um cliente está reagendado
-  const isClientRescheduled = (clientId: string): TemporaryReschedule | null => {
+  const isClientRescheduled = useCallback((clientId: string): TemporaryReschedule | null => {
     return reschedules.find(r => r.clientId === clientId) || null;
-  };
+  }, [reschedules]);
 
   // Obter clientes reagendados para um dia específico
-  const getClientsForDay = (day: string): TemporaryReschedule[] => {
+  const getClientsForDay = useCallback((day: string): TemporaryReschedule[] => {
     return reschedules.filter(r => r.newDay === day);
-  };
+  }, [reschedules]);
 
   // Verificar se cliente foi movido para fora do dia atual
-  const isClientMovedAway = (clientId: string, currentDay: string): boolean => {
+  const isClientMovedAway = useCallback((clientId: string, currentDay: string): boolean => {
     const reschedule = reschedules.find(r => r.clientId === clientId);
     return reschedule ? reschedule.originalDay === currentDay : false;
-  };
+  }, [reschedules]);
 
   return {
     reschedules,
