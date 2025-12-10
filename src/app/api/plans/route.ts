@@ -8,7 +8,7 @@ export async function GET() {
     const plansRef = db.collection('subscription_plans');
     const snapshot = await plansRef.where('active', '==', true).orderBy('order', 'asc').get();
     
-    const plans = snapshot.docs.map(doc => ({
+    const plans = snapshot.docs.map((doc: any) => ({
       id: doc.id,
       ...doc.data()
     }));

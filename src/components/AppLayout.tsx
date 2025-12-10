@@ -110,11 +110,19 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
     if (!hasActiveSubscription) {
       return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 overflow-y-auto">
-          <div className="flex justify-end p-4">
+          <div className="flex justify-end p-4 relative z-50">
              <Button 
                 variant="ghost" 
-                onClick={() => auth.signOut()}
-                className="text-red-500 hover:text-red-600"
+                onClick={async () => {
+                  try {
+                    await auth.signOut();
+                    window.location.href = '/login';
+                  } catch (error) {
+                    console.error('Erro ao sair:', error);
+                    toast.error('Erro ao sair. Tente novamente.');
+                  }
+                }}
+                className="text-red-500 hover:text-red-600 hover:bg-red-50"
               >
                 Sair
               </Button>
