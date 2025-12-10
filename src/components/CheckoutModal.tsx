@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { VisitForm, VisitFormData } from '@/components/VisitForm';
-import { ChevronDown, ChevronRight, ClipboardList, CheckCircle, MessageCircle, Settings } from 'lucide-react';
+import { ChevronDown, ChevronRight, ClipboardList, CheckCircle, MessageCircle } from 'lucide-react';
 
 interface CheckoutModalProps {
   clientId: string;
@@ -23,27 +23,13 @@ export function CheckoutModal({ clientId, isOpen, onClose, onSuccess }: Checkout
   const { client, isLoading } = useClientDetails(clientId);
   const { stock, updateStock, deductProductByName } = useClientStock(clientId);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({ visit: true });
   const [visitData, setVisitData] = useState<VisitFormData | null>(null);
-  const [mechanicalChecks, setMechanicalChecks] = useState({
-    drainOpen: false,
-    returnOpen: false,
-    filterValve: false,
-    drainClosed: false,
-    timerAutomatic: false,
-  });
 
   const toggleSection = (section: string) => {
     setOpenSections(prev => ({
       ...prev,
       [section]: !prev[section]
-    }));
-  };
-
-  const updateMechanicalCheck = (check: keyof typeof mechanicalChecks) => {
-    setMechanicalChecks(prev => ({
-      ...prev,
-      [check]: !prev[check]
     }));
   };
 
@@ -123,23 +109,6 @@ export function CheckoutModal({ clientId, isOpen, onClose, onSuccess }: Checkout
       message += `\n📦 *Produtos Utilizados:*\n${currentData.productsUsed}\n`;
     }
 
-    // Conferência Mecânica/Hidráulica
-    const mechanicalStatus = Object.values(mechanicalChecks).filter(Boolean).length;
-    if (mechanicalStatus > 0) {
-      message += `\n🔧 *Conferência Hidráulica (${mechanicalStatus}/5):*\n`;
-      const mechanicalItems = [
-        { key: 'drainOpen', label: 'Ralo aberto' },
-        { key: 'returnOpen', label: 'Retorno aberto' },
-        { key: 'filterValve', label: 'Válvula no filtrar' },
-        { key: 'drainClosed', label: 'Esgoto fechado' },
-        { key: 'timerAutomatic', label: 'Timer no automático' },
-      ];
-      mechanicalItems.forEach(item => {
-        const status = mechanicalChecks[item.key as keyof typeof mechanicalChecks] ? '✅' : '❌';
-        message += `${status} ${item.label}\n`;
-      });
-    }
-
     // Horário de saída
     if (currentData.departureTime) {
       message += `\n⏰ *Horário de Saída:* ${currentData.departureTime}\n`;
@@ -167,13 +136,6 @@ export function CheckoutModal({ clientId, isOpen, onClose, onSuccess }: Checkout
   const handleClose = () => {
     setVisitData(null);
     setOpenSections({});
-    setMechanicalChecks({
-      drainOpen: false,
-      returnOpen: false,
-      filterValve: false,
-      drainClosed: false,
-      timerAutomatic: false,
-    });
     onClose();
   };
 
@@ -243,93 +205,6 @@ export function CheckoutModal({ clientId, isOpen, onClose, onSuccess }: Checkout
                   isLoading={isSubmitting}
                   clientId={clientId}
                 />
-              </CardContent>
-            )}
-          </Card>
-
-          {/* Seção 2: Checkout Hidráulico */}
-          <Card className="border-orange-200 dark:border-orange-800">
-            <CardHeader 
-              className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-              onClick={() => toggleSection('mechanical')}
-            >
-              <CardTitle className="flex items-center justify-between text-lg">
-                <div className="flex items-center gap-2">
-                  <Settings className="h-5 w-5 text-orange-600" />
-                  Checkout Hidráulico
-                </div>
-                {openSections.mechanical ? (
-                  <ChevronDown className="h-5 w-5" />
-                ) : (
-                  <ChevronRight className="h-5 w-5" />
-                )}
-              </CardTitle>
-            </CardHeader>
-            {openSections.mechanical && (
-              <CardContent>
-                <div className="space-y-4">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    Marque os itens conforme a conferência mecânica:
-                  </p>
-                  
-                  <div className="space-y-3">
-                    <label className="flex items-center space-x-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={mechanicalChecks.drainOpen}
-                        onChange={() => updateMechanicalCheck('drainOpen')}
-                        className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
-                      />
-                      <span className="text-sm font-medium">Ralo aberto?</span>
-                    </label>
-                    
-                    <label className="flex items-center space-x-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={mechanicalChecks.returnOpen}
-                        onChange={() => updateMechanicalCheck('returnOpen')}
-                        className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
-                      />
-                      <span className="text-sm font-medium">Retorno aberto?</span>
-                    </label>
-                    
-                    <label className="flex items-center space-x-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={mechanicalChecks.filterValve}
-                        onChange={() => updateMechanicalCheck('filterValve')}
-                        className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
-                      />
-                      <span className="text-sm font-medium">Válvula no filtrar?</span>
-                    </label>
-                    
-                    <label className="flex items-center space-x-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={mechanicalChecks.drainClosed}
-                        onChange={() => updateMechanicalCheck('drainClosed')}
-                        className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
-                      />
-                      <span className="text-sm font-medium">Esgoto fechado?</span>
-                    </label>
-                    
-                    <label className="flex items-center space-x-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={mechanicalChecks.timerAutomatic}
-                        onChange={() => updateMechanicalCheck('timerAutomatic')}
-                        className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
-                      />
-                      <span className="text-sm font-medium">Timer no automático?</span>
-                    </label>
-                  </div>
-                  
-                  <div className="mt-4 p-3 bg-orange-50 dark:bg-orange-950/30 rounded-lg">
-                    <p className="text-xs text-orange-700 dark:text-orange-300">
-                      <strong>Checados:</strong> {Object.values(mechanicalChecks).filter(Boolean).length}/5 itens
-                    </p>
-                  </div>
-                </div>
               </CardContent>
             )}
           </Card>
