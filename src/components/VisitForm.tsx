@@ -267,7 +267,8 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
     if (data.productsUsed) message += `\n🧪 Produtos Utilizados:\n${data.productsUsed}\n`;
     if (data.productsToRequest) message += `\n📦 Solicitação de Produtos:\n${data.productsToRequest}\n`;
     if (data.description) message += `\n📝 Obs:\n${data.description}\n`;
-    message += `\n✅ Visita concluída!`;
+    message += `\n✅ Visita concluída!\n`;
+    message += `\n🏊 _Relatório enviado automaticamente via PiscineiroMestreAPP_\n`;
     
     const phoneNumber = client.phone.replace(/\D/g, '');
     window.open(`https://wa.me/55${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
