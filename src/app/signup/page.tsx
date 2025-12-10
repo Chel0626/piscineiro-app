@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
@@ -23,6 +24,11 @@ export default function SignupPage() {
     setError(null);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Enviar e-mail de verificação
+      await sendEmailVerification(userCredential.user);
+      toast.success('Conta criada! Verifique seu e-mail para ativar a conta.');
+
       const idToken = await userCredential.user.getIdToken();
       await fetch('/api/login', {
           method: 'POST',

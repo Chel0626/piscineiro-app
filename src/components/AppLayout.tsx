@@ -10,7 +10,9 @@ import { FillReminderProvider } from '@/context/FillReminderContext';
 import { FillReminderButton } from './FillReminderButton';
 import { AuthContextProvider, useAuth } from '@/context/AuthContext';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db, auth } from '@/lib/firebase';
+import { sendEmailVerification } from 'firebase/auth';
+import { toast } from 'sonner';
 
 function AppLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -44,6 +46,52 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
   }, [user, authLoading, isProtectedRoute, isSetupRoute, router]);
 
   if (isProtectedRoute) {
+    // Bloqueio para e-mail não verificado
+    if (user && !user.emailVerified) {
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+          <div className="max-w-md w-full bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg text-center">
+            <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Verifique seu E-mail</h2>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              Para acessar o sistema, é necessário verificar seu endereço de e-mail ({user.email}).
+              Por favor, verifique sua caixa de entrada (e spam).
+            </p>
+            <div className="flex flex-col gap-3">
+              <Button 
+                onClick={async () => {
+                  try {
+                    await sendEmailVerification(user);
+                    toast.success('E-mail de verificação reenviado!');
+                  } catch (error: any) {
+                    if (error.code === 'auth/too-many-requests') {
+                      toast.error('Muitas tentativas. Aguarde um pouco.');
+                    } else {
+                      toast.error('Erro ao reenviar e-mail.');
+                    }
+                  }
+                }}
+              >
+                Reenviar E-mail de Verificação
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => window.location.reload()}
+              >
+                Já verifiquei, atualizar página
+              </Button>
+              <Button 
+                variant="ghost" 
+                onClick={() => auth.signOut()}
+                className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+              >
+                Sair
+              </Button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <FillReminderProvider>
         <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 overflow-x-hidden">
