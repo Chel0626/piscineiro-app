@@ -1,8 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Check, Loader2, Star } from 'lucide-react';
@@ -29,16 +27,13 @@ export function PlanSelection() {
   useEffect(() => {
     const fetchPlans = async () => {
       try {
-        const plansRef = collection(db, 'subscription_plans');
-        const q = query(plansRef, where('active', '==', true), orderBy('order', 'asc'));
-        const snapshot = await getDocs(q);
-        
-        const plansData = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Plan[];
-        
-        setPlans(plansData);
+        const response = await fetch('/api/plans');
+        if (response.ok) {
+          const plansData = await response.json();
+          setPlans(plansData);
+        } else {
+          console.error('Erro ao buscar planos via API');
+        }
       } catch (error) {
         console.error('Erro ao buscar planos:', error);
       } finally {
