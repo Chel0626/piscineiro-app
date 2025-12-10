@@ -108,7 +108,7 @@ export function WeatherWidget() {
             </div>
 
             {/* Right Side: Next 4 Hours */}
-            <div className="flex gap-3 overflow-x-auto pb-2 sm:pb-0 w-full sm:w-auto justify-start sm:justify-end">
+            <div className="grid grid-cols-2 gap-2 w-full sm:w-auto">
               {weather.hourly.slice(0, 4).map((hour, index) => (
                 <div key={index} className="flex flex-col items-center gap-1 p-2 min-w-[60px] rounded-lg bg-gray-50 dark:bg-gray-700/50">
                   <span className="text-xs font-medium dark:text-gray-300">{hour.time}h</span>
