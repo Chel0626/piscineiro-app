@@ -256,9 +256,9 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
     }
     const data = form.getValues();
     let message = `🏊 Relatório da Manutenção - ${client.name}\n`;
-    message += `📅 Data: ${new Date().toLocaleDateString('pt-BR')}\n`;
+    message += `\n📅 Data: ${new Date().toLocaleDateString('pt-BR')}\n`;
     if (data.departureTime) message += `⏰ *Saída:* ${data.departureTime}\n`;
-    message += `💧 Parâmetros da Água:\n`;
+    message += `\n💧 Parâmetros da Água:\n`;
     if (data.ph) message += `• pH: ${data.ph} (Ideal: 7,2 - 7,6)\n`;
     if (data.cloro) message += `• Cloro: ${data.cloro} ppm (Ideal: 1 - 3 ppm)\n`;
     if (data.alcalinidade) message += `• Alcalinidade: ${data.alcalinidade} ppm (Ideal: 80 - 120 ppm)\n`;
