@@ -38,6 +38,43 @@ const WeatherIcon = ({ code, hour }: { code: number; hour: number }) => {
   return <Icon className={`h-6 w-6 sm:h-8 sm:w-8 ${iconColor}`} />;
 };
 
+const generateWeatherAdvice = (current: WeatherData['current'], hourly: WeatherData['hourly']): { message: string; type: 'warning' | 'info' | 'success' } => {
+  // Verificar chuva nas próximas horas
+  const rainCodes = [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82, 95, 96, 99];
+  const willRain = hourly.some(h => rainCodes.includes(h.weather_code));
+  
+  if (willRain) {
+    return {
+      message: "Chuva prevista para as próximas horas. Evite aplicar produtos químicos agora, pois podem ser diluídos ou perdidos.",
+      type: 'warning'
+    };
+  }
+
+  // Verificar calor excessivo
+  const maxTemp = Math.max(...hourly.map(h => h.temp), current.temp);
+  if (maxTemp >= 30) {
+    return {
+      message: "Calor intenso previsto! O cloro tende a evaporar mais rápido. Verifique o nível de cloro residual e considere um reforço.",
+      type: 'warning'
+    };
+  }
+
+  // Verificar frio
+  const minTemp = Math.min(...hourly.map(h => h.temp), current.temp);
+  if (minTemp < 18) {
+    return {
+      message: "Temperaturas mais baixas. O consumo de produtos químicos tende a ser menor hoje.",
+      type: 'info'
+    };
+  }
+
+  // Condições ideais
+  return {
+    message: "Condições climáticas favoráveis para realizar a manutenção e tratamento da piscina.",
+    type: 'success'
+  };
+};
+
 export function WeatherWidget() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -86,6 +123,7 @@ export function WeatherWidget() {
 
   const currentHour = new Date().getHours();
   const { description } = getWeatherInfo(weather.current.weather_code, currentHour);
+  const advice = generateWeatherAdvice(weather.current, weather.hourly);
 
   return (
     <Card className="dark:bg-gray-800 dark:border-gray-700">
@@ -115,6 +153,21 @@ export function WeatherWidget() {
             <p className="text-2xl sm:text-3xl font-bold dark:text-white">{weather.current.temp}°C</p>
             <p className="text-sm text-muted-foreground dark:text-gray-400 capitalize">{description}</p>
           </div>
+        </div>
+
+        {/* Advice Block */}
+        <div className={`p-3 rounded-lg text-sm ${
+          advice.type === 'warning' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 border border-orange-200 dark:border-orange-800' :
+          advice.type === 'info' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-800' :
+          'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border border-green-200 dark:border-green-800'
+        }`}>
+          <p className="font-medium flex items-center gap-2">
+            {advice.type === 'warning' ? <Zap className="h-4 w-4" /> : 
+             advice.type === 'info' ? <Cloud className="h-4 w-4" /> : 
+             <Sun className="h-4 w-4" />}
+            Dica do Piscineiro:
+          </p>
+          <p className="mt-1">{advice.message}</p>
         </div>
         
         {isExpanded && (
