@@ -37,7 +37,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Não autorizado: UID não encontrado no token.' }, { status: 401 });
     }
 
+    // Verificar limites do plano
+    const isSuperAdmin = uid === process.env.NEXT_PUBLIC_SUPER_ADMIN_ID;
+    
+    if (!isSuperAdmin) {
+      const subDoc = await db.collection('subscriptions').doc(uid).get();
+      const subData = subDoc.data();
+      
+      // Se não tiver assinatura ativa, bloqueia (embora o front já bloqueie, é bom garantir)
+      if (!subData || subData.status !== 'authorized') {
+         return NextResponse.json({ error: 'Assinatura inativa.' }, { status: 403 });
+      }
+
+      // Se for plano gratuito, verificar limite de 3 clientes
+      if (subData.planId === 'free') {
+        const clientsSnapshot = await db.collection('clients').where('userId', '==', uid).count().get();
+        const clientCount = clientsSnapshot.data().count;
+        
+        if (clientCount >= 3) {
+          return NextResponse.json({ 
+            error: 'Limite de clientes atingido no plano Gratuito. Faça upgrade para adicionar mais clientes.' 
+          }, { status: 403 });
+        }
+      }
+    }
+
     const clientData = await request.json();
+
     const docRef = await db.collection('clients').add({ ...clientData, userId: uid });
 
     return NextResponse.json({ success: true, clientId: docRef.id }, { status: 201 });

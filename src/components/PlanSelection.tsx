@@ -50,29 +50,41 @@ export function PlanSelection() {
   }, []);
 
   const handleSubscribe = async (plan: Plan) => {
-    if (plan.price === 0) {
-      // Lógica para plano gratuito
-      console.log('Assinar plano gratuito:', plan.name);
-      return;
-    }
-
     setProcessingPlanId(plan.id);
     try {
-      const response = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ planId: plan.id }),
-      });
-
-      const data = await response.json();
-
-      if (data.initPoint) {
-        window.location.href = data.initPoint;
+      if (plan.price === 0) {
+        // Ativar plano gratuito
+        const response = await fetch('/api/subscription/free', {
+          method: 'POST',
+        });
+        
+        if (response.ok) {
+          // Recarregar a página para atualizar o estado da assinatura
+          window.location.reload();
+          return;
+        } else {
+          const data = await response.json();
+          console.error('Erro ao ativar plano gratuito:', data.error);
+          alert('Erro ao ativar plano gratuito. Tente novamente.');
+        }
       } else {
-        console.error('Erro ao criar checkout:', data.error);
-        alert('Erro ao iniciar pagamento. Tente novamente.');
+        // Checkout Mercado Pago
+        const response = await fetch('/api/checkout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ planId: plan.id }),
+        });
+
+        const data = await response.json();
+
+        if (data.initPoint) {
+          window.location.href = data.initPoint;
+        } else {
+          console.error('Erro ao criar checkout:', data.error);
+          alert('Erro ao iniciar pagamento. Tente novamente.');
+        }
       }
     } catch (error) {
       console.error('Erro na requisição:', error);
@@ -81,6 +93,7 @@ export function PlanSelection() {
       setProcessingPlanId(null);
     }
   };
+
 
 
   if (loading) {
