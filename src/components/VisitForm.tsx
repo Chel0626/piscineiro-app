@@ -259,13 +259,13 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
     message += `📅 Data: ${new Date().toLocaleDateString('pt-BR')}\n`;
     if (data.departureTime) message += `⏰ *Saída:* ${data.departureTime}\n`;
     message += `💧 Parâmetros da Água:\n`;
-    if (data.ph) message += `• pH: ${data.ph}\n`;
-    if (data.cloro) message += `• Cloro: ${data.cloro} ppm\n`;
-    if (data.alcalinidade) message += `• Alcalinidade: ${data.alcalinidade} ppm\n`;
+    if (data.ph) message += `• pH: ${data.ph} (Ideal: 7,2 - 7,6)\n`;
+    if (data.cloro) message += `• Cloro: ${data.cloro} ppm (Ideal: 1 - 3 ppm)\n`;
+    if (data.alcalinidade) message += `• Alcalinidade: ${data.alcalinidade} ppm (Ideal: 80 - 120 ppm)\n`;
     if (data.waterCondition) message += `• Condição: ${data.waterCondition}\n`;
-    if (data.checklist) message += `\n🔄 Processos:\n${data.checklist}\n`;
-    if (data.productsUsed) message += `\n🧪 Produtos:\n${data.productsUsed}\n`;
-    if (data.productsToRequest) message += `\n📦 Solicitação:\n${data.productsToRequest}\n`;
+    if (data.checklist) message += `\n🔄 Processos Realizados:\n${data.checklist}\n`;
+    if (data.productsUsed) message += `\n🧪 Produtos Utilizados:\n${data.productsUsed}\n`;
+    if (data.productsToRequest) message += `\n📦 Solicitação de Produtos:\n${data.productsToRequest}\n`;
     if (data.description) message += `\n📝 Obs:\n${data.description}\n`;
     message += `\n✅ Visita concluída!`;
     
