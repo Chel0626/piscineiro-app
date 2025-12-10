@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -12,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { IMaskInput } from 'react-imask';
-import { Camera, User, Wrench, DollarSign, FileText, CheckCircle, MessageCircle } from 'lucide-react';
+import { User, Wrench, DollarSign, FileText, CheckCircle, MessageCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 interface ClienteAvulsoModalProps {
@@ -30,7 +29,6 @@ interface ClienteAvulsoData {
   cloro?: number;
   alcalinidade?: number;
   descricaoServico?: string;
-  fotoUrl?: string;
 }
 
 const tiposServico = [
@@ -61,13 +59,10 @@ export function ClienteAvulsoModal({ isOpen, onClose }: ClienteAvulsoModalProps)
     cloro: 1.0,
     alcalinidade: 80,
     descricaoServico: '',
-    fotoUrl: ''
   });
 
-  const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [servicoConcluido, setServicoConcluido] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleInputChange = (field: keyof ClienteAvulsoData, value: string | number) => {
     setClienteData(prev => ({ ...prev, [field]: value }));
@@ -77,33 +72,7 @@ export function ClienteAvulsoModal({ isOpen, onClose }: ClienteAvulsoModalProps)
     setRelatorioData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
 
-    setIsUploading(true);
-    try {
-      // Determina a extensão do arquivo baseada no tipo MIME
-      const fileExtension = file.type === 'image/png' ? 'png' : 
-                           file.type === 'image/gif' ? 'gif' :
-                           file.type === 'image/webp' ? 'webp' : 'jpg';
-      
-      // Cria um nome de arquivo seguro usando apenas timestamp e extensão
-      const timestamp = Date.now();
-      const safeFileName = `cliente_avulso_${timestamp}.${fileExtension}`;
-      
-      const storageRef = ref(storage, `clientes-avulsos/${safeFileName}`);
-      await uploadBytes(storageRef, file);
-      const downloadURL = await getDownloadURL(storageRef);
-      setRelatorioData(prev => ({ ...prev, fotoUrl: downloadURL }));
-      toast.success('Foto enviada com sucesso!');
-    } catch (error) {
-      console.error('Erro ao enviar foto:', error);
-      toast.error('Erro ao enviar foto.');
-    } finally {
-      setIsUploading(false);
-    }
-  };
 
   const handleFinalizarServico = async () => {
     if (!clienteData.nome || !clienteData.endereco || !clienteData.telefone || !clienteData.tipoServico || !clienteData.valor) {
@@ -183,7 +152,6 @@ export function ClienteAvulsoModal({ isOpen, onClose }: ClienteAvulsoModalProps)
       cloro: 1.0,
       alcalinidade: 80,
       descricaoServico: '',
-      fotoUrl: ''
     });
     setServicoConcluido(false);
     onClose();
@@ -350,42 +318,7 @@ export function ClienteAvulsoModal({ isOpen, onClose }: ClienteAvulsoModalProps)
                 />
               </div>
 
-              {/* Foto da Piscina */}
-              <div>
-                <Label>Foto da Piscina (opcional)</Label>
-                <div className="flex items-center gap-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploading}
-                    className="flex items-center gap-2"
-                  >
-                    <Camera className="h-4 w-4" />
-                    {isUploading ? 'Enviando...' : 'Selecionar Foto'}
-                  </Button>
-                  {relatorioData.fotoUrl && (
-                    <span className="text-sm text-green-600">✓ Foto enviada</span>
-                  )}
-                </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handlePhotoUpload}
-                  className="hidden"
-                />
-              </div>
 
-              {relatorioData.fotoUrl && (
-                <div className="mt-4">
-                  <img
-                    src={relatorioData.fotoUrl}
-                    alt="Foto da piscina"
-                    className="max-w-xs rounded-lg border"
-                  />
-                </div>
-              )}
             </div>
           </details>
 

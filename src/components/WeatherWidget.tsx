@@ -95,24 +95,24 @@ export function WeatherWidget() {
           </CardTitle>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+      <CardContent>
+        <div className="flex items-center gap-4 sm:gap-6 overflow-x-auto pb-2 sm:pb-0 scrollbar-hide">
             
             {/* Left Side: Current */}
-            <div className="flex items-center gap-4">
-                <WeatherIcon code={weather.current.weather_code} hour={currentHour} className="h-12 w-12" />
+            <div className="flex items-center gap-3 sm:gap-4 min-w-fit pr-4 sm:pr-6 border-r border-border">
+                <WeatherIcon code={weather.current.weather_code} hour={currentHour} className="h-10 w-10 sm:h-12 sm:w-12" />
                 <div>
-                    <p className="text-4xl font-bold dark:text-white">{weather.current.temp}°</p>
-                    <p className="text-sm text-muted-foreground dark:text-gray-400 capitalize">{description}</p>
+                    <p className="text-3xl sm:text-4xl font-bold dark:text-white">{weather.current.temp}°</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground dark:text-gray-400 capitalize whitespace-nowrap">{description}</p>
                 </div>
             </div>
 
-            {/* Right Side: Next 4 Hours */}
-            <div className="grid grid-cols-2 gap-2 w-full sm:w-auto">
-              {weather.hourly.slice(0, 4).map((hour, index) => (
-                <div key={index} className="flex flex-col items-center gap-1 p-2 min-w-[60px] rounded-lg bg-gray-50 dark:bg-gray-700/50">
-                  <span className="text-xs font-medium dark:text-gray-300">{hour.time}h</span>
-                  <WeatherIcon code={hour.weather_code} hour={hour.time} className="h-6 w-6" />
+            {/* Right Side: Next Hours */}
+            <div className="flex gap-4 sm:gap-6 flex-1">
+              {weather.hourly.slice(0, 5).map((hour, index) => (
+                <div key={index} className="flex flex-col items-center gap-1 min-w-[40px]">
+                  <span className="text-xs text-muted-foreground">{hour.time}h</span>
+                  <WeatherIcon code={hour.weather_code} hour={hour.time} className="h-5 w-5 sm:h-6 sm:w-6" />
                   <span className="text-sm font-bold dark:text-white">{hour.temp}°</span>
                 </div>
               ))}

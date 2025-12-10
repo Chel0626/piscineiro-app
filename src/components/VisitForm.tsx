@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useClientDetails } from '@/hooks/useClientDetails';
 import { toast } from 'sonner';
-import { Send, Camera, Clock, X, Upload, CheckSquare, ShoppingCart, Plus, Minus } from 'lucide-react';
+import { Send, Clock, X, Upload, CheckSquare, ShoppingCart, Plus, Minus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
@@ -40,7 +40,6 @@ const formSchema = z.object({
   productsToRequest: z.string().optional(), // Ex: "Pastilha de Cloro (5), Algicída (2)"
   description: z.string().optional(),
   departureTime: z.string().optional(),
-  poolPhoto: z.string().optional(),
 });
 
 type VisitFormData = z.infer<typeof formSchema>;
@@ -118,7 +117,6 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
       productsToRequest: initialData?.productsToRequest || '',
       description: initialData?.description || '',
       departureTime: initialData?.departureTime || getCurrentTime(),
-      poolPhoto: initialData?.poolPhoto || '',
     },
   });
 
@@ -360,62 +358,7 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
     form.setValue('productsUsed', selectedProds);
   };
 
-  // Estados para captura de foto
-  const [photoPreview, setPhotoPreview] = useState<string>('');
-  const [fullScreenPhoto, setFullScreenPhoto] = useState<string | null>(null);
-  const [isCapturing, setIsCapturing] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Função para iniciar captura de foto
-  const startCamera = async () => {
-    try {
-      setIsCapturing(true);
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          facingMode: 'environment' // Preferir câmera traseira
-        } 
-      });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-    } catch (error) {
-      console.error('Erro ao acessar câmera:', error);
-      toast.error('Não foi possível acessar a câmera');
-      setIsCapturing(false);
-    }
-  };
-
-  // Função para tirar foto (salva apenas localmente em base64)
-  const capturePhoto = async () => {
-    if (videoRef.current && canvasRef.current) {
-      const canvas = canvasRef.current;
-      const video = videoRef.current;
-      const context = canvas.getContext('2d');
-      
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      
-      context?.drawImage(video, 0, 0);
-      const photoDataUrl = canvas.toDataURL('image/jpeg', 0.8);
-      
-      // Salvar foto localmente (base64)
-      setPhotoPreview(photoDataUrl);
-      form.setValue('poolPhoto', photoDataUrl);
-      
-      toast.success('Foto capturada! Será incluída no relatório.');
-      stopCamera();
-    }
-  };
-
-  // Função para parar câmera
-  const stopCamera = () => {
-    if (videoRef.current?.srcObject) {
-      const stream = videoRef.current.srcObject as MediaStream;
-      stream.getTracks().forEach(track => track.stop());
-    }
-    setIsCapturing(false);
-  };
 
   // Funções para gerenciar checklist
   const toggleProcess = (process: string) => {
@@ -564,38 +507,12 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
     message += `\n\n✅ Serviço realizado com sucesso!`;
     message += `\n\n🏊 _Relatório enviado automaticamente via Piscineiro Mestre APP_`;
 
-    // Se tem foto, fazer download automático
-    if (data.poolPhoto && data.poolPhoto.startsWith('data:image')) {
-      try {
-        // Criar link de download da foto
-        const link = document.createElement('a');
-        link.href = data.poolPhoto;
-        link.download = `piscina-${client.name.replace(/\s/g, '-')}-${new Date().getTime()}.jpg`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        toast.success('Foto baixada! Envie-a pelo WhatsApp após o texto.', {
-          duration: 6000
-        });
-      } catch (error) {
-        console.error('Erro ao baixar foto:', error);
-      }
-    }
-
     // Abrir WhatsApp
     const phoneNumber = client.phone.replace(/\D/g, '');
     const url = `https://wa.me/55${phoneNumber}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
     
-    if (!data.poolPhoto) {
-      toast.success('WhatsApp aberto com o relatório!');
-    }
-  };
-
-  const removePhoto = () => {
-    setPhotoPreview('');
-    form.setValue('poolPhoto', '');
+    toast.success('WhatsApp aberto com o relatório!');
   };
 
   const handleFormSubmit = async (data: VisitFormData) => {
@@ -929,87 +846,7 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
               </FormItem>
             )}
           />
-        </div>        {/* Seção de Foto da Piscina */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Camera className="h-5 w-5" />
-              Foto da Piscina
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {!photoPreview && !isCapturing && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={startCamera}
-                className="w-full"
-              >
-                <Camera className="h-4 w-4 mr-2" />
-                Tirar Foto da Piscina
-              </Button>
-            )}
-
-            {isCapturing && (
-              <div className="space-y-4">
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  className="w-full max-w-md rounded-lg border mx-auto"
-                />
-                <div className="flex gap-2 justify-center">
-                  <Button
-                    type="button"
-                    onClick={capturePhoto}
-                  >
-                    Capturar
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={stopCamera}
-                  >
-                    Cancelar
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {photoPreview && (
-              <div className="space-y-4">
-                <div className="relative cursor-pointer" onClick={() => setFullScreenPhoto(photoPreview)}>
-                  <img
-                    src={photoPreview}
-                    alt="Foto da piscina"
-                    className="w-full max-w-md rounded-lg border mx-auto hover:opacity-90 transition-opacity"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removePhoto();
-                    }}
-                    className="absolute top-2 right-2"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                  <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
-                    Clique para ampliar
-                  </div>
-                </div>
-                <p className="text-sm text-center text-gray-600 dark:text-gray-400">
-                  Foto capturada! Será incluída no relatório do WhatsApp.
-                </p>
-              </div>
-            )}
-
-            {/* Canvas oculto para captura */}
-            <canvas ref={canvasRef} style={{ display: 'none' }} />
-          </CardContent>
-        </Card>
+        </div>
 
         <div className="mt-6 space-y-3">
           <Button 
@@ -1034,30 +871,7 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
       </form>
     </Form>
 
-    {/* Modal de foto em tela cheia */}
-    <Dialog open={!!fullScreenPhoto} onOpenChange={() => setFullScreenPhoto(null)}>
-      <DialogContent className="max-w-full max-h-full w-screen h-screen p-0 bg-black/95">
-        <DialogTitle className="sr-only">Visualização da Foto</DialogTitle>
-        <DialogDescription className="sr-only">
-          Visualização em tela cheia da foto da piscina
-        </DialogDescription>
-        <div className="relative w-full h-full flex items-center justify-center">
-          <img
-            src={fullScreenPhoto || ''}
-            alt="Foto da piscina em tela cheia"
-            className="max-w-full max-h-full object-contain"
-          />
-          <Button
-            variant="ghost"
-            size="lg"
-            onClick={() => setFullScreenPhoto(null)}
-            className="absolute top-4 right-4 text-white hover:bg-white/20"
-          >
-            <X className="h-8 w-8" />
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+
 
     {/* Dialog de Checklist com Checkboxes */}
     <Dialog open={showChecklistDialog} onOpenChange={setShowChecklistDialog}>

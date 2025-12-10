@@ -14,7 +14,6 @@ export interface ClienteAvulso {
   cloro?: number;
   alcalinidade?: number;
   descricaoServico?: string;
-  fotoUrl?: string;
   timestamp: Timestamp;
   mes: string; // YYYY-MM para faturamento
 }

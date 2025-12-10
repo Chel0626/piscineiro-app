@@ -2,8 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
-import { ref, uploadString, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
 import { useClientDetails } from '@/hooks/useClientDetails';
 import { useClientStock } from '@/hooks/useClientStock';
@@ -151,32 +150,7 @@ export function CheckoutModal({ clientId, isOpen, onClose, onSuccess }: Checkout
       message += `\n📋 *Observações:* ${currentData.description}\n`;
     }
 
-    // Foto
-    if (currentData.poolPhoto) {
-      // Se for base64, fazemos upload para o Storage temporário
-      if (currentData.poolPhoto.startsWith('data:image')) {
-        try {
-          toast.info('Enviando foto para a nuvem...');
-          // Nome único para o arquivo
-          const fileName = `temp_reports/${Date.now()}_${client.id}.jpg`;
-          const storageRef = ref(storage, fileName);
-          
-          // Upload da string base64
-          await uploadString(storageRef, currentData.poolPhoto, 'data_url');
-          
-          // Obter URL pública
-          const photoUrl = await getDownloadURL(storageRef);
-          
-          message += `\n📸 *Foto:* ${photoUrl}\n`;
-          message += `_(Link válido por 24 horas)_`;
-        } catch (error) {
-          console.error('Erro upload:', error);
-          message += `\n📸 *Foto:* (Erro ao gerar link, envie manualmente)\n`;
-        }
-      } else {
-        message += `\n📸 *Foto da Piscina:* ${currentData.poolPhoto}\n`;
-      }
-    }
+
 
     message += `\n\n✅ *Visita concluída com sucesso!*`;
     message += `\n\n🏊 _Relatório enviado automaticamente via Piscineiro Mestre APP_`;
