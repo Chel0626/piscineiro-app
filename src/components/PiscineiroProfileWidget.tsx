@@ -122,7 +122,8 @@ export function PiscineiroProfileWidget() {
     );
   }
 
-  const getExperienceColor = (experiencia: string) => {
+  const getExperienceColor = (experiencia: string | undefined) => {
+    if (!experiencia) return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
     switch (experiencia) {
       case 'iniciante': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
       case 'intermediario': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
@@ -132,7 +133,8 @@ export function PiscineiroProfileWidget() {
     }
   };
 
-  const getExperienceLabel = (experiencia: string) => {
+  const getExperienceLabel = (experiencia: string | undefined) => {
+    if (!experiencia) return 'Não informado';
     switch (experiencia) {
       case 'iniciante': return 'Iniciante';
       case 'intermediario': return 'Intermediário';
@@ -165,10 +167,14 @@ export function PiscineiroProfileWidget() {
                 <p className="font-medium text-white truncate">
                   {profile.nome} {profile.sobrenome}
                 </p>
-                <p className="text-sm text-gray-300 flex items-center gap-1 truncate">
-                  <MapPin className="w-3 h-3 flex-shrink-0" />
-                  <span className="truncate">{profile.cidade}, {profile.estado}</span>
-                </p>
+                {(profile.cidade || profile.estado) && (
+                  <p className="text-sm text-gray-300 flex items-center gap-1 truncate">
+                    <MapPin className="w-3 h-3 flex-shrink-0" />
+                    <span className="truncate">
+                      {[profile.cidade, profile.estado].filter(Boolean).join(', ')}
+                    </span>
+                  </p>
+                )}
               </div>
               {isOpen ? (
                 <ChevronUp className="w-4 h-4 text-gray-400" />
@@ -182,12 +188,14 @@ export function PiscineiroProfileWidget() {
         <CollapsibleContent>
           <CardContent className="p-4 pt-0 space-y-4 border-t border-gray-600 dark:border-gray-700">
             {/* Experiência */}
-            <div className="flex items-center gap-2">
-              <Briefcase className="w-4 h-4 text-gray-400" />
-              <Badge className={getExperienceColor(profile.experiencia)} variant="secondary">
-                {getExperienceLabel(profile.experiencia)}
-              </Badge>
-            </div>
+            {profile.experiencia && (
+              <div className="flex items-center gap-2">
+                <Briefcase className="w-4 h-4 text-gray-400" />
+                <Badge className={getExperienceColor(profile.experiencia)} variant="secondary">
+                  {getExperienceLabel(profile.experiencia)}
+                </Badge>
+              </div>
+            )}
 
             {/* Empresa */}
             {profile.empresa && (
