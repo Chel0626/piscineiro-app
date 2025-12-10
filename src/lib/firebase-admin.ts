@@ -1,9 +1,11 @@
 import { initializeApp, getApps, cert, ServiceAccount } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getStorage } from 'firebase-admin/storage';
+import { getFirestore } from 'firebase-admin/firestore';
 
 // Processa a chave privada para garantir que esteja no formato correto
 let privateKey = process.env.FIREBASE_PRIVATE_KEY || '';
+
 
 // Limpa qualquer tipo de aspas (simples ou duplas) no início e fim
 privateKey = privateKey.replace(/^["']|["']$/g, '');
@@ -77,6 +79,11 @@ export function getAdminStorage() {
   return getStorage();
 }
 
+export function getAdminFirestore() {
+  ensureInitialized();
+  return getFirestore();
+}
+
 // Exporta funções que inicializam sob demanda (Mantido para compatibilidade, mas prefira getAdminAuth)
 export const auth = (() => {
   try {
@@ -95,6 +102,16 @@ export const storage = (() => {
     return getStorage();
   } catch (e) {
     console.warn('[firebase-admin] Falha ao exportar storage (pode ser build time):', e);
+    return {} as any;
+  }
+})();
+
+export const db = (() => {
+  try {
+    if (getApps().length === 0) initializeFirebaseAdmin();
+    return getFirestore();
+  } catch (e) {
+    console.warn('[firebase-admin] Falha ao exportar db (pode ser build time):', e);
     return {} as any;
   }
 })();

@@ -52,15 +52,20 @@ export const USER_ROLES: Record<string, UserRole> = {
   'testador5@gmail.com': 'tester',
 };
 
-export function getUserRole(email: string): UserRole {
+export function getUserRole(email: string, uid?: string): UserRole {
+  if (uid && isSuperAdmin(uid)) return 'admin';
   return USER_ROLES[email] || 'user';
 }
 
-export function getUserPermissions(email: string): UserPermissions {
-  const role = getUserRole(email);
+export function getUserPermissions(email: string, uid?: string): UserPermissions {
+  const role = getUserRole(email, uid);
   return ROLE_PERMISSIONS[role];
 }
 
 export function isAuthorizedUser(email: string): boolean {
   return AUTHORIZED_TEST_EMAILS.includes(email);
+}
+
+export function isSuperAdmin(uid: string): boolean {
+  return uid === process.env.NEXT_PUBLIC_SUPER_ADMIN_ID;
 }

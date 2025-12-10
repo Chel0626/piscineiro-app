@@ -14,10 +14,14 @@ import { db, auth } from '@/lib/firebase';
 import { sendEmailVerification } from 'firebase/auth';
 import { toast } from 'sonner';
 
+import { useSubscription } from '@/hooks/useSubscription';
+import { PlanSelection } from '@/components/PlanSelection';
+
 function AppLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, authLoading } = useAuth();
+  const { hasActiveSubscription, isLoading: subscriptionLoading } = useSubscription();
   // Estado para controlar se a sidebar está aberta ou fechada em telas pequenas
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
@@ -88,6 +92,34 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
               </Button>
             </div>
           </div>
+        </div>
+      );
+    }
+
+    if (subscriptionLoading) {
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
+          <div className="flex flex-col items-center gap-4">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+            <p className="text-gray-500">Verificando assinatura...</p>
+          </div>
+        </div>
+      );
+    }
+
+    if (!hasActiveSubscription) {
+      return (
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 overflow-y-auto">
+          <div className="flex justify-end p-4">
+             <Button 
+                variant="ghost" 
+                onClick={() => auth.signOut()}
+                className="text-red-500 hover:text-red-600"
+              >
+                Sair
+              </Button>
+          </div>
+          <PlanSelection />
         </div>
       );
     }
