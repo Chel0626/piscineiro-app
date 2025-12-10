@@ -77,39 +77,41 @@ export function ParametersChart({ clientId, isOpen, onClose }: ParametersChartPr
                 <CardDescription>Ideal: 7.2 - 7.6</CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={200}>
-                  <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis domain={[6.5, 8.5]} />
-                    <Tooltip />
-                    <Line 
-                      type="monotone" 
-                      dataKey="pH" 
-                      stroke="#3b82f6" 
-                      strokeWidth={2}
-                      dot={{ fill: '#3b82f6', r: 4 }}
-                      connectNulls
-                    />
-                    {/* Linhas de referência ideal */}
-                    <Line 
-                      type="monotone" 
-                      dataKey={() => 7.2} 
-                      stroke="#22c55e" 
-                      strokeDasharray="5 5" 
-                      dot={false}
-                      name="Mínimo ideal"
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey={() => 7.6} 
-                      stroke="#22c55e" 
-                      strokeDasharray="5 5" 
-                      dot={false}
-                      name="Máximo ideal"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+                <div className="h-[200px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis domain={[6.5, 8.5]} />
+                      <Tooltip />
+                      <Line 
+                        type="monotone" 
+                        dataKey="pH" 
+                        stroke="#3b82f6" 
+                        strokeWidth={2}
+                        dot={{ fill: '#3b82f6', r: 4 }}
+                        connectNulls
+                      />
+                      {/* Linhas de referência ideal */}
+                      <Line 
+                        type="monotone" 
+                        dataKey={() => 7.2} 
+                        stroke="#22c55e" 
+                        strokeDasharray="5 5" 
+                        dot={false}
+                        name="Mínimo ideal"
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey={() => 7.6} 
+                        stroke="#22c55e" 
+                        strokeDasharray="5 5" 
+                        dot={false}
+                        name="Máximo ideal"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
               </CardContent>
             </Card>
 
@@ -120,39 +122,41 @@ export function ParametersChart({ clientId, isOpen, onClose }: ParametersChartPr
                 <CardDescription>Ideal: 1.0 - 3.0 ppm</CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={200}>
-                  <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis domain={[0, 5]} />
-                    <Tooltip />
-                    <Line 
-                      type="monotone" 
-                      dataKey="Cloro" 
-                      stroke="#06b6d4" 
-                      strokeWidth={2}
-                      dot={{ fill: '#06b6d4', r: 4 }}
-                      connectNulls
-                    />
-                    {/* Linhas de referência ideal */}
-                    <Line 
-                      type="monotone" 
-                      dataKey={() => 1.0} 
-                      stroke="#22c55e" 
-                      strokeDasharray="5 5" 
-                      dot={false}
-                      name="Mínimo ideal"
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey={() => 3.0} 
-                      stroke="#22c55e" 
-                      strokeDasharray="5 5" 
-                      dot={false}
-                      name="Máximo ideal"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+                <div className="h-[200px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis domain={[0, 5]} />
+                      <Tooltip />
+                      <Line 
+                        type="monotone" 
+                        dataKey="Cloro" 
+                        stroke="#06b6d4" 
+                        strokeWidth={2}
+                        dot={{ fill: '#06b6d4', r: 4 }}
+                        connectNulls
+                      />
+                      {/* Linhas de referência ideal */}
+                      <Line 
+                        type="monotone" 
+                        dataKey={() => 1.0} 
+                        stroke="#22c55e" 
+                        strokeDasharray="5 5" 
+                        dot={false}
+                        name="Mínimo ideal"
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey={() => 3.0} 
+                        stroke="#22c55e" 
+                        strokeDasharray="5 5" 
+                        dot={false}
+                        name="Máximo ideal"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
               </CardContent>
             </Card>
 
@@ -163,41 +167,41 @@ export function ParametersChart({ clientId, isOpen, onClose }: ParametersChartPr
                 <CardDescription>Ideal: 80 - 120 ppm (escala dividida por 10 para visualização)</CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={200}>
-                  <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis domain={[0, 20]} />
-                    <Tooltip 
-                      formatter={(value: number) => [value * 10, 'Alcalinidade (ppm)']}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="Alcalinidade" 
-                      stroke="#8b5cf6" 
-                      strokeWidth={2}
-                      dot={{ fill: '#8b5cf6', r: 4 }}
-                      connectNulls
-                    />
-                    {/* Linhas de referência ideal */}
-                    <Line 
-                      type="monotone" 
-                      dataKey={() => 8} 
-                      stroke="#22c55e" 
-                      strokeDasharray="5 5" 
-                      dot={false}
-                      name="Mínimo ideal (80)"
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey={() => 12} 
-                      stroke="#22c55e" 
-                      strokeDasharray="5 5" 
-                      dot={false}
-                      name="Máximo ideal (120)"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+                <div className="h-[200px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis domain={[0, 200]} />
+                      <Tooltip />
+                      <Line 
+                        type="monotone" 
+                        dataKey="Alcalinidade" 
+                        stroke="#8b5cf6" 
+                        strokeWidth={2}
+                        dot={{ fill: '#8b5cf6', r: 4 }}
+                        connectNulls
+                      />
+                      {/* Linhas de referência ideal */}
+                      <Line 
+                        type="monotone" 
+                        dataKey={() => 80} 
+                        stroke="#22c55e" 
+                        strokeDasharray="5 5" 
+                        dot={false}
+                        name="Mínimo ideal"
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey={() => 120} 
+                        stroke="#22c55e" 
+                        strokeDasharray="5 5" 
+                        dot={false}
+                        name="Máximo ideal"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
               </CardContent>
             </Card>
 
