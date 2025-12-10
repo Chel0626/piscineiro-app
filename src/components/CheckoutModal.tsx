@@ -92,9 +92,9 @@ export function CheckoutModal({ clientId, isOpen, onClose, onSuccess }: Checkout
 
     // Parâmetros da água
     const params = [];
-    if (currentData.ph) params.push(`pH: ${currentData.ph}`);
-    if (currentData.cloro) params.push(`Cloro: ${currentData.cloro} ppm`);
-    if (currentData.alcalinidade) params.push(`Alcalinidade: ${currentData.alcalinidade} ppm`);
+    if (currentData.ph) params.push(`pH: ${currentData.ph} (Ideal: 7,2 - 7,6)`);
+    if (currentData.cloro) params.push(`Cloro: ${currentData.cloro} ppm (Ideal: 1 - 3 ppm`);
+    if (currentData.alcalinidade) params.push(`Alcalinidade: ${currentData.alcalinidade} ppm (Ideal: 80 - 120 ppm`);
     if (params.length > 0) {
       message += `💧 *Parâmetros:* ${params.join(' | ')}\n`;
     }
