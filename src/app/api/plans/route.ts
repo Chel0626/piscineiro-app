@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/firebase-admin';
+import { getAdminFirestore } from '@/lib/firebase-admin';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
+    const db = getAdminFirestore();
     const plansRef = db.collection('subscription_plans');
     const snapshot = await plansRef.where('active', '==', true).orderBy('order', 'asc').get();
     
@@ -16,6 +17,7 @@ export async function GET() {
     return NextResponse.json(plans);
   } catch (error) {
     console.error('Erro ao buscar planos:', error);
-    return NextResponse.json({ error: 'Erro ao buscar planos' }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
