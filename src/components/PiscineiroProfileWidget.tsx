@@ -167,6 +167,7 @@ export function PiscineiroProfileWidget() {
                 <p className="font-medium text-white truncate">
                   {profile.nome} {profile.sobrenome}
                 </p>
+                {/* 
                 {(profile.cidade || profile.estado) && (
                   <p className="text-sm text-gray-300 flex items-center gap-1 truncate">
                     <MapPin className="w-3 h-3 flex-shrink-0" />
@@ -175,6 +176,7 @@ export function PiscineiroProfileWidget() {
                     </span>
                   </p>
                 )}
+                */}
               </div>
               {isOpen ? (
                 <ChevronUp className="w-4 h-4 text-gray-400" />
@@ -188,6 +190,7 @@ export function PiscineiroProfileWidget() {
         <CollapsibleContent>
           <CardContent className="p-4 pt-0 space-y-4 border-t border-gray-600 dark:border-gray-700">
             {/* Experiência */}
+            {/* 
             {profile.experiencia && (
               <div className="flex items-center gap-2">
                 <Briefcase className="w-4 h-4 text-gray-400" />
@@ -196,16 +199,20 @@ export function PiscineiroProfileWidget() {
                 </Badge>
               </div>
             )}
+            */}
 
             {/* Empresa */}
+            {/* 
             {profile.empresa && (
               <div className="flex items-center gap-2">
                 <Star className="w-4 h-4 text-gray-400" />
                 <span className="text-sm text-gray-300">{profile.empresa}</span>
               </div>
             )}
+            */}
 
             {/* Biografia */}
+            {/* 
             {profile.biografia && (
               <div className="text-sm text-gray-300 leading-relaxed">
                 {profile.biografia.length > 100 
@@ -214,8 +221,10 @@ export function PiscineiroProfileWidget() {
                 }
               </div>
             )}
+            */}
 
             {/* Especialidades */}
+            {/* 
             {profile.especialidades && profile.especialidades.length > 0 && (
               <div>
                 <p className="text-xs text-gray-400 mb-2">Especialidades:</p>
@@ -240,8 +249,10 @@ export function PiscineiroProfileWidget() {
                 </div>
               </div>
             )}
+            */}
 
             {/* Status */}
+            {/* 
             <div className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full ${profile.disponivel ? 'bg-green-500' : 'bg-gray-500'}`} />
               <span className="text-sm text-gray-300">
@@ -253,8 +264,10 @@ export function PiscineiroProfileWidget() {
                 </Badge>
               )}
             </div>
+            */}
 
             {/* Links */}
+            {/* 
             <div className="flex flex-col gap-2">
               {profile.site && (
                 <a 
@@ -279,6 +292,7 @@ export function PiscineiroProfileWidget() {
                 </a>
               )}
             </div>
+            */}
 
             {/* Botão de editar */}
             <div className="pt-2 border-t border-gray-600 dark:border-gray-700">
