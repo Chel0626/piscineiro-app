@@ -85,14 +85,6 @@ export default function PerfilPage() {
           </Button>
         </div>
         
-        <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Editar Perfil Profissional
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Atualize suas informações profissionais
-          </p>
-        </div>
 
         <PiscineiroSetupForm 
           onComplete={handleProfileUpdate}

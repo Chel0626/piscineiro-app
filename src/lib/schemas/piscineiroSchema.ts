@@ -8,14 +8,14 @@ export const piscineiroProfileSchema = z.object({
   telefone: z.string().min(10, 'Telefone deve ter pelo menos 10 dígitos'),
   
   // Localização
-  cidade: z.string().min(2, 'Cidade é obrigatória'),
-  estado: z.string().min(2, 'Estado é obrigatório'),
-  cep: z.string().regex(/^\d{5}-?\d{3}$/, 'CEP inválido'),
+  cidade: z.string().min(2, 'Cidade é obrigatória').optional(),
+  estado: z.string().min(2, 'Estado é obrigatório').optional(),
+  cep: z.string().regex(/^\d{5}-?\d{3}$/, 'CEP inválido').optional(),
   endereco: z.string().optional(),
   
   // Informações profissionais
   empresa: z.string().optional(),
-  experiencia: z.enum(['iniciante', 'intermediario', 'avancado', 'expert']),
+  experiencia: z.enum(['iniciante', 'intermediario', 'avancado', 'expert']).optional(),
   especialidades: z.array(z.string()).optional(),
   certificacoes: z.array(z.string()).optional(),
   
