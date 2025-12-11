@@ -203,7 +203,19 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
               <FormItem>
                 <FormLabel className="text-sm font-medium">Carga de areia (kg) <span className="text-gray-500">(Opcional)</span></FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="Ex: 50" {...field} onChange={e => field.onChange(Number(e.target.value))} className="text-sm" />
+                  <Input 
+                    type="number" 
+                    placeholder="Ex: 50" 
+                    {...field} 
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      // Se estiver vazio, passa undefined para o formulário
+                      // Se tiver valor, converte para número
+                      field.onChange(val === '' ? undefined : Number(val));
+                    }}
+                    value={field.value ?? ''} // Se for undefined/null, mostra string vazia
+                    className="text-sm" 
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -214,7 +226,7 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
             name="lastSandChange"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-sm font-medium">Data da última troca de areia</FormLabel>
+                <FormLabel className="text-sm font-medium">Data da última troca de areia <span className="text-gray-500">(Opcional)</span></FormLabel>
                 <FormControl>
                   <Input type="date" {...field} className="text-sm" />
                 </FormControl>
@@ -227,7 +239,7 @@ export function ClientForm({ form, onSubmit }: ClientFormProps) {
             name="nextSandChange"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-sm font-medium">Data prevista da próxima troca</FormLabel>
+                <FormLabel className="text-sm font-medium">Data prevista da próxima troca <span className="text-gray-500">(Opcional)</span></FormLabel>
                 <FormControl>
                   <Input type="date" {...field} className="text-sm" />
                 </FormControl>

@@ -32,10 +32,12 @@ export const clientFormSchema = z.object({
   })).optional(),
 
   // Campos do filtro (opcionais - nem toda piscina tem filtro)
-  filterModel: z.string().optional(),
+  filterModel: z.string().optional().or(z.literal('')),
+  // Simplificando ao máximo: aceita number ou undefined.
+  // A conversão deve ser feita no componente (onChange) antes de chegar aqui.
   filterSandKg: z.number().optional(),
-  lastSandChange: z.string().optional(),
-  nextSandChange: z.string().optional(),
+  lastSandChange: z.string().optional().or(z.literal('')),
+  nextSandChange: z.string().optional().or(z.literal('')),
   
   // Data de início do contrato
   contractStartDate: z.string().optional(),

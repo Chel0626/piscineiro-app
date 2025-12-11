@@ -38,6 +38,7 @@ const defaultFormValues: Partial<ClientFormData> = {
     phone: '',
     visitFrequency: 'weekly',
     visitDays: [],
+    filterSandKg: undefined, // Garante que comece como undefined
 };
 
 export function useClients(): UseClientsReturn {
