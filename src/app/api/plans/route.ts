@@ -1,24 +1,17 @@
 import { NextResponse } from 'next/server';
-import { getAdminFirestore } from '@/lib/firebase-admin';
+import { PLANS } from '@/config/plans';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const db = getAdminFirestore();
-    const plansRef = db.collection('subscription_plans');
-    // Removemos o orderBy da query para evitar a necessidade de criar um índice composto no Firestore
-    // Como são poucos planos, podemos ordenar em memória sem impacto na performance
-    const snapshot = await plansRef.where('active', '==', true).get();
-    
-    const plans = snapshot.docs
-      .map((doc: any) => ({
-        id: doc.id,
-        ...doc.data()
-      }))
-      .sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
+    // Retorna os planos definidos estaticamente no código (Vercel)
+    // Isso evita leituras no Firestore e problemas de permissão/índices
+    const activePlans = PLANS
+      .filter(plan => plan.active)
+      .sort((a, b) => a.order - b.order);
 
-    return NextResponse.json(plans);
+    return NextResponse.json(activePlans);
   } catch (error) {
     console.error('Erro ao buscar planos:', error);
     const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
