@@ -31,7 +31,7 @@ export const PLANS: Plan[] = [
     id: 'pro_monthly',
     name: 'Profissional Mensal',
     description: 'Para piscineiros em crescimento',
-    price: 49.90,
+    price: 29.90,
     interval: 'month',
     features: [
       'Clientes ilimitados',
@@ -48,8 +48,8 @@ export const PLANS: Plan[] = [
   {
     id: 'pro_yearly',
     name: 'Profissional Anual',
-    description: 'Economize 20% com o plano anual',
-    price: 479.00, // Equivalente a ~39,90/mês
+    description: 'Economize com o plano anual (R$ 19,90/mês)',
+    price: 238.80,
     interval: 'year',
     features: [
       'Tudo do plano mensal',
