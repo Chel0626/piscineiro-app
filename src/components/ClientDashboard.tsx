@@ -45,6 +45,7 @@ export type Financial = {
   current_value: number;
   frequency: 'weekly' | 'biweekly';
   visit_day: string;
+  visit_days?: string[]; // Adicionado suporte a múltiplos dias
   active_since: string;
   price_history: PriceHistory[];
   reajusteHistory?: any[];
@@ -172,9 +173,15 @@ export const ClientDashboard: React.FC<{ client: ClientData }> = ({ client }) =>
     if (!client.id) return;
     try {
       const clientRef = doc(db, 'clients', client.id);
+      
+      // Se tiver visit_days (array), usa ele. Se não, usa visit_day (string) como array de 1 item
+      const visitDaysToSave = (updatedFinancial.visit_days && updatedFinancial.visit_days.length > 0)
+        ? updatedFinancial.visit_days
+        : [updatedFinancial.visit_day];
+
       await updateDoc(clientRef, {
         visitFrequency: updatedFinancial.frequency,
-        visitDays: [updatedFinancial.visit_day]
+        visitDays: visitDaysToSave
       });
 
       setClientData(prev => ({

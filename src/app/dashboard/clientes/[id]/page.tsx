@@ -54,6 +54,7 @@ export default function ClienteDetailPage() {
           current_value: client.serviceValue || 0,
           frequency: client.visitFrequency || 'weekly',
           visit_day: client.visitDays?.[0] || '',
+          visit_days: client.visitDays || [],
           active_since: (client.reajusteHistory && client.reajusteHistory.length > 0) 
             ? client.reajusteHistory[client.reajusteHistory.length - 1].date 
             : (client.contractStartDate || ''),

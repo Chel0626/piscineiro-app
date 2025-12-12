@@ -354,30 +354,40 @@ export function DailyRouteWidget() {
     const loadOrder = async () => {
       if (!auth.currentUser?.uid) return;
 
+      // Calcular clientes que deveriam estar no roteiro de hoje
+      const originalClients = clients.filter(client => {
+        if (client.visitDays) {
+          return client.visitDays.includes(getCurrentDayName());
+        }
+        const legacyClient = client as ClientFormData & { visitDay?: string };
+        return legacyClient.visitDay === getCurrentDayName();
+      }).filter(client => !isClientMovedAway(client.id, getCurrentDayName()));
+
+      const rescheduledForToday = getClientsForDay(getCurrentDayName());
+      const currentDayClientIds = [
+        ...originalClients.map(c => c.id),
+        ...rescheduledForToday.map(r => r.clientId)
+      ];
+
       const today = format(new Date(), 'yyyy-MM-dd');
       const orderRef = doc(db, `users/${auth.currentUser.uid}/clientOrders/${today}`);
       const orderDoc = await getDoc(orderRef);
 
       if (orderDoc.exists()) {
         isFirstLoad.current = true;
-        setItems(orderDoc.data().order);
+        const savedOrder = orderDoc.data().order as string[];
+        
+        // Mesclar ordem salva com clientes atuais
+        // 1. Manter a ordem salva, mas remover IDs que não deveriam mais estar aqui (ex: movidos para outro dia depois de salvar)
+        const validSavedOrder = savedOrder.filter(id => currentDayClientIds.includes(id));
+        
+        // 2. Adicionar novos clientes que apareceram depois (ex: temporários adicionados agora)
+        const newClients = currentDayClientIds.filter(id => !savedOrder.includes(id));
+        
+        setItems([...validSavedOrder, ...newClients]);
       } else {
         isFirstLoad.current = false;
-        // Inicializar com ordem padrão
-        const originalClients = clients.filter(client => {
-          if (client.visitDays) {
-            return client.visitDays.includes(getCurrentDayName());
-          }
-          const legacyClient = client as ClientFormData & { visitDay?: string };
-          return legacyClient.visitDay === getCurrentDayName();
-        }).filter(client => !isClientMovedAway(client.id, getCurrentDayName()));
-
-        const rescheduledForToday = getClientsForDay(getCurrentDayName());
-        const allIds = [
-          ...originalClients.map(c => c.id),
-          ...rescheduledForToday.map(r => r.clientId)
-        ];
-        setItems(allIds);
+        setItems(currentDayClientIds);
       }
     };
 

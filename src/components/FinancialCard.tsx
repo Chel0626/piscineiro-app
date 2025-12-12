@@ -42,20 +42,49 @@ export const FinancialCard: React.FC<FinancialCardProps> = ({ financial, onAdjus
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Dia da Visita</label>
-            <select
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
-              value={editData.visit_day}
-              onChange={(e) => setEditData({ ...editData, visit_day: e.target.value })}
-            >
-              <option value="">Selecione...</option>
-              <option value="Segunda-feira">Segunda-feira</option>
-              <option value="Terça-feira">Terça-feira</option>
-              <option value="Quarta-feira">Quarta-feira</option>
-              <option value="Quinta-feira">Quinta-feira</option>
-              <option value="Sexta-feira">Sexta-feira</option>
-              <option value="Sábado">Sábado</option>
-            </select>
+            <label className="block text-sm font-medium text-gray-700">Dia(s) da Visita</label>
+            <div className="mt-1 space-y-2">
+              {['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'].map((day) => (
+                <div key={day} className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id={`day-${day}`}
+                    checked={editData.visit_days?.includes(day) || editData.visit_day === day}
+                    onChange={(e) => {
+                      const currentDays = editData.visit_days || (editData.visit_day ? [editData.visit_day] : []);
+                      let newDays;
+                      if (e.target.checked) {
+                        newDays = [...currentDays, day];
+                      } else {
+                        newDays = currentDays.filter(d => d !== day);
+                      }
+                      
+                      // Limitar seleção baseado na frequência
+                      if (editData.frequency === 'weekly' && newDays.length > 1) {
+                        // Se for semanal, mantém apenas o último selecionado
+                        newDays = [day];
+                      } else if (editData.frequency === 'biweekly' && newDays.length > 2) {
+                         // Se for quinzenal (2x), não deixa selecionar mais que 2
+                         return; 
+                      }
+
+                      setEditData({ 
+                        ...editData, 
+                        visit_days: newDays,
+                        visit_day: newDays[0] || '' // Mantém compatibilidade
+                      });
+                    }}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor={`day-${day}`} className="ml-2 block text-sm text-gray-900">
+                    {day}
+                  </label>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              {editData.frequency === 'weekly' ? 'Selecione 1 dia.' : 'Selecione até 2 dias.'}
+            </p>
           </div>
           <div className="flex justify-end gap-2 mt-4">
             <button
@@ -90,7 +119,7 @@ export const FinancialCard: React.FC<FinancialCardProps> = ({ financial, onAdjus
       <div className="font-semibold mb-2">Contrato Atual</div>
       <div className="text-2xl font-bold text-green-700">R$ {financial.current_value.toFixed(2)}</div>
       <div>Frequência: {financial.frequency === 'weekly' ? '1x por semana' : '2x por semana'}</div>
-      <div>Dia da visita: {financial.visit_day}</div>
+      <div>Dia(s) da visita: {financial.visit_days && financial.visit_days.length > 0 ? financial.visit_days.join(', ') : financial.visit_day}</div>
       <div>Vigente desde: {financial.active_since}</div>
       <button className="mt-2 px-3 py-1 bg-yellow-600 text-white rounded" onClick={onAdjustContract}>
         Reajustar Valor
