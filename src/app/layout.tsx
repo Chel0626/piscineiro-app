@@ -6,6 +6,7 @@ import { AppLayout } from '@/components/AppLayout';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
 import { ChunkLoadErrorHandler } from '@/components/ChunkLoadErrorHandler';
+import { SplashScreen } from '@/components/SplashScreen';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -92,6 +93,7 @@ export default function RootLayout({
         <meta name="msapplication-config" content="/browserconfig.xml" />
       </head>
       <body className={inter.className}>
+        <SplashScreen />
         <ChunkLoadErrorHandler />
         <ServiceWorkerRegistration />
         <ThemeProvider
