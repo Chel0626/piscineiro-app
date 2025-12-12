@@ -52,9 +52,10 @@ interface VisitFormProps {
   isLoading: boolean;
   clientId: string;
   initialData?: Partial<VisitFormData>;
+  onFinish?: () => void;
 }
 
-export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitFormProps) {
+export function VisitForm({ onSubmit, isLoading, clientId, initialData, onFinish }: VisitFormProps) {
   const { client } = useClientDetails(clientId);
   const [step, setStep] = useState(1);
   
@@ -272,6 +273,10 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
     
     const phoneNumber = client.phone.replace(/\D/g, '');
     window.open(`https://wa.me/55${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
+    
+    if (onFinish) {
+      onFinish();
+    }
   };
 
   const handleNext = () => {
@@ -543,6 +548,11 @@ export function VisitForm({ onSubmit, isLoading, clientId, initialData }: VisitF
               <Button onClick={handleSendReportWhatsApp} size="lg" className="w-full max-w-xs bg-green-600 hover:bg-green-700">
                 <Send className="mr-2 h-5 w-5" /> Enviar Relatório WhatsApp
               </Button>
+              {onFinish && (
+                <Button variant="ghost" onClick={onFinish} className="text-sm text-gray-500">
+                  Fechar sem enviar
+                </Button>
+              )}
             </CardContent>
           </Card>
         )}

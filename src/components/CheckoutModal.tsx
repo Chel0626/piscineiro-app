@@ -67,69 +67,16 @@ export function CheckoutModal({ clientId, isOpen, onClose, onSuccess }: Checkout
       }
       
       // Fechar modal após sucesso
-      setTimeout(() => {
-        // Enviar WhatsApp automaticamente se configurado
-        handleSendWhatsApp(data);
-        onClose();
-      }, 1500);
+      // setTimeout(() => {
+      //   // Enviar WhatsApp automaticamente se configurado
+      //   handleSendWhatsApp(data);
+      //   onClose();
+      // }, 1500);
     } catch (error) {
       console.error('Erro ao salvar visita:', error);
       toast.error('Não foi possível realizar o check-out.');
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const handleSendWhatsApp = async (data?: VisitFormData) => {
-    if (!client || (!visitData && !data)) return;
-    
-    const currentData = data || visitData;
-    if (!currentData) return;
-
-    let message = `🏊‍♂️ *Relatório de Visita - ${client.name}*\n\n`;
-    message += `📅 Data: ${new Date().toLocaleDateString('pt-BR')}\n`;
-    message += `📍 Endereço: ${client.address}\n\n`;
-
-    // Parâmetros da água
-    const params = [];
-    if (currentData.ph) params.push(`pH: ${currentData.ph} (Ideal: 7,2 - 7,6)`);
-    if (currentData.cloro) params.push(`Cloro: ${currentData.cloro} ppm (Ideal: 1 - 3 ppm`);
-    if (currentData.alcalinidade) params.push(`Alcalinidade: ${currentData.alcalinidade} ppm (Ideal: 80 - 120 ppm`);
-    if (params.length > 0) {
-      message += `💧 *Parâmetros:* ${params.join(' | ')}\n`;
-    }
-
-    // Condição da água
-    if (currentData.waterCondition) {
-      message += `🌊 *Condição da Água:* ${currentData.waterCondition}\n`;
-    }
-
-    // Produtos utilizados
-    if (currentData.productsUsed && currentData.productsUsed.trim()) {
-      message += `\n📦 *Produtos Utilizados:*\n${currentData.productsUsed}\n`;
-    }
-
-    // Horário de saída
-    if (currentData.departureTime) {
-      message += `\n⏰ *Horário de Saída:* ${currentData.departureTime}\n`;
-    }
-
-    // Observações
-    if (currentData.description && currentData.description.trim()) {
-      message += `\n📋 *Observações:* ${currentData.description}\n`;
-    }
-
-
-
-    message += `\n\n✅ *Visita concluída com sucesso!*`;
-    message += `\n\n🏊 _Relatório enviado automaticamente via Piscineiro Mestre APP_`;
-
-    const phoneNumber = client.phone?.replace(/\D/g, '');
-    if (phoneNumber) {
-      const whatsappUrl = `https://wa.me/55${phoneNumber}?text=${encodeURIComponent(message)}`;
-      window.open(whatsappUrl, '_blank');
-    } else {
-      toast.error('Número de telefone não encontrado');
     }
   };
 
@@ -204,43 +151,12 @@ export function CheckoutModal({ clientId, isOpen, onClose, onSuccess }: Checkout
                   onSubmit={handleVisitSubmit}
                   isLoading={isSubmitting}
                   clientId={clientId}
+                  onFinish={handleClose}
                 />
               </CardContent>
             )}
           </Card>
 
-          {/* Ações de Finalização */}
-          {visitData && (
-            <Card className="border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/30">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg text-orange-700 dark:text-orange-300">
-                  <CheckCircle className="h-5 w-5" />
-                  Check-out Concluído
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <p className="text-sm text-orange-600 dark:text-orange-400">
-                  Visita registrada com sucesso! Você pode enviar o relatório para o cliente.
-                </p>
-                <div className="flex gap-3">
-                  <Button 
-                    onClick={() => handleSendWhatsApp()}
-                    className="flex items-center gap-2"
-                    variant="default"
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                    Enviar Relatório via WhatsApp
-                  </Button>
-                  <Button 
-                    onClick={handleClose}
-                    variant="outline"
-                  >
-                    Fechar
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </div>
       </DialogContent>
     </Dialog>
