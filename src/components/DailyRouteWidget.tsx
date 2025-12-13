@@ -92,14 +92,20 @@ function SortableClientCard({
           : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
       }`}
     >
-      {/* Cabeçalho clicável - toda área é clicável para expandir/recolher */}
+      {/* Cabeçalho clicável - toda área é clicável para abrir o checkout, exceto o chevron */}
       <div
-        onClick={onToggleExpand}
+        onClick={onCheckout}
         className="flex items-center justify-between gap-3 p-4 cursor-pointer hover:bg-white/50 dark:hover:bg-gray-700/50 active:bg-white/80 dark:active:bg-gray-700/80 transition-colors"
       >
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          {/* Indicador visual circular com seta */}
-          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-white dark:bg-gray-700 shadow-sm shrink-0">
+          {/* Indicador visual circular com seta - clique aqui para expandir */}
+          <div 
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleExpand();
+            }}
+            className="flex items-center justify-center w-10 h-10 rounded-full bg-white dark:bg-gray-700 shadow-sm shrink-0 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+          >
             {isExpanded ? (
               <ChevronUp className="h-6 w-6 text-gray-600 dark:text-gray-300" />
             ) : (
