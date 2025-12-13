@@ -44,7 +44,8 @@ export function LowStockNotificationWidget() {
       const uid = auth.currentUser.uid; // Garantir que não é null
       const stockPromises = clients.map(async (client) => {
         try {
-          const stockRef = collection(db, `users/${uid}/clients/${client.id}/stock`);
+          // CORREÇÃO: Usar a coleção 'products' dentro de 'clients'
+          const stockRef = collection(db, `clients/${client.id}/products`);
           const snapshot = await getDocs(stockRef);
           
           const clientAlerts: LowStockAlert[] = [];
@@ -56,7 +57,7 @@ export function LowStockNotificationWidget() {
               clientAlerts.push({
                 clientId: client.id,
                 clientName: client.name,
-                productName: data.productName || doc.id,
+                productName: data.name || data.productName || doc.id, // Suporte a ambos os campos
                 quantity: data.quantity || 0,
                 minQuantity,
               });

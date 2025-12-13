@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { doc, updateDoc, onSnapshot } from 'firebase/firestore';
+import { collection, doc, updateDoc, onSnapshot, addDoc, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 export interface StockItem {
-  productId: string;
-  productName: string;
+  id: string;
+  name: string;
   quantity: number;
-  unit: string;
+  unit?: string;
   minQuantity?: number;
 }
 
@@ -23,17 +23,24 @@ export function useClientStock(clientId: string | null) {
       return;
     }
 
-    const stockDocRef = doc(db, 'clients', clientId, 'stock', 'inventory');
+    // Mudança: Usar a coleção 'products' em vez de 'stock/inventory'
+    const productsRef = collection(db, 'clients', clientId, 'products');
     
     const unsubscribe = onSnapshot(
-      stockDocRef,
-      (docSnap) => {
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          setStock(data.items || []);
-        } else {
-          setStock([]);
-        }
+      productsRef,
+      (snapshot) => {
+        const items: StockItem[] = [];
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          items.push({
+            id: doc.id,
+            name: data.name || data.productName || 'Sem nome',
+            quantity: data.quantity || 0,
+            unit: data.unit,
+            minQuantity: data.minQuantity
+          });
+        });
+        setStock(items);
         setIsLoading(false);
       },
       (err) => {
@@ -50,15 +57,14 @@ export function useClientStock(clientId: string | null) {
     if (!clientId) return;
     
     try {
-      const stockDocRef = doc(db, 'clients', clientId, 'stock', 'inventory');
-      const updatedStock = stock.map(item => {
-        if (item.productId === productId) {
-          return { ...item, quantity: Math.max(0, item.quantity + quantityChange) };
-        }
-        return item;
-      });
-      
-      await updateDoc(stockDocRef, { items: updatedStock });
+      const productRef = doc(db, 'clients', clientId, 'products', productId);
+      // Precisamos pegar o item atual para somar
+      const currentItem = stock.find(i => i.id === productId);
+      if (currentItem) {
+         await updateDoc(productRef, { 
+            quantity: Math.max(0, currentItem.quantity + quantityChange) 
+         });
+      }
     } catch (err) {
       console.error('Erro ao atualizar estoque:', err);
       throw err;
@@ -69,33 +75,43 @@ export function useClientStock(clientId: string | null) {
     if (!clientId) return;
 
     try {
-      const stockDocRef = doc(db, 'clients', clientId, 'stock', 'inventory');
-      let productFound = false;
+      const productsRef = collection(db, 'clients', clientId, 'products');
       
-      let updatedStock = stock.map(item => {
-        // Normaliza nomes para comparação (remove acentos, lowercase)
-        const normalize = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        
-        if (normalize(item.productName) === normalize(productName)) {
-          productFound = true;
-          // Permite negativo conforme solicitado
-          return { ...item, quantity: item.quantity - quantityToDeduct };
+      // Normaliza o nome buscado
+      const normalize = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      const normalizedSearchName = normalize(productName);
+
+      // Busca todos os produtos para encontrar correspondência
+      const snapshot = await getDocs(productsRef);
+      
+      let matchDocId = null;
+      let currentQuantity = 0;
+
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        const name = data.name || data.productName || '';
+        if (normalize(name) === normalizedSearchName) {
+          matchDocId = doc.id;
+          currentQuantity = data.quantity || 0;
         }
-        return item;
       });
 
-      if (!productFound) {
-        // Adiciona novo item com quantidade negativa
-        updatedStock.push({
-          productId: `auto_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-          productName: productName,
+      if (matchDocId) {
+        // Produto existe, atualiza
+        const productRef = doc(db, 'clients', clientId, 'products', matchDocId);
+        await updateDoc(productRef, {
+          quantity: currentQuantity - quantityToDeduct
+        });
+      } else {
+        // Produto não existe, cria com quantidade negativa
+        await addDoc(productsRef, {
+          name: productName,
           quantity: -quantityToDeduct,
           unit: unit,
-          minQuantity: 0
+          createdAt: new Date().toISOString()
         });
       }
 
-      await updateDoc(stockDocRef, { items: updatedStock });
     } catch (err) {
       console.error('Erro ao debitar do estoque:', err);
       throw err;
