@@ -48,7 +48,8 @@ export function useSubscription(): SubscriptionState {
     const unsubscribe = onSnapshot(subRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
-        const isActive = ['active', 'trialing'].includes(data.status);
+        // 'authorized' é usado pelo Mercado Pago e pelo nosso plano gratuito
+        const isActive = ['active', 'trialing', 'authorized'].includes(data.status);
         
         setState({
           hasActiveSubscription: isActive,
