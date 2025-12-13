@@ -64,6 +64,11 @@ service cloud.firestore {
       allow read, update, delete: if isOwner(resource.data.userId);
     }
 
+    // Subscriptions
+    match /subscriptions/{userId} {
+      allow read: if isOwner(userId);
+    }
+
     // Subscription Plans
     match /subscription_plans/{planId} {
       allow read: if true;
